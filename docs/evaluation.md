@@ -42,11 +42,11 @@ prompts, questions, or secrets.
 
 ## Thresholds
 
-| Dimension | Threshold | Status |
-|---|---|---|
-| Groundedness | TBD from first baseline | pending Phase 4 |
-| Completeness | TBD from first baseline | pending Phase 4 |
-| Citation correctness | TBD from first baseline | pending Phase 4 |
+| Dimension                         | Threshold               | Status          |
+| --------------------------------- | ----------------------- | --------------- |
+| Groundedness                      | TBD from first baseline | pending Phase 4 |
+| Completeness                      | TBD from first baseline | pending Phase 4 |
+| Citation correctness              | TBD from first baseline | pending Phase 4 |
 | Refusal quality (adversarial set) | TBD from first baseline | pending Phase 4 |
 
 Rules: thresholds are set from the first live baseline, recorded here with

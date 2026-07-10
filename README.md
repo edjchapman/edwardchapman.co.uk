@@ -30,7 +30,7 @@ islands, and none exist before Phase 3. Full picture:
 
 Astro 7 · TypeScript (strictest) · Cloudflare Workers + Static Assets ·
 wrangler 4 · pnpm 11 / Node 24 LTS · Vitest · Playwright · ESLint 10 +
-Prettier 3 · GitHub Actions. The *why* for each load-bearing choice is an
+Prettier 3 · GitHub Actions. The _why_ for each load-bearing choice is an
 ADR: [docs/adr/](docs/adr/).
 
 ## Local setup
@@ -47,13 +47,13 @@ Details and troubleshooting: [docs/development.md](docs/development.md).
 
 ## Commands
 
-| | |
-|---|---|
-| `make check` | format, lint, `astro check`, unit tests, build, content-policy scan, built-output link checks |
-| `make test-e2e` | Playwright against the built site |
-| `make preview` | production build via `wrangler dev` |
-| `make eval-agent` / `make eval-agent-live` | agent evaluations (defined in Phases 3–4; see [docs/evaluation.md](docs/evaluation.md)) |
-| `make help` | everything else |
+|                                            |                                                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `make check`                               | format, lint, `astro check`, unit tests, build, content-policy scan, built-output link checks |
+| `make test-e2e`                            | Playwright against the built site                                                             |
+| `make preview`                             | production build via `wrangler dev`                                                           |
+| `make eval-agent` / `make eval-agent-live` | agent evaluations (defined in Phases 3–4; see [docs/evaluation.md](docs/evaluation.md))       |
+| `make help`                                | everything else                                                                               |
 
 ## Environment variables
 
@@ -90,10 +90,10 @@ and is gated by deterministic + live evaluations and a manual red-team pass
 
 ## Repository status
 
-| Phase | Scope | State |
-|---|---|---|
-| 0 | Spec, bootstrap, scaffold, CI, temporary URL | **in progress** |
-| 1 | Recruiter homepage, colophon, domain cutover | pending |
-| 2 | Case studies, notes, security headers | pending |
-| 3 | Agent foundation (corpus, retrieval, fake adapter) | pending |
-| 4 | Live model integration, gated /ask release | pending |
+| Phase | Scope                                              | State           |
+| ----- | -------------------------------------------------- | --------------- |
+| 0     | Spec, bootstrap, scaffold, CI, temporary URL       | **in progress** |
+| 1     | Recruiter homepage, colophon, domain cutover       | pending         |
+| 2     | Case studies, notes, security headers              | pending         |
+| 3     | Agent foundation (corpus, retrieval, fake adapter) | pending         |
+| 4     | Live model integration, gated /ask release         | pending         |

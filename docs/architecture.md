@@ -40,11 +40,11 @@ injects its server entrypoint.
 Content is typed data, not loose markdown
 ([ADR-0001](adr/0001-astro-and-strict-typescript.md)):
 
-| Collection | Purpose | Schema highlights |
-|---|---|---|
-| `projects` | Project cards (Phase 1) + case-study bodies (Phase 2) | card copy fields (`problem`, `built`, `differentiator`), `tech`, `repo`/`demo` URLs, `featured`, `order`, `draft` |
-| `notes` | Technical writing (Phase 2+) | `pubDate`/`updatedDate`, `tags`, `draft`, `canonicalURL`, `relatedProject` |
-| `profile` | Prose the homepage/colophon render — positioning, how-I-work, technical focus, colophon | `order`, `corpus` (agent-ingestion opt-out) |
+| Collection | Purpose                                                                                 | Schema highlights                                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `projects` | Project cards (Phase 1) + case-study bodies (Phase 2)                                   | card copy fields (`problem`, `built`, `differentiator`), `tech`, `repo`/`demo` URLs, `featured`, `order`, `draft` |
+| `notes`    | Technical writing (Phase 2+)                                                            | `pubDate`/`updatedDate`, `tags`, `draft`, `canonicalURL`, `relatedProject`                                        |
+| `profile`  | Prose the homepage/colophon render — positioning, how-I-work, technical focus, colophon | `order`, `corpus` (agent-ingestion opt-out)                                                                       |
 
 Schemas are **pure zod** in [`src/lib/schemas.ts`](../src/lib/schemas.ts) —
 no `astro:*` imports — so Astro's content layer, the Node check scripts, and
@@ -76,12 +76,12 @@ non-required CI job.
 
 ## Environment bindings
 
-| Name | Kind | Introduced | Purpose |
-|---|---|---|---|
-| `ASSETS` | assets binding | Phase 0 | static asset serving |
-| `ANTHROPIC_MODEL` | var | Phase 3 | model id for the agent (config-driven; default `claude-haiku-4-5`) |
-| `ANTHROPIC_API_KEY` | secret | Phase 4 | Anthropic credential (Worker secret; never client-side) |
-| rate-limit binding | ratelimit | Phase 3 | per-IP limiting on `/api/ask` |
+| Name                | Kind           | Introduced | Purpose                                                            |
+| ------------------- | -------------- | ---------- | ------------------------------------------------------------------ |
+| `ASSETS`            | assets binding | Phase 0    | static asset serving                                               |
+| `ANTHROPIC_MODEL`   | var            | Phase 3    | model id for the agent (config-driven; default `claude-haiku-4-5`) |
+| `ANTHROPIC_API_KEY` | secret         | Phase 4    | Anthropic credential (Worker secret; never client-side)            |
+| rate-limit binding  | ratelimit      | Phase 3    | per-IP limiting on `/api/ask`                                      |
 
 ## URL policy
 

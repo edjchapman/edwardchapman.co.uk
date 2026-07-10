@@ -18,14 +18,14 @@ make check    # the full gate — green on a fresh clone
 
 ## Everyday commands
 
-| Command | What it does |
-|---|---|
-| `make dev` | Astro dev server (hot reload) at `localhost:4321` |
-| `make preview` | Production build served through `wrangler dev` (real asset/Worker semantics) |
-| `make check` | The whole gate: md links/anchors, format, lint, `astro check`, unit tests, build, content policy, dist links |
-| `make test-e2e` | Playwright suite against the built site (first run: `pnpm exec playwright install chromium`) |
-| `make format` / `make lint-fix` | Write-mode formatting / autofixable lint |
-| `make help` | Everything else |
+| Command                         | What it does                                                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `make dev`                      | Astro dev server (hot reload) at `localhost:4321`                                                            |
+| `make preview`                  | Production build served through `wrangler dev` (real asset/Worker semantics)                                 |
+| `make check`                    | The whole gate: md links/anchors, format, lint, `astro check`, unit tests, build, content policy, dist links |
+| `make test-e2e`                 | Playwright suite against the built site (first run: `pnpm exec playwright install chromium`)                 |
+| `make format` / `make lint-fix` | Write-mode formatting / autofixable lint                                                                     |
+| `make help`                     | Everything else                                                                                              |
 
 `make check` is exactly what CI runs — if it's green locally, the required
 checks will be green.

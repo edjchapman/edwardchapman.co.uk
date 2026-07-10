@@ -20,7 +20,7 @@ Content may be drawn from, and only from:
 
 Private material — including the private `career-portfolio` repository,
 application notes, recruiter correspondence, and interview information — may
-inform *drafting* done outside this repository, but no text, metric, or fact
+inform _drafting_ done outside this repository, but no text, metric, or fact
 traceable only to a private source may be committed, built, prompted, or
 logged here.
 

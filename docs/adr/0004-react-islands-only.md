@@ -24,7 +24,7 @@ gives the first one: a real interaction that HTML and CSS cannot express.
   prose. Rejected.
 - **No framework, hand-rolled JS for the ask UI** — viable, but the form's
   state machine (idle/loading/answer/error with aria-live updates) is where a
-  component model earns its keep, and demonstrating *selective* React use is
+  component model earns its keep, and demonstrating _selective_ React use is
   an explicit goal of the artefact.
 - **Lighter islands (Preact/Svelte)** — defensible; React chosen because it
   matches the professional positioning the site documents and the ecosystem

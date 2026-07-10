@@ -6,19 +6,19 @@ dashboard-only behaviour.
 
 ## Environments
 
-| Surface | What | When |
-|---|---|---|
-| Production | Worker `edwardchapman` (workers.dev during Phase 0; `edwardchapman.co.uk` after the Phase 1 cutover) | Every push to `main` (i.e. every squash-merge), gated by the GitHub `production` environment |
-| PR previews | Versioned preview uploads with alias `pr-<n>` | Every PR update |
+| Surface     | What                                                                                                 | When                                                                                         |
+| ----------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Production  | Worker `edwardchapman` (workers.dev during Phase 0; `edwardchapman.co.uk` after the Phase 1 cutover) | Every push to `main` (i.e. every squash-merge), gated by the GitHub `production` environment |
+| PR previews | Versioned preview uploads with alias `pr-<n>`                                                        | Every PR update                                                                              |
 
 Preview uploads use `wrangler versions upload`, which **cannot** touch
 triggers or custom domains — a preview can never affect production routing.
 
 ## Secrets (GitHub Actions)
 
-| Secret | Scope |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Minimal-scope API token (see below) |
+| Secret                  | Scope                                                         |
+| ----------------------- | ------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Minimal-scope API token (see below)                           |
 | `CLOUDFLARE_ACCOUNT_ID` | Account id (not secret-sensitive, stored as one for tidiness) |
 
 Token recipe (create at dash.cloudflare.com → My Profile → API Tokens):
