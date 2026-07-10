@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE } from "../lib/site";
+---
+
+<BaseLayout
+  title="Colophon — Ed Chapman"
+  description="How edwardchapman.co.uk is built: Astro on Cloudflare Workers, static-first, spec-driven, with its architecture decisions public."
+>
+  <h1>Colophon</h1>
+  <p>
+    How this site is built — because for a personal site by an engineer, the
+    <em>how</em> is part of the point. A fuller version of this page ships with the
+    site's first full release; the source is already public.
+  </p>
+  <ul>
+    <li>
+      <strong>Static by design.</strong> Built with Astro, served from Cloudflare
+      Workers Static Assets. There is no origin server — the previous incarnation
+      of this domain died with one; this one structurally cannot.
+    </li>
+    <li>
+      <strong>Spec-first.</strong> The commissioning specification and every load-bearing
+      architecture decision are in the repository as ADRs.
+    </li>
+    <li>
+      <strong>Gated.</strong> Every change lands through a PR that must pass a single
+      deterministic gate — format, lint, types, tests, build, a content-safety scan,
+      and built-output link checks.
+    </li>
+  </ul>
+  <p>
+    The full details live in the
+    <a href={SITE.repo}>public repository</a>.
+  </p>
+</BaseLayout>

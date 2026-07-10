@@ -1,0 +1,46 @@
+/*
+ * Design tokens — the site's entire visual vocabulary. Components consume
+ * these custom properties only; no raw values in component styles.
+ * Editorial register: paper/ink palette, serif display over sans body,
+ * comfortable measure, deliberate whitespace. All colour pairs on paper
+ * meet WCAG 2.2 AA (≥ 4.5:1).
+ */
+
+:root {
+  /* colour */
+  --color-paper: #faf9f6;
+  --color-ink: #1a1a18;
+  --color-muted: #5c5a54;
+  --color-accent: #1a5fb4;
+  --color-rule: #e5e2da;
+  --color-paper-raised: #ffffff;
+
+  /* type */
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* scale: 1.25 ratio on a 17px base */
+  --text-sm: 0.875rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 1.953rem;
+  --text-3xl: 2.441rem;
+
+  --leading-tight: 1.2;
+  --leading-body: 1.6;
+  --measure: 65ch;
+
+  /* space: 4px base */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --space-6: 4rem;
+
+  --radius: 4px;
+  --rule: 1px solid var(--color-rule);
+}
