@@ -46,6 +46,12 @@ keep an entry out of production (and out of the Phase-3 agent corpus). Before
 writing, read [docs/content-policy.md](content-policy.md); the policy scanner
 will hold you to it.
 
+**`public/llms.txt` is maintained by hand**: when pages or featured projects
+change, update it in the same PR (it is a discovery aid, not a security
+boundary — see docs/spec.md §9). The Phase-3 corpus builder is the natural
+point to start generating it instead; until then, hand-maintenance is the
+documented process.
+
 ## Troubleshooting
 
 - **`astro check` fails inside the Cloudflare plugin** — the adapter reads
