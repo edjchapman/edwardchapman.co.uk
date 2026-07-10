@@ -40,6 +40,8 @@ export const profileSchema = z.object({
   title: z.string().min(1),
   /** Render order within homepage sections. */
   order: z.number().int().min(0),
+  /** Short positioning line (hero use; positioning entry only). */
+  tagline: z.string().optional(),
   updatedDate: z.coerce.date().optional(),
   /** Whether the Phase-3 agent corpus may ingest this entry. */
   corpus: z.boolean().default(true),

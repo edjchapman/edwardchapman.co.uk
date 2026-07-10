@@ -13,7 +13,7 @@ tech:
   - pgvector
 featured: true
 order: 2
-draft: true
+draft: false
 repo: "https://github.com/edjchapman/AI-Due-Diligence-Assistant"
 demo: "https://app-production-e60e.up.railway.app"
 ---
