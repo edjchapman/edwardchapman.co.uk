@@ -44,8 +44,17 @@ function* walk(dir: string): Generator<string> {
 
 export function extractExternalUrls(text: string): string[] {
   const urls = new Set<string>();
-  for (const match of text.matchAll(/https?:\/\/[^\s"'<>)\]]+/g)) {
+  // Require at least one host character after the scheme so bare scheme
+  // mentions in prose/code spans (`https://`) aren't treated as links.
+  for (const match of text.matchAll(/https?:\/\/[^\s"'<>)\]`]+/g)) {
     const url = match[0].replace(/[.,;:]+$/, "");
+    let hostname: string;
+    try {
+      hostname = new URL(url).hostname;
+    } catch {
+      continue;
+    }
+    if (hostname === "") continue;
     if (!url.startsWith(INTERNAL_ORIGIN)) urls.add(url);
   }
   return [...urls];
