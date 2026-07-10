@@ -1,17 +1,122 @@
 ---
+import Base from "../layouts/Base.astro";
 
+const projects = [
+  {
+    name: "Foreman",
+    href: "https://github.com/edjchapman/Foreman",
+    demo: null,
+    blurb:
+      "An event-driven job-processing platform, built in the open. File upload → async processing with a transactional outbox, worker retries and dead-letter handling, and realtime progress over WebSockets. A reference for doing background work that doesn't lose data when things fail.",
+    stack: "Django · Celery · Channels · Redis · PostgreSQL · React/TS",
+  },
+  {
+    name: "AI Due Diligence Assistant",
+    href: "https://github.com/edjchapman/AI-Due-Diligence-Assistant",
+    demo: "https://app-production-e60e.up.railway.app",
+    blurb:
+      "A production-shaped LLM system in TypeScript/Node.js. Ingests a company's filings, runs structured due-diligence checks via a stateful LangGraph.js agent, and returns a cited, audit-grade report. The point is the eval loop: an LLM-as-judge harness scores every finding against a golden set in CI on every push — quality measured, not vibed.",
+    stack:
+      "TypeScript · Fastify · LangGraph.js · pgvector · Claude · Vitest/CI",
+  },
+  {
+    name: "claude-code-config",
+    href: "https://github.com/edjchapman/claude-code-config",
+    demo: null,
+    blurb:
+      "A Claude Code plugin that bootstraps a repo with an agentic-AI kit: GitHub Actions workflows, project templates, MCP servers, and commit/validation hooks. Tooling I actually use every day — including to build this site.",
+    stack: "Claude Code · MCP · GitHub Actions",
+  },
+];
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Astro</title>
-  </head>
-  <body>
-    <h1>Astro</h1>
-  </body>
-</html>
+<Base
+  title="Ed Chapman — Senior Full-Stack Engineer"
+  description="Senior full-stack engineer in London. Python/Django + FastAPI, React/TypeScript, AWS/Terraform — and AI tooling treated as real engineering: evaluated, not vibed."
+>
+  <main>
+    <h1>Ed Chapman</h1>
+    <p class="muted">Senior full-stack engineer · London</p>
+
+    <p>
+      I build data-intensive products end to end — backend in Python (Django,
+      FastAPI), frontends in React/TypeScript, and the AWS + Terraform they run
+      on. Happiest owning a whole system: the API, the data model, the infra,
+      and the unglamorous reliability work in between. Lately I'm into
+      event-driven architecture and treating AI tooling as real engineering —
+      evaluated, not vibed.
+    </p>
+
+    <p>
+      <a href="https://github.com/edjchapman">GitHub</a> ·
+      <a href="https://linkedin.com/in/edjchapman">LinkedIn</a> ·
+      <a href="mailto:edchapman88@gmail.com">Email</a>
+      <span class="muted"> · CV on request</span>
+    </p>
+
+    <h2>What I'm building</h2>
+    {
+      projects.map((p) => (
+        <article>
+          <h3>
+            <a href={p.href}>{p.name}</a>
+            {p.demo && (
+              <span class="demo">
+                {" — "}
+                <a href={p.demo}>live demo</a>
+              </span>
+            )}
+          </h3>
+          <p>{p.blurb}</p>
+          <p class="stack muted">{p.stack}</p>
+        </article>
+      ))
+    }
+
+    <h2>How I work</h2>
+    <ul>
+      <li>
+        I'd rather own a system end to end than hand off at the seams — UI, API,
+        data model, infra.
+      </li>
+      <li>
+        Most of my favourite work is unglamorous: killing N+1 queries,
+        zero-downtime migrations, making releases boring.
+      </li>
+      <li>
+        Big on developer experience — fast CI, sharp tooling, and AI in the loop
+        with evaluation harnesses as quality gates.
+      </li>
+      <li>
+        Nine years across proptech, supply-chain logistics, and energy
+        platforms, most recently as a senior/lead engineer.
+      </li>
+    </ul>
+  </main>
+</Base>
+
+<style>
+  article {
+    margin-bottom: 1.6rem;
+  }
+  article h3 {
+    font-size: 1.02rem;
+    margin: 0 0 0.25rem;
+  }
+  article p {
+    margin: 0.25rem 0;
+  }
+  .stack {
+    font-size: 0.85rem;
+  }
+  .demo {
+    font-weight: 400;
+    font-size: 0.9rem;
+  }
+  ul {
+    padding-left: 1.2rem;
+  }
+  li {
+    margin-bottom: 0.45rem;
+  }
+</style>
