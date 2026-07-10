@@ -1,17 +1,58 @@
 # Development
 
-<!-- Stub — expanded in Phase 0 PR-3. -->
-
 ## Prerequisites
 
-- Node.js 24 LTS (with corepack)
-- git, make
+- **Node.js 24 LTS** (ships corepack, which manages pnpm via the
+  `packageManager` field — no global pnpm install needed)
+- **git**, **make**, **python3** (markdown anchor checker)
+- Optional: **gh** (GitHub CLI) for the PR workflow
 
 ## Setup
 
 ```sh
-make setup   # enables pnpm via corepack and installs dependencies
-make check   # full validation gate — run before every push
-make dev     # local dev server
-make help    # all targets
+git clone https://github.com/edjchapman/edwardchapman.co.uk.git
+cd edwardchapman.co.uk
+make setup    # corepack enable pnpm + pnpm install --frozen-lockfile
+make check    # the full gate — green on a fresh clone
 ```
+
+## Everyday commands
+
+| Command                         | What it does                                                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `make dev`                      | Astro dev server (hot reload) at `localhost:4321`                                                            |
+| `make preview`                  | Production build served through `wrangler dev` (real asset/Worker semantics)                                 |
+| `make check`                    | The whole gate: md links/anchors, format, lint, `astro check`, unit tests, build, content policy, dist links |
+| `make test-e2e`                 | Playwright suite against the built site (first run: `pnpm exec playwright install chromium`)                 |
+| `make format` / `make lint-fix` | Write-mode formatting / autofixable lint                                                                     |
+| `make help`                     | Everything else                                                                                              |
+
+`make check` is exactly what CI runs — if it's green locally, the required
+checks will be green.
+
+## Working conventions
+
+Branch → PR → squash-merge; the PR title becomes the permanent commit subject
+and is validated strictly (see [CONTRIBUTING.md](../CONTRIBUTING.md)).
+Commits run through the global git-hooks dispatcher: secret scan plus
+`make check` via `.pre-commit-config.yaml`.
+
+## Content authoring
+
+Add or edit entries under `src/content/{projects,notes,profile}/`. Schemas in
+[`src/lib/schemas.ts`](../src/lib/schemas.ts) validate frontmatter at build
+time — a bad entry is a red build, not a broken page. Set `draft: true` to
+keep an entry out of production (and out of the Phase-3 agent corpus). Before
+writing, read [docs/content-policy.md](content-policy.md); the policy scanner
+will hold you to it.
+
+## Troubleshooting
+
+- **`astro check` fails inside the Cloudflare plugin** — the adapter reads
+  `wrangler.jsonc`; ensure you haven't added a `main` (the adapter injects
+  its own entrypoint) or removed the `assets` binding.
+- **pnpm refuses to run postinstall scripts** — build allowances live in
+  `pnpm-workspace.yaml` (`allowBuilds`); esbuild/sharp/workerd must stay
+  allowed.
+- **TypeScript 7** — pinned to 5.9 until typescript-eslint supports TS7
+  (dependabot is configured to skip that major).
