@@ -11,5 +11,10 @@ export const GET: APIRoute = () =>
       version: __BUILD_SHA__,
       builtAt: __BUILD_TIME__,
     },
-    { headers: { "cache-control": "no-store" } },
+    {
+      headers: {
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
+      },
+    },
   );

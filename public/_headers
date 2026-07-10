@@ -1,0 +1,15 @@
+# Security headers applied by the Workers Static Assets layer to every asset
+# response. Worker routes (/api/*) set their own headers in code. The
+# @astrojs/cloudflare adapter appends its /_astro/* cache rule at build time.
+#
+# CSP notes: Astro emits scoped styles as inline <style> blocks, hence
+# style-src 'unsafe-inline'. JSON-LD <script type="application/ld+json"> is
+# non-executing data and exempt from script-src. script-src 'self' is ready
+# for the Phase-3 island bundle; connect-src 'self' covers its /api/ask call.
+
+/*
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  X-Frame-Options: DENY
