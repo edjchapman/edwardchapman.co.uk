@@ -1,0 +1,25 @@
+# Node / Astro / Cloudflare
+node_modules/
+dist/
+.astro/
+.wrangler/
+.dev.vars
+src/generated/
+
+# Test artefacts
+test-results/
+playwright-report/
+coverage/
+
+# IDE / OS
+.idea/
+.junie/
+.DS_Store
+
+# Claude Code — personal layers only; .claude/settings.json and
+# .claude/hooks/ are committed (Claude-on-web bootstrap).
+.claude/agents
+.claude/skills
+.claude/rules
+.claude/settings.local.json
+.mcp.json

@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: npm # covers pnpm-lock.yaml + the packageManager field
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

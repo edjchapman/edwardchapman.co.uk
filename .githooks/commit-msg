@@ -1,0 +1,6 @@
+#!/bin/sh
+# Commit-msg hook: validate the commit subject against the commit standard.
+# Activate with: git config core.hooksPath .githooks
+# Strict from day 0: a brand-new repo has no legacy runway to honour.
+
+exec "$(git rev-parse --show-toplevel)/scripts/check-commit-msg.sh" --strict "$1"

@@ -1,0 +1,23 @@
+name: scheduled-check
+
+on:
+  schedule:
+    # Mondays 09:00 UTC — catches drift from out-of-band edits (e.g. via GitHub web UI)
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  make-check:
+    name: make check (scheduled)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run make check
+        run: make check

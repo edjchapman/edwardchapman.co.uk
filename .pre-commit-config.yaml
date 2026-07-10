@@ -1,0 +1,12 @@
+# Run via the global git-hooks dispatcher (~/.config/git/hooks), which invokes
+# pre-commit alongside the ggshield secret scan. The repo-local .githooks/
+# directory is intentionally NOT wired (no core.hooksPath override) so the
+# global dispatcher stays active; `make check` runs here instead.
+repos:
+  - repo: local
+    hooks:
+      - id: make-check
+        name: make check (full validation gate)
+        entry: make check
+        language: system
+        pass_filenames: false
