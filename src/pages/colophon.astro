@@ -1,0 +1,45 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base
+  title="Colophon — how this site is built"
+  description="How edwardchapman.co.uk is built: Astro on Cloudflare Pages, agentic toolchain, CI-gated."
+>
+  <main>
+    <h1>Colophon</h1>
+    <p class="muted">How this site is built — because the how is the point.</p>
+
+    <ul>
+      <li>
+        <strong>Static by design.</strong> Built with
+        <a href="https://astro.build">Astro</a>, deployed on Cloudflare Pages.
+        There is no origin server — the previous incarnation of this domain died
+        with one, and this one structurally can't.
+      </li>
+      <li>
+        <strong>Built with an agentic toolchain.</strong> Scaffolded and maintained
+        with <a href="https://claude.com/claude-code">Claude Code</a>
+        running my own
+        <a href="https://github.com/edjchapman/claude-code-config"
+          >claude-code-config</a
+        > kit — vendored CI workflows, commit standards, validation hooks. The tooling
+        works because it's constrained: every change lands through a PR gated by
+        <code>make check</code> (format, type check, production build) and a strict
+        commit-style validator.
+      </li>
+      <li>
+        <strong>Machine-readable.</strong>
+        <a href="/llms.txt">llms.txt</a> summarises the site for AI agents. An interactive,
+        eval-gated "ask about my work" agent is in the works — grounded strictly on
+        this site's published content, with an LLM-as-judge harness in CI so answer
+        quality is measured, not assumed.
+      </li>
+      <li>
+        <strong>Open.</strong> The
+        <a href="https://github.com/edjchapman/edwardchapman.co.uk">source</a> is
+        public — repo standards, workflows and all.
+      </li>
+    </ul>
+  </main>
+</Base>

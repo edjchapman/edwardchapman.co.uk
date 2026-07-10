@@ -1,0 +1,32 @@
+# Ed Chapman — edwardchapman.co.uk
+
+> Personal site of Ed Chapman, a senior full-stack engineer in London, UK.
+> Python/Django + FastAPI backend, React/TypeScript frontend, AWS/Terraform
+> infrastructure. Nine-plus years across proptech (commercial real estate
+> financial modelling), supply-chain & logistics, and energy platforms, most
+> recently as a senior/lead engineer. Treats AI/LLM tooling as real
+> engineering — evaluated with eval harnesses (LLM-as-judge in CI), not vibed.
+
+## Pages
+
+- [Home](https://edwardchapman.co.uk/): profile, current projects, how I work, contact
+- [Colophon](https://edwardchapman.co.uk/colophon/): how this site is built
+
+## Projects
+
+- [Foreman](https://github.com/edjchapman/Foreman): event-driven job-processing
+  platform (Django, Celery, Channels, Redis, PostgreSQL, React/TS) —
+  transactional outbox, worker retries, dead-letter handling, realtime progress.
+- [AI Due Diligence Assistant](https://github.com/edjchapman/AI-Due-Diligence-Assistant):
+  production-shaped LLM system (TypeScript, Fastify, LangGraph.js, pgvector,
+  Claude) with an LLM-as-judge eval harness as a CI quality gate.
+- [claude-code-config](https://github.com/edjchapman/claude-code-config):
+  agentic-AI repo bootstrap kit (Claude Code plugin, MCP servers, GitHub
+  Actions, validation hooks).
+
+## Contact
+
+- GitHub: https://github.com/edjchapman
+- LinkedIn: https://linkedin.com/in/edjchapman
+- Email: edchapman88@gmail.com
+- CV: available on request
