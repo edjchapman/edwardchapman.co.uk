@@ -7,6 +7,11 @@ updates:
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # TypeScript 7 (native compiler) breaks typescript-eslint; revisit when
+      # typescript-eslint declares TS7 support.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

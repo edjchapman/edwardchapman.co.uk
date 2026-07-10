@@ -1,12 +1,15 @@
-# Generic project quality gate — vendored into this repo by claude-code-config's
-# `setup-project.sh --tooling`. `make check` is the single aggregate gate that CI
-# (.github/workflows/check.yml), the pre-commit hook (.githooks/pre-commit), and the
-# weekly scheduled run (.github/workflows/scheduled-check.yml) all call.
+# Project quality gate — vendored base from claude-code-config, wired for this
+# repo's Astro/TypeScript/Cloudflare stack. `make check` is the single aggregate
+# gate that CI (.github/workflows/check.yml), the pre-commit hook
+# (.pre-commit-config.yaml via the global dispatcher), and the weekly scheduled
+# run (.github/workflows/scheduled-check.yml) all call.
 #
-# This file is yours now — edit freely. The most important edit is wiring your
-# stack's lint/test into `stack-check` (see the comment block below).
+# `eval-agent` and `eval-agent-live` are defined in Phases 3–4 (see
+# docs/evaluation.md); the names are reserved here.
 
-.PHONY: help check check-links check-anchors stack-check \
+.PHONY: help setup dev preview check check-links check-anchors stack-check \
+        format-check lint typecheck test build check-content check-dist-links \
+        format lint-fix test-e2e deploy deploy-preview \
         check-commit-msg check-stale-branches sweep-branches lint-md
 
 .DEFAULT_GOAL := help
@@ -19,6 +22,17 @@ help: ## Print this help message (lists all annotated targets)
 		/^[a-z][a-zA-Z0-9_%-]*:.*##/ { printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2 }' \
 		$(MAKEFILE_LIST)
 
+# === Setup & local development ===
+
+setup: ## Enable pnpm via corepack and install dependencies
+	@corepack enable pnpm && pnpm install --frozen-lockfile
+
+dev: ## Start the Astro dev server
+	@pnpm run dev
+
+preview: ## Serve the production build locally via wrangler (build first)
+	@pnpm run build && pnpm run preview
+
 # === Validation (run by CI + pre-commit) ===
 
 check: check-links check-anchors stack-check ## Run the full validation battery
@@ -30,15 +44,45 @@ check-links: ## Verify internal markdown links resolve
 check-anchors: ## Verify markdown anchor fragments resolve to heading slugs
 	@python3 scripts/check_anchors.py
 
-# Stack gate — no-op by default. Wire your project's lint/test/typecheck here, e.g.:
-#   Python:  stack-check: ; @ruff check . && pytest -q
-#   Node:    stack-check: ; @npm run lint && npm test
-#   Go:      stack-check: ; @go vet ./... && go test ./...
-# setup-project.sh --tooling prints the suggested snippet for your detected stack.
-stack-check: ## Project lint/test gate (wire this to your stack)
-	@echo "stack-check: no gate configured — edit the Makefile to add your lint/test."
+stack-check: format-check lint typecheck test build check-content check-dist-links ## Astro/TS gate: format, lint, types, tests, build, content policy, dist links
+
+format-check: ## Prettier in check mode
+	@pnpm exec prettier --check .
+
+lint: ## ESLint over the repo
+	@pnpm exec eslint .
+
+typecheck: ## astro check (TypeScript + .astro diagnostics)
+	@pnpm exec astro check
+
+test: ## Vitest unit/integration suites
+	@pnpm exec vitest run
+
+build: ## Production build (dist/)
+	@pnpm exec astro build
+
+check-content: ## Content-policy scan over sources and built output
+	@node scripts/check-content-policy.ts
+
+check-dist-links: ## Validate internal links + canonical policy in dist/
+	@node scripts/check-internal-links.ts
 
 # === On-demand (not part of make check) ===
+
+format: ## Prettier in write mode
+	@pnpm exec prettier --write .
+
+lint-fix: ## ESLint with --fix
+	@pnpm exec eslint . --fix
+
+test-e2e: ## Playwright end-to-end suite (built site via wrangler dev)
+	@pnpm exec playwright test
+
+deploy: ## Deploy the current build to Cloudflare (CI does this from main)
+	@pnpm exec wrangler deploy --config dist/server/wrangler.json
+
+deploy-preview: ## Upload a preview version (ALIAS=<name>, defaults to local)
+	@pnpm exec wrangler versions upload --config dist/server/wrangler.json --preview-alias $${ALIAS:-local}
 
 check-commit-msg: ## Validate a commit subject (FILE=<path> or pipe via --stdin)
 	@./scripts/check-commit-msg.sh $${FILE:---stdin}
