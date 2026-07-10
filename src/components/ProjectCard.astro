@@ -19,6 +19,7 @@ const { title, problem, built, differentiator, tech, repo, demo } =
     {tech.map((tag) => <li>{tag}</li>)}
   </ul>
   <p class="links">
+    <a href={`/projects/${project.id}`}>Case study</a>
     <a href={repo}>Repository</a>
     {demo && <a href={demo}>Live demo</a>}
   </p>

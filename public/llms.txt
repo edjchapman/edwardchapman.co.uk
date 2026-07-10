@@ -14,6 +14,11 @@ repository) until the site's build generates it from published content.
 
 - [Home](https://edwardchapman.co.uk/): positioning, selected projects,
   how I work, technical focus, contact
+- [Projects](https://edwardchapman.co.uk/projects): case studies with
+  architecture, decisions, limitations, and next steps —
+  [Foreman](https://edwardchapman.co.uk/projects/foreman),
+  [AI Due-Diligence Assistant](https://edwardchapman.co.uk/projects/ai-due-diligence-assistant),
+  [claude-code-config](https://edwardchapman.co.uk/projects/claude-code-config)
 - [Colophon](https://edwardchapman.co.uk/colophon): how this site is built —
   Astro on Cloudflare Workers, static-first, spec-driven, gated by CI
 - [Privacy](https://edwardchapman.co.uk/privacy): no analytics, no cookies,
