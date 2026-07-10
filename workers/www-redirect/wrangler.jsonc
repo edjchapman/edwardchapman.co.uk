@@ -1,0 +1,14 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "edwardchapman-www-redirect",
+  "main": "./index.js",
+  "compatibility_date": "2026-06-01",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "www.edwardchapman.co.uk/*",
+      "zone_name": "edwardchapman.co.uk",
+    },
+  ],
+  "observability": { "enabled": true },
+}

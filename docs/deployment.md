@@ -53,12 +53,62 @@ Application-level, in order of preference:
 
 Confirm with `/api/health` — the `version` field names the serving commit.
 
-## Domain cutover (Phase 1)
+## Domain cutover (Phase 1) — executed 2026-07-11
 
-The full runbook (stale-record removal, Worker custom domain, www→apex 301,
-Email Routing for the public contact address, verification matrix) lands here
-with the Phase 1 cutover PR. Current state: apex/www still point at the dead
-origin (521) pending cutover; Phase 0 serves from workers.dev.
+Prior state: the zone (already on Cloudflare nameservers) proxied the apex to
+a dead Gandi origin (`A 217.70.184.38`) and `www` to Gandi's defunct redirect
+service (`CNAME webredir.vip.gandi.net`) — both returned **HTTP 521**. A full
+pre-cutover DNS snapshot is recorded below; a Gandi mail stack (MX/SPF/SRV)
+was found on the zone and deliberately left untouched pending a decision on
+the public contact address routing.
+
+Steps executed (Cloudflare API, token scopes: Workers Scripts/Routes, DNS,
+Zone Settings):
+
+1. Deleted the two dead records (apex `A`, `www CNAME`).
+2. Created a proxied placeholder `AAAA www → 100::` so the `www` route is
+   proxiable.
+3. Deployed `workers/www-redirect` (this repo) on the
+   `www.edwardchapman.co.uk/*` route — a 301 to the apex preserving path and
+   query. A zone Single-Redirect rule was the plan, but the deploy token
+   deliberately lacks ruleset scopes; the worker keeps the redirect versioned
+   here instead.
+4. Confirmed the zone's **Always Use HTTPS** setting was already on.
+5. This PR set `routes: [{pattern: "edwardchapman.co.uk", custom_domain: true}]`
+   and `workers_dev: false`; the merge deploy attached the custom domain
+   (DNS + edge certificate created automatically by Cloudflare).
+6. Verification: apex `200`; `www/<path>?<q>` → `301` to the apex with path
+   and query intact; `/api/health` reports the deployed sha;
+   `sitemap-index.xml`/`robots.txt` served; workers.dev no longer serves
+   production.
+
+Rollback remains application-level (`wrangler rollback`); restoring the
+deleted DNS records would only restore the 521.
+
+<details>
+<summary>Pre-cutover DNS snapshot (2026-07-11)</summary>
+
+```text
+A     edwardchapman.co.uk        → 217.70.184.38 (proxied)        [DELETED]
+CNAME www                        → webredir.vip.gandi.net (proxied) [DELETED]
+AAAA  www                        → 100:: (proxied)                 [CREATED]
+CNAME career-portfolio           → career-portfolio-2bi.pages.dev (untouched)
+CNAME mind                       → mind-9tc.pages.dev (untouched)
+CNAME webmail                    → webmail.gandi.net (untouched)
+MX    @                          → spool.mail.gandi.net, fb.mail.gandi.net (untouched)
+SRV   _imap/_imaps/_pop3/_pop3s/_submission (untouched)
+TXT   @ (SPF gandi), _dmarc      (untouched)
+```
+
+</details>
+
+### www-redirect worker
+
+`workers/www-redirect/` is deployed manually (it changes ~never):
+
+```sh
+make deploy-www-redirect
+```
 
 ## Diagnosing failures
 

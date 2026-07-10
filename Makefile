@@ -10,6 +10,7 @@
 .PHONY: help setup dev preview check check-links check-anchors stack-check \
         format-check lint typecheck test build check-content check-dist-links \
         format lint-fix test-e2e check-external-links deploy deploy-preview \
+        deploy-www-redirect \
         check-commit-msg check-stale-branches sweep-branches lint-md
 
 .DEFAULT_GOAL := help
@@ -86,6 +87,9 @@ deploy: ## Deploy the current build to Cloudflare (CI does this from main)
 
 deploy-preview: ## Upload a preview version (ALIAS=<name>, defaults to local)
 	@pnpm exec wrangler versions upload --config dist/server/wrangler.json --preview-alias $${ALIAS:-local}
+
+deploy-www-redirect: ## Deploy the www→apex redirect worker (rarely changes)
+	@pnpm exec wrangler deploy --config workers/www-redirect/wrangler.jsonc
 
 check-commit-msg: ## Validate a commit subject (FILE=<path> or pipe via --stdin)
 	@./scripts/check-commit-msg.sh $${FILE:---stdin}
