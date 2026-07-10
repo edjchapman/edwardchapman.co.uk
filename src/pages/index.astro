@@ -1,22 +1,60 @@
 ---
+import { getCollection, getEntry, render } from "astro:content";
+
+import Hero from "../components/Hero.astro";
+import JsonLdPerson from "../components/JsonLdPerson.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import Prose from "../components/Prose.astro";
+import Section from "../components/Section.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE } from "../lib/site";
+
+const positioning = await getEntry("profile", "positioning");
+const howIWork = await getEntry("profile", "how-i-work");
+const technicalFocus = await getEntry("profile", "technical-focus");
+if (!positioning || !howIWork || !technicalFocus) {
+  throw new Error("Homepage profile entries are missing from the collection");
+}
+
+const { Content: Positioning } = await render(positioning);
+const { Content: HowIWork } = await render(howIWork);
+const { Content: TechnicalFocus } = await render(technicalFocus);
+
+const projects = (
+  await getCollection("projects", ({ data }) => data.featured && !data.draft)
+).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout
-  title="Ed Chapman — Senior Software Engineer"
-  description="Ed Chapman, senior software engineer in London. This site is being rebuilt in the open."
->
-  <h1>Ed Chapman</h1>
-  <p>
-    Senior software engineer, London. This site is being rebuilt in the open —
-    the full version is on its way.
+<BaseLayout title={SITE.title} description={SITE.description}>
+  <Hero tagline={positioning.data.tagline ?? SITE.description} />
+  <Prose><Positioning /></Prose>
+
+  <Section id="projects" heading="Selected projects">
+    {projects.map((project) => <ProjectCard project={project} />)}
+  </Section>
+
+  <Section id="how-i-work" heading="How I work">
+    <Prose><HowIWork /></Prose>
+  </Section>
+
+  <Section id="technical-focus" heading="Technical focus">
+    <Prose><TechnicalFocus /></Prose>
+  </Section>
+
+  <p class="deeper">
+    This site is a project too — the <a href="/colophon">colophon</a> explains how
+    it's built. Case studies and notes are on the way.
   </p>
-  <p>
-    In the meantime: the
-    <a href="https://github.com/edjchapman/edwardchapman.co.uk"
-      >source for this site</a
-    >
-    shows how it is being built, and
-    <a href="https://github.com/edjchapman">github.com/edjchapman</a> has the projects.
-  </p>
+
+  <JsonLdPerson />
 </BaseLayout>
+
+<style>
+  .deeper {
+    margin-top: var(--space-5);
+    padding-top: var(--space-3);
+    border-top: var(--rule);
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+</style>
