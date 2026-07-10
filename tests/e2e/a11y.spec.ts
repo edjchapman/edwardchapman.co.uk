@@ -7,6 +7,8 @@ const PAGES = [
   "/",
   "/projects",
   "/projects/foreman",
+  "/notes",
+  "/notes/llm-as-judge-as-a-ci-quality-gate",
   "/colophon",
   "/privacy",
   "/definitely-not-a-page",
