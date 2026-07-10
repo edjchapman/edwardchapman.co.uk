@@ -1,0 +1,71 @@
+import { expect, test } from "@playwright/test";
+
+test.describe("smoke", () => {
+  test("homepage serves with the expected heading", async ({ page }) => {
+    const response = await page.goto("/");
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "Ed Chapman",
+    );
+  });
+
+  test("homepage renders fully without JavaScript", async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    const response = await page.goto("/");
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "Ed Chapman",
+    );
+    await context.close();
+  });
+
+  test("homepage produces no console errors", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(message.text());
+    });
+    await page.goto("/");
+    expect(errors).toEqual([]);
+  });
+
+  test("unknown URLs return the authored 404 page with status 404", async ({
+    page,
+  }) => {
+    const response = await page.goto("/definitely-not-a-page");
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "Page not found",
+    );
+    await expect(page.getByRole("link", { name: /homepage/i })).toBeVisible();
+  });
+
+  test("/api/health reports the build and forbids caching", async ({
+    request,
+  }) => {
+    const response = await request.get("/api/health");
+    expect(response.status()).toBe(200);
+    expect(response.headers()["cache-control"]).toBe("no-store");
+    const body = (await response.json()) as Record<string, unknown>;
+    expect(body["status"]).toBe("ok");
+    expect(typeof body["version"]).toBe("string");
+  });
+
+  test("skip link is the first focusable element and targets #main", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.keyboard.press("Tab");
+    const focused = page.locator(":focus");
+    await expect(focused).toHaveAttribute("href", "#main");
+  });
+
+  test("robots.txt and favicon are served from assets", async ({ request }) => {
+    const robots = await request.get("/robots.txt");
+    expect(robots.status()).toBe(200);
+    expect(await robots.text()).toContain("User-agent");
+
+    const favicon = await request.get("/favicon.svg");
+    expect(favicon.status()).toBe(200);
+  });
+});
