@@ -22,3 +22,10 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# personal agent config (per claude-code-config conventions)
+.claude/agents
+.claude/skills
+.claude/rules
+.claude/settings.local.json
+.mcp.json
