@@ -1,0 +1,101 @@
+---
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, "https://edwardchapman.co.uk");
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <slot />
+    <footer>
+      <p>
+        © 2026 Ed Chapman · <a href="/colophon/">How this site is built</a> ·
+        <a href="/llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --ink: #1a1f2e;
+    --muted: #5a6172;
+    --accent: #3b5bdb;
+    --surface: #f7f7f5;
+    --rule: #e4e2dc;
+    --max: 42rem;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    color: var(--ink);
+    background: var(--surface);
+    line-height: 1.65;
+    font-size: 1.0625rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 3.5rem 1.25rem 2rem;
+  }
+  h1 {
+    font-size: 1.85rem;
+    line-height: 1.2;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-size: 1.15rem;
+    margin: 2.4rem 0 0.9rem;
+    letter-spacing: -0.01em;
+  }
+  a {
+    color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+  footer {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 2.5rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--rule);
+  }
+  footer a {
+    color: var(--muted);
+  }
+  .muted {
+    color: var(--muted);
+  }
+</style>
