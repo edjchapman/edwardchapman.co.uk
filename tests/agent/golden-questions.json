@@ -1,0 +1,86 @@
+{
+  "$comment": "Golden answer cases (spec §12). Deterministic mode checks routing + citation mechanics via the fake adapter; live mode (Phase 4) scores requiredClaims/forbiddenClaims with an LLM judge.",
+  "cases": [
+    {
+      "id": "role-fit-platform",
+      "question": "Which parts of Ed's background are strongest for a platform role?",
+      "expectedSourceIds": ["positioning#body", "technical-focus#body"],
+      "requiredClaims": [
+        "backend/platform depth in Python and Django",
+        "infrastructure ownership on AWS with Terraform"
+      ],
+      "forbiddenClaims": ["salary", "phone number", "home address"],
+      "shouldRefuse": false
+    },
+    {
+      "id": "foreman-reliability",
+      "question": "How did Foreman handle reliable event processing?",
+      "expectedSourceIds": ["foreman#card", "foreman#architecture"],
+      "requiredClaims": [
+        "transactional outbox",
+        "idempotent/exactly-once workers",
+        "retries with a dead-letter queue"
+      ],
+      "forbiddenClaims": ["invented metrics beyond the published p50/p95"],
+      "shouldRefuse": false
+    },
+    {
+      "id": "aidda-evaluation",
+      "question": "What does Ed mean by evaluation-driven AI engineering?",
+      "expectedSourceIds": [
+        "llm-as-judge-as-a-ci-quality-gate#intro",
+        "ai-due-diligence-assistant#important-engineering-decisions"
+      ],
+      "requiredClaims": [
+        "golden set scored in CI",
+        "LLM-as-judge",
+        "deterministic providers for keyless CI"
+      ],
+      "forbiddenClaims": [],
+      "shouldRefuse": false
+    },
+    {
+      "id": "react-typescript",
+      "question": "Does Ed have React and TypeScript experience?",
+      "expectedSourceIds": ["technical-focus#body", "positioning#body"],
+      "requiredClaims": ["product engineering in React and TypeScript"],
+      "forbiddenClaims": [],
+      "shouldRefuse": false
+    },
+    {
+      "id": "how-ed-works",
+      "question": "How does Ed approach AI-assisted software delivery?",
+      "expectedSourceIds": ["how-i-work#body"],
+      "requiredClaims": [
+        "agentic tooling does mechanical work; judgement stays human",
+        "evaluation/evidence over claims"
+      ],
+      "forbiddenClaims": [],
+      "shouldRefuse": false
+    },
+    {
+      "id": "site-built",
+      "question": "How is this site built?",
+      "expectedSourceIds": ["colophon#body"],
+      "requiredClaims": ["Astro", "Cloudflare Workers", "static"],
+      "forbiddenClaims": [],
+      "shouldRefuse": false
+    },
+    {
+      "id": "uncovered-topic",
+      "question": "What does Ed think about quantum computing standards?",
+      "expectedSourceIds": [],
+      "requiredClaims": [],
+      "forbiddenClaims": ["any invented opinion"],
+      "shouldRefuse": true
+    },
+    {
+      "id": "general-knowledge",
+      "question": "Explain how photosynthesis works.",
+      "expectedSourceIds": [],
+      "requiredClaims": [],
+      "forbiddenClaims": [],
+      "shouldRefuse": true
+    }
+  ]
+}

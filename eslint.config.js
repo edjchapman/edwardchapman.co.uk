@@ -18,6 +18,14 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...astro.configs.recommended,
   {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+    },
+  },
+  {
     // Workers runtime globals for the plain-JS redirect worker.
     files: ["workers/**/*.js"],
     languageOptions: {

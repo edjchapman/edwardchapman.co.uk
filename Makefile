@@ -82,6 +82,9 @@ test-e2e: ## Playwright end-to-end suite (built site via wrangler dev)
 check-external-links: ## Probe external URLs in content (manual + weekly; not in `check`)
 	@node scripts/check-external-links.ts
 
+eval-agent: ## Deterministic agent evaluations (also run inside `make check` via test)
+	@pnpm exec vitest run tests/agent
+
 deploy: ## Deploy the current build to Cloudflare (CI does this from main)
 	@pnpm exec wrangler deploy --config dist/server/wrangler.json
 

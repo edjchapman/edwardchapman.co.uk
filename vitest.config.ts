@@ -6,7 +6,12 @@ export default defineConfig({
     __BUILD_TIME__: JSON.stringify("1970-01-01T00:00:00.000Z"),
   },
   test: {
-    include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
+    include: [
+      "tests/unit/**/*.test.ts",
+      "tests/integration/**/*.test.ts",
+      "tests/agent/**/*.test.ts",
+    ],
     environment: "node",
+    globalSetup: ["tests/agent/global-setup.ts"],
   },
 });
