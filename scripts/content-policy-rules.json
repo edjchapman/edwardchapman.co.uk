@@ -1,0 +1,49 @@
+{
+  "$comment": "Machine-readable content-policy rules enforced by check-content-policy.ts (see docs/content-policy.md). Rules scan the shipping surfaces; docs/ may describe prohibited things without shipping them. Line-level escape: append 'content-policy-allow:<rule-id>'.",
+  "allowedEmails": ["ed@edwardchapman.co.uk"],
+  "rules": [
+    {
+      "id": "private-repo-reference",
+      "description": "The private career-portfolio repository must never be referenced from shipped content",
+      "pattern": "career-portfolio",
+      "flags": "i",
+      "paths": ["src", "public", "dist/client"]
+    },
+    {
+      "id": "uk-phone",
+      "description": "Personal phone numbers must not be published",
+      "pattern": "(\\+44\\s?7\\d{3}|\\b07\\d{3})[\\s-]?\\d{3}[\\s-]?\\d{3}\\b",
+      "flags": "",
+      "paths": ["src", "public", "dist/client", "docs"]
+    },
+    {
+      "id": "full-uk-postcode",
+      "description": "Full postcodes (precise location) must not be published — city-level only",
+      "pattern": "\\b[A-Z]{1,2}\\d[A-Z\\d]?\\s?\\d[A-Z]{2}\\b",
+      "flags": "",
+      "paths": ["src/content", "src/pages", "dist/client"]
+    },
+    {
+      "id": "salary-figures",
+      "description": "Salary details must not be published",
+      "pattern": "£\\s?\\d{2,3}[,.]?\\d{3}\\b|\\b\\d{2,3}k\\s*(per|pa|/)\\b",
+      "flags": "i",
+      "paths": ["src/content", "src/pages", "dist/client"]
+    },
+    {
+      "id": "email-address",
+      "description": "Only the approved public contact address may appear (fail-closed allowlist)",
+      "pattern": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",
+      "flags": "g",
+      "paths": ["src", "public", "dist/client"]
+    },
+    {
+      "id": "noncanonical-origin",
+      "description": "Built output must reference only the canonical origin (enabled at domain cutover)",
+      "pattern": "workers\\.dev",
+      "flags": "i",
+      "paths": ["dist/client"],
+      "enabled": false
+    }
+  ]
+}

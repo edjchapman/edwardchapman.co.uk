@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "edwardchapman",
+  // No "main": the @astrojs/cloudflare adapter injects its server entrypoint
+  // and the build emits a deploy-ready config under dist/.
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+  },
+  // Flipped to false at the Phase 1 domain cutover; PR preview aliases stay on.
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true },
+  // Phase 1 cutover adds:
+  //   "routes": [{ "pattern": "edwardchapman.co.uk", "custom_domain": true }]
+  // Phase 3 adds (names reserved; no AI code before then):
+  //   "vars": { "ANTHROPIC_MODEL": "claude-haiku-4-5" }
+  //   secret ANTHROPIC_API_KEY via `wrangler secret put ANTHROPIC_API_KEY`
+}

@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+.markdownlint-cli2.jsonc
+dist/
+.astro/
+.wrangler/
+.claude/
+playwright-report/
+test-results/
+src/generated/
+coverage/
