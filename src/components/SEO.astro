@@ -1,0 +1,52 @@
+---
+import { SITE } from "../lib/site";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Root-relative path to a social-card image (defaults to the site card). */
+  image?: string | undefined;
+  type?: "website" | "article" | undefined;
+}
+
+const {
+  title,
+  description,
+  image = "/og/default.png",
+  type = "website",
+} = Astro.props;
+
+// Canonical policy: absolute, on the canonical origin, no trailing slash
+// (except the root). With build.format "file" the build-time pathname is the
+// emitted file name (/colophon.html, /index.html) — strip it back to the
+// served route. Enforced site-wide by scripts/check-internal-links.ts.
+let path = Astro.url.pathname;
+if (path.endsWith("/index.html")) {
+  path = path.slice(0, -"index.html".length);
+} else if (path.endsWith(".html")) {
+  path = path.slice(0, -".html".length);
+}
+if (path !== "/" && path.endsWith("/")) {
+  path = path.slice(0, -1);
+}
+const canonical = new URL(path, SITE.origin).href;
+const imageURL = new URL(image, SITE.origin).href;
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageURL} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageURL} />
