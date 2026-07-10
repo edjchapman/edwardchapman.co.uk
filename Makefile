@@ -9,7 +9,7 @@
 
 .PHONY: help setup dev preview check check-links check-anchors stack-check \
         format-check lint typecheck test build check-content check-dist-links \
-        format lint-fix test-e2e deploy deploy-preview \
+        format lint-fix test-e2e check-external-links deploy deploy-preview \
         check-commit-msg check-stale-branches sweep-branches lint-md
 
 .DEFAULT_GOAL := help
@@ -77,6 +77,9 @@ lint-fix: ## ESLint with --fix
 
 test-e2e: ## Playwright end-to-end suite (built site via wrangler dev)
 	@pnpm exec playwright test
+
+check-external-links: ## Probe external URLs in content (manual + weekly; not in `check`)
+	@node scripts/check-external-links.ts
 
 deploy: ## Deploy the current build to Cloudflare (CI does this from main)
 	@pnpm exec wrangler deploy --config dist/server/wrangler.json

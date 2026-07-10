@@ -1,12 +1,18 @@
 ---
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import SEO from "../components/SEO.astro";
+import SkipLink from "../components/SkipLink.astro";
 import "../styles/global.css";
 
 interface Props {
   title: string;
   description: string;
+  image?: string;
+  type?: "website" | "article";
 }
 
-const { title, description } = Astro.props;
+const { title, description, image, type } = Astro.props;
 ---
 
 <!doctype html>
@@ -14,14 +20,23 @@ const { title, description } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
+    <SEO title={title} description={description} image={image} type={type} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to main content</a>
+    <SkipLink />
+    <Header />
     <main id="main">
       <slot />
     </main>
+    <Footer />
   </body>
 </html>
+
+<style>
+  main {
+    max-width: calc(var(--measure) + 2 * var(--space-4));
+    margin-inline: auto;
+    padding: var(--space-5) var(--space-4);
+  }
+</style>

@@ -1,0 +1,80 @@
+---
+import { normalizePath } from "../lib/paths";
+import { SITE } from "../lib/site";
+
+const navItems = [
+  { href: "/projects", label: "Projects" },
+  { href: "/notes", label: "Notes" },
+  { href: "/colophon", label: "Colophon" },
+];
+const currentPath = normalizePath(Astro.url.pathname);
+---
+
+<header>
+  <div class="inner">
+    <a class="site-name" href="/">{SITE.name}</a>
+    <nav aria-label="Site">
+      <ul>
+        {
+          navItems.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={currentPath === item.href ? "page" : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  header {
+    border-bottom: var(--rule);
+  }
+
+  .inner {
+    max-width: calc(var(--measure) + 2 * var(--space-4));
+    margin-inline: auto;
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .site-name {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .site-name:hover {
+    text-decoration: underline;
+  }
+
+  nav ul {
+    display: flex;
+    gap: var(--space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  nav a {
+    color: var(--color-muted);
+    text-decoration: none;
+    font-size: var(--text-sm);
+  }
+
+  nav a:hover,
+  nav a[aria-current="page"] {
+    color: var(--color-ink);
+    text-decoration: underline;
+  }
+</style>

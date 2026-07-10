@@ -1,0 +1,131 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, getEntry, render } from "astro:content";
+
+import Prose from "../../components/Prose.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE } from "../../lib/site";
+
+export const getStaticPaths = (async () => {
+  const notes = await getCollection("notes", ({ data }) => !data.draft);
+  return notes.map((note) => ({ params: { slug: note.id }, props: { note } }));
+}) satisfies GetStaticPaths;
+
+const { note } = Astro.props;
+const { title, description, pubDate, updatedDate, tags, relatedProject } =
+  note.data;
+const { Content } = await render(note);
+
+const related = relatedProject
+  ? await getEntry("projects", relatedProject)
+  : undefined;
+
+const iso = (date: Date) => date.toISOString().slice(0, 10);
+const formatDate = (date: Date) =>
+  date.toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+const articleLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: title,
+  description,
+  datePublished: pubDate.toISOString(),
+  ...(updatedDate && { dateModified: updatedDate.toISOString() }),
+  author: { "@type": "Person", name: SITE.name, url: SITE.origin },
+  url: `${SITE.origin}/notes/${note.id}`,
+};
+---
+
+<BaseLayout
+  title={`${title} — Ed Chapman`}
+  description={description}
+  type="article"
+>
+  <article>
+    <header>
+      <h1>{title}</h1>
+      <p class="meta">
+        <time datetime={iso(pubDate)}>{formatDate(pubDate)}</time>
+        {
+          updatedDate && (
+            <span>
+              · updated{" "}
+              <time datetime={iso(updatedDate)}>{formatDate(updatedDate)}</time>
+            </span>
+          )
+        }
+      </p>
+      {
+        tags.length > 0 && (
+          <ul class="tags" aria-label="Tags">
+            {tags.map((tag) => (
+              <li>{tag}</li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+    <Prose><Content /></Prose>
+    {
+      related && !related.data.draft && (
+        <aside aria-label="Related project">
+          <p>
+            Related project:
+            <a href={`/projects/${related.id}`}>{related.data.title}</a>
+          </p>
+        </aside>
+      )
+    }
+  </article>
+  <p class="back"><a href="/notes">← All notes</a></p>
+  <script type="application/ld+json" set:html={JSON.stringify(articleLd)} />
+</BaseLayout>
+
+<style>
+  header {
+    margin-bottom: var(--space-4);
+  }
+
+  .meta {
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+  }
+
+  .tags li {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    border: var(--rule);
+    border-radius: var(--radius);
+    padding: 0 var(--space-2);
+  }
+
+  aside {
+    margin-top: var(--space-5);
+    padding: var(--space-3);
+    border: var(--rule);
+    border-radius: var(--radius);
+    background: var(--color-paper-raised);
+  }
+
+  aside p {
+    margin: 0;
+  }
+
+  .back {
+    margin-top: var(--space-5);
+  }
+</style>

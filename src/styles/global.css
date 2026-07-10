@@ -1,13 +1,7 @@
-/* Minimal base — the full design-token system lands in Phase 1. */
+@import "./tokens.css";
 
-:root {
-  --color-paper: #faf9f6;
-  --color-ink: #1a1a18;
-  --color-muted: #5c5a54;
-  --color-accent: #1a5fb4;
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --measure: 65ch;
-}
+/* Base — semantic HTML gets the editorial register by default; components
+ * add scoped styles on top, consuming tokens only. */
 
 *,
 *::before,
@@ -15,40 +9,73 @@
   box-sizing: border-box;
 }
 
+html {
+  color-scheme: light;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
-  line-height: 1.6;
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
   color: var(--color-ink);
   background: var(--color-paper);
+  -webkit-font-smoothing: antialiased;
 }
 
-main {
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  margin-block: 0 var(--space-3);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--text-3xl);
+}
+
+h2 {
+  font-size: var(--text-xl);
+}
+
+h3 {
+  font-size: var(--text-lg);
+}
+
+p,
+ul,
+ol {
+  margin-block: 0 var(--space-3);
   max-width: var(--measure);
-  margin-inline: auto;
-  padding: 3rem 1.25rem;
 }
 
 a {
   color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
 }
 
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+  border-radius: var(--radius);
 }
 
-.skip-link {
-  position: absolute;
-  left: -999px;
-  top: 0;
-  background: var(--color-ink);
+::selection {
+  background: var(--color-accent);
   color: var(--color-paper);
-  padding: 0.5rem 1rem;
-}
-
-.skip-link:focus {
-  left: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,20 @@
+---
+import { getEntry, render } from "astro:content";
+
+import Prose from "../components/Prose.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const colophon = await getEntry("profile", "colophon");
+if (!colophon) {
+  throw new Error("Colophon entry is missing from the profile collection");
+}
+const { Content } = await render(colophon);
+---
+
+<BaseLayout
+  title="Colophon — Ed Chapman"
+  description="How edwardchapman.co.uk is built: Astro on Cloudflare Workers, static-first, spec-driven, with its architecture decisions public."
+>
+  <h1>Colophon</h1>
+  <Prose><Content /></Prose>
+</BaseLayout>
