@@ -1,0 +1,51 @@
+name: preview
+
+# Per-PR preview deploys via `wrangler versions upload`, which can never touch
+# triggers or custom domains — a preview cannot affect production routing.
+# The preview URL is commented on the PR and surfaced in the workflow summary.
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    name: deploy preview
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm exec astro build
+      - name: Upload preview version
+        id: upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          pnpm exec wrangler versions upload \
+            --config dist/server/wrangler.json \
+            --preview-alias "pr-${{ github.event.number }}" | tee upload.log
+          echo "url=$(grep -Eo 'https://[a-z0-9-]+-edwardchapman[^ ]*\.workers\.dev' upload.log | head -1)" >> "$GITHUB_OUTPUT"
+      - name: Comment preview URL on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.number }}" \
+            --repo "${{ github.repository }}" \
+            --edit-last --create-if-none \
+            --body "Preview: ${{ steps.upload.outputs.url }} (\`${{ github.event.pull_request.head.sha }}\`)"
+          echo "Preview: ${{ steps.upload.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
