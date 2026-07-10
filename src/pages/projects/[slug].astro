@@ -1,0 +1,79 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, render } from "astro:content";
+
+import Prose from "../../components/Prose.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export const getStaticPaths = (async () => {
+  const projects = await getCollection("projects", ({ data }) => !data.draft);
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}) satisfies GetStaticPaths;
+
+const { project } = Astro.props;
+const { title, problem, tech, repo, demo } = project.data;
+const { Content } = await render(project);
+---
+
+<BaseLayout title={`${title} — Ed Chapman`} description={problem}>
+  <article>
+    <header>
+      <h1>{title}</h1>
+      <p class="problem">{problem}</p>
+      <ul class="tech" aria-label="Technologies">
+        {tech.map((tag) => <li>{tag}</li>)}
+      </ul>
+      <p class="links">
+        <a href={repo}>Repository</a>
+        {demo && <a href={demo}>Live demo</a>}
+      </p>
+    </header>
+    <Prose><Content /></Prose>
+  </article>
+  <p class="back"><a href="/projects">← All projects</a></p>
+</BaseLayout>
+
+<style>
+  header {
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+    border-bottom: var(--rule);
+  }
+
+  .problem {
+    color: var(--color-muted);
+    font-style: italic;
+    font-size: var(--text-lg);
+  }
+
+  .tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0 0 var(--space-3);
+    padding: 0;
+  }
+
+  .tech li {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    border: var(--rule);
+    border-radius: var(--radius);
+    padding: 0 var(--space-2);
+  }
+
+  .links {
+    display: flex;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  .back {
+    margin-top: var(--space-5);
+  }
+</style>

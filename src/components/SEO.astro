@@ -1,4 +1,5 @@
 ---
+import { normalizePath } from "../lib/paths";
 import { SITE } from "../lib/site";
 
 interface Props {
@@ -17,19 +18,8 @@ const {
 } = Astro.props;
 
 // Canonical policy: absolute, on the canonical origin, no trailing slash
-// (except the root). With build.format "file" the build-time pathname is the
-// emitted file name (/colophon.html, /index.html) — strip it back to the
-// served route. Enforced site-wide by scripts/check-internal-links.ts.
-let path = Astro.url.pathname;
-if (path.endsWith("/index.html")) {
-  path = path.slice(0, -"index.html".length);
-} else if (path.endsWith(".html")) {
-  path = path.slice(0, -".html".length);
-}
-if (path !== "/" && path.endsWith("/")) {
-  path = path.slice(0, -1);
-}
-const canonical = new URL(path, SITE.origin).href;
+// (except the root). Enforced site-wide by scripts/check-internal-links.ts.
+const canonical = new URL(normalizePath(Astro.url.pathname), SITE.origin).href;
 const imageURL = new URL(image, SITE.origin).href;
 ---
 

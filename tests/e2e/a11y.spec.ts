@@ -3,7 +3,14 @@ import { expect, test } from "@playwright/test";
 
 // Automated accessibility checks — necessary but not sufficient; the manual
 // checklist lives in the PR template. Pages are added here as they ship.
-const PAGES = ["/", "/colophon", "/privacy", "/definitely-not-a-page"];
+const PAGES = [
+  "/",
+  "/projects",
+  "/projects/foreman",
+  "/colophon",
+  "/privacy",
+  "/definitely-not-a-page",
+];
 
 test.describe("accessibility", () => {
   for (const path of PAGES) {

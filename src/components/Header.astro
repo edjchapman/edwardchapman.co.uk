@@ -1,9 +1,13 @@
 ---
+import { normalizePath } from "../lib/paths";
 import { SITE } from "../lib/site";
 
-// Nav grows as sections ship: Projects and Notes arrive in Phase 2.
-const navItems = [{ href: "/colophon", label: "Colophon" }];
-const currentPath = Astro.url.pathname;
+// Nav grows as sections ship: Notes arrives later in Phase 2.
+const navItems = [
+  { href: "/projects", label: "Projects" },
+  { href: "/colophon", label: "Colophon" },
+];
+const currentPath = normalizePath(Astro.url.pathname);
 ---
 
 <header>
