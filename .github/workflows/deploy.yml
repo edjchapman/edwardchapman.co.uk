@@ -1,0 +1,41 @@
+name: deploy
+
+# Production deploys: every push to main (i.e. every squash-merge), gated by
+# the required checks that protect main and by the GitHub `production`
+# environment. The gate is re-proven in-workflow so a deploy can never outrun
+# a red check. Rollback: `wrangler rollback`, or re-run this workflow from the
+# last good commit (docs/deployment.md).
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production # queue production deploys; never cancel one mid-flight
+
+jobs:
+  deploy:
+    name: deploy production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://edwardchapman.co.uk
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Re-prove the gate (includes the production build)
+        run: make check
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm exec wrangler deploy --config dist/server/wrangler.json
+      - name: Summary
+        run: |
+          echo "Deployed \`${GITHUB_SHA}\` — verify: \`curl https://edwardchapman.co.uk/api/health\`" >> "$GITHUB_STEP_SUMMARY"
