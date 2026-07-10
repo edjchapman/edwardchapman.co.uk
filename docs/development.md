@@ -46,6 +46,12 @@ keep an entry out of production (and out of the Phase-3 agent corpus). Before
 writing, read [docs/content-policy.md](content-policy.md); the policy scanner
 will hold you to it.
 
+**Internal cross-links inside content markdown use canonical absolute URLs**
+(`https://edwardchapman.co.uk/...`), not root-relative paths — the markdown
+link checker validates repo-file links, and the Phase-3 corpus needs
+canonical citation URLs anyway. The built-output checker still validates
+them against dist.
+
 **`public/llms.txt` is maintained by hand**: when pages or featured projects
 change, update it in the same PR (it is a discovery aid, not a security
 boundary — see docs/spec.md §9). The Phase-3 corpus builder is the natural
