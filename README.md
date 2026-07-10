@@ -12,8 +12,9 @@ The repository is itself part of the portfolio. It is built spec-first
 ([docs/adr/](docs/adr/)), enforces its content-safety policy mechanically,
 and deploys reproducibly from CI.
 
-**Status: Phase 0 (bootstrap) — deploying to a temporary workers.dev URL;
-domain cutover lands with Phase 1.**
+**Status: live at [edwardchapman.co.uk](https://edwardchapman.co.uk)
+(Phases 0–2 shipped; the ask agent — Phases 3–4 — is in progress behind
+release gates).**
 
 ## Architecture in one paragraph
 

@@ -17,4 +17,16 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...astro.configs.recommended,
+  {
+    // Workers runtime globals for the plain-JS redirect worker.
+    files: ["workers/**/*.js"],
+    languageOptions: {
+      globals: {
+        URL: "readonly",
+        Request: "readonly",
+        Response: "readonly",
+        fetch: "readonly",
+      },
+    },
+  },
 );
