@@ -1,0 +1,25 @@
+<div class="prose">
+  <slot />
+</div>
+
+<style>
+  .prose {
+    max-width: var(--measure);
+  }
+
+  .prose :global(h3) {
+    margin-top: var(--space-4);
+  }
+
+  .prose :global(ul) {
+    padding-left: 1.25em;
+  }
+
+  .prose :global(li) {
+    margin-bottom: var(--space-1);
+  }
+
+  .prose :global(strong) {
+    font-weight: 600;
+  }
+</style>
