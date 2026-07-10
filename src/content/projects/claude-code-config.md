@@ -9,7 +9,7 @@ tech:
   - GitHub Actions
 featured: true
 order: 3
-draft: true
+draft: false
 repo: "https://github.com/edjchapman/claude-code-config"
 ---
 
