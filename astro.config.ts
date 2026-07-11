@@ -1,4 +1,5 @@
 import cloudflare from "@astrojs/cloudflare";
+import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig, sessionDrivers } from "astro/config";
 
@@ -8,8 +9,11 @@ export default defineConfig({
   build: { format: "file" },
   adapter: cloudflare({ imageService: "compile" }),
   integrations: [
+    react(),
     sitemap({
-      filter: (page) => !page.includes("/404"),
+      // /404 is not a destination; /ask stays unadvertised until the Phase 4
+      // release gates pass (docs/evaluation.md).
+      filter: (page) => !page.includes("/404") && !page.includes("/ask"),
     }),
   ],
   // Sessions are unused on this site. Without an explicit driver the adapter

@@ -4,6 +4,8 @@
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "types": ["node"],
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
   }
 }
