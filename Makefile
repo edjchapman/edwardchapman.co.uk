@@ -9,7 +9,8 @@
 
 .PHONY: help setup dev preview check check-links check-anchors stack-check corpus \
         format-check lint typecheck test build check-content check-dist-links \
-        format lint-fix test-e2e check-external-links deploy deploy-preview \
+        format lint-fix test-e2e check-external-links eval-agent eval-agent-live \
+        deploy deploy-preview \
         deploy-www-redirect \
         check-commit-msg check-stale-branches sweep-branches lint-md
 
@@ -87,6 +88,9 @@ check-external-links: ## Probe external URLs in content (manual + weekly; not in
 
 eval-agent: ## Deterministic agent evaluations (also run inside `make check` via test)
 	@pnpm exec vitest run tests/agent
+
+eval-agent-live: ## Live model evaluation vs thresholds (needs ANTHROPIC_API_KEY)
+	@node scripts/run-agent-evals.ts
 
 deploy: ## Deploy the current build to Cloudflare (CI does this from main)
 	@pnpm exec wrangler deploy --config dist/server/wrangler.json

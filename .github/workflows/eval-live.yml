@@ -1,0 +1,49 @@
+name: eval-live
+
+# Live agent evaluation (ADR-0008): calls the real model. Never part of PR
+# CI — runs on demand and weekly, inside the production environment so the
+# Anthropic key stays scoped. Logs and the report artifact carry case ids and
+# scores only (no question or answer text) — safe on a public repository.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Tuesdays 08:00 UTC — offset from the Monday scheduled-check.
+    - cron: "0 8 * * 2"
+
+jobs:
+  eval-live:
+    name: live agent evaluation
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run live evaluation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: claude-haiku-4-5
+          JUDGE_MODEL: claude-sonnet-5
+        run: make eval-agent-live
+      - name: Summarise
+        if: always()
+        run: |
+          if [ -f eval-report.json ]; then
+            echo '## Live evaluation scores' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            python3 -c "import json;d=json.load(open('eval-report.json'));print(json.dumps({'scores': d['scores'], 'thresholds': d['thresholds'], 'model': d['model'], 'corpusVersion': d['corpusVersion']}, indent=2))" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: eval-report.json
+          retention-days: 30

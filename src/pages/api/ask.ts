@@ -6,6 +6,7 @@ import {
   FakeModelAdapter,
   type ModelAdapter,
 } from "../../lib/agent/adapter.ts";
+import { AnthropicAdapter } from "../../lib/agent/anthropic-adapter.ts";
 import { askRequestSchema, MAX_BODY_BYTES } from "../../lib/agent/schema.ts";
 import { AgentService, type AgentLogger } from "../../lib/agent/service.ts";
 
@@ -45,6 +46,7 @@ interface AskEnv {
   ASK_RATE_LIMITER?: RateLimitBinding;
   ANTHROPIC_MODEL?: string;
   ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_BASE_URL?: string;
 }
 
 const jsonHeaders = {
@@ -69,11 +71,19 @@ const structuredLog: AgentLogger = (event) => {
 };
 
 /**
- * Adapter selection: Phase 3 ships the deterministic fake (the /ask UI is
- * unadvertised); Phase 4 swaps in the Anthropic adapter behind the same
- * interface, keyed off ANTHROPIC_API_KEY's presence.
+ * Adapter selection: the live Anthropic adapter when the Worker secret is
+ * present (Phase 4), the deterministic fake otherwise (local dev, CI,
+ * previews — which are host-gated off anyway). Model id and base URL are
+ * config-driven bindings, never hard-coded (spec §2).
  */
-function selectAdapter(_env: AskEnv): ModelAdapter {
+function selectAdapter(env: AskEnv): ModelAdapter {
+  if (env.ANTHROPIC_API_KEY) {
+    return new AnthropicAdapter({
+      apiKey: env.ANTHROPIC_API_KEY,
+      model: env.ANTHROPIC_MODEL ?? "claude-haiku-4-5",
+      baseURL: env.ANTHROPIC_BASE_URL,
+    });
+  }
   return new FakeModelAdapter({ mode: "echo-first-citation" });
 }
 
