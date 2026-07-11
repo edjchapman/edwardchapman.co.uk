@@ -7,7 +7,7 @@
 # `eval-agent` and `eval-agent-live` are defined in Phases 3–4 (see
 # docs/evaluation.md); the names are reserved here.
 
-.PHONY: help setup dev preview check check-links check-anchors stack-check \
+.PHONY: help setup dev preview check check-links check-anchors stack-check corpus \
         format-check lint typecheck test build check-content check-dist-links \
         format lint-fix test-e2e check-external-links deploy deploy-preview \
         deploy-www-redirect \
@@ -53,13 +53,16 @@ format-check: ## Prettier in check mode
 lint: ## ESLint over the repo
 	@pnpm exec eslint .
 
-typecheck: ## astro check (TypeScript + .astro diagnostics)
+corpus: ## Generate src/generated/corpus.json (the /api/ask route imports it)
+	@node scripts/build-agent-corpus.ts
+
+typecheck: corpus ## astro check (TypeScript + .astro diagnostics)
 	@pnpm exec astro check
 
-test: ## Vitest unit/integration suites
+test: ## Vitest unit/integration suites (corpus via vitest globalSetup)
 	@pnpm exec vitest run
 
-build: ## Production build (dist/)
+build: corpus ## Production build (dist/)
 	@pnpm exec astro build
 
 check-content: ## Content-policy scan over sources and built output
