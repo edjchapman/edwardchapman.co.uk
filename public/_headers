@@ -4,11 +4,15 @@
 #
 # CSP notes: Astro emits scoped styles as inline <style> blocks, hence
 # style-src 'unsafe-inline'. JSON-LD <script type="application/ld+json"> is
-# non-executing data and exempt from script-src. script-src 'self' is ready
-# for the Phase-3 island bundle; connect-src 'self' covers its /api/ask call.
+# non-executing data and exempt from script-src. The two sha256 hashes allow
+# Astro's inline island-bootstrap scripts (astro-island custom element +
+# directive loader) — they change on Astro upgrades; the /ask e2e suite fails
+# closed if they drift. Regenerate: build, then hash each inline <script> in
+# dist/client/ask.html (sha256, base64). connect-src 'self' covers the
+# island's /api/ask call.
 
 /*
-  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-eIXWvAmxkr251LJZkjniEK5LcPF3NkapbJepohwYRIc=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q='; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()

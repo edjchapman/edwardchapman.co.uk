@@ -8,6 +8,8 @@ interface Props {
   /** Root-relative path to a social-card image (defaults to the site card). */
   image?: string | undefined;
   type?: "website" | "article" | undefined;
+  /** Keep the page out of search indexes (unreleased surfaces like /ask). */
+  noindex?: boolean | undefined;
 }
 
 const {
@@ -15,6 +17,7 @@ const {
   description,
   image = "/og/default.png",
   type = "website",
+  noindex = false,
 } = Astro.props;
 
 // Canonical policy: absolute, on the canonical origin, no trailing slash
@@ -25,6 +28,7 @@ const imageURL = new URL(image, SITE.origin).href;
 
 <title>{title}</title>
 <meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
 <link rel="canonical" href={canonical} />
 
 <meta property="og:type" content={type} />
