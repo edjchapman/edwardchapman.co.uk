@@ -1,0 +1,92 @@
+{
+  "$comment": "Golden retrieval cases: for each query, at least one of expectedSectionIds must appear in the top-k results. Tied to the stable-ID contract (docs/architecture.md) — renaming content files must update these in the same PR.",
+  "cases": [
+    {
+      "id": "foreman-reliability",
+      "query": "How did Foreman handle reliable event processing?",
+      "expectedSectionIds": [
+        "foreman#card",
+        "foreman#architecture",
+        "foreman#problem"
+      ]
+    },
+    {
+      "id": "foreman-outbox",
+      "query": "What is the transactional outbox pattern used for?",
+      "expectedSectionIds": [
+        "foreman#architecture",
+        "foreman#problem",
+        "foreman#card"
+      ]
+    },
+    {
+      "id": "foreman-latency",
+      "query": "What did LISTEN/NOTIFY dispatch improve?",
+      "expectedSectionIds": [
+        "foreman#important-engineering-decisions",
+        "foreman#card"
+      ]
+    },
+    {
+      "id": "aidda-evals",
+      "query": "What does evaluation-driven AI engineering mean here?",
+      "expectedSectionIds": [
+        "llm-as-judge-as-a-ci-quality-gate#intro",
+        "llm-as-judge-as-a-ci-quality-gate#the-shape-of-the-gate",
+        "ai-due-diligence-assistant#important-engineering-decisions"
+      ]
+    },
+    {
+      "id": "aidda-citations",
+      "query": "How does the due diligence assistant cite its sources?",
+      "expectedSectionIds": [
+        "ai-due-diligence-assistant#card",
+        "ai-due-diligence-assistant#architecture",
+        "ai-due-diligence-assistant#problem"
+      ]
+    },
+    {
+      "id": "positioning-roles",
+      "query": "What kind of engineering roles is Ed best suited to?",
+      "expectedSectionIds": ["positioning#body", "technical-focus#body"]
+    },
+    {
+      "id": "backend-platform",
+      "query": "What is Ed's backend and platform experience?",
+      "expectedSectionIds": ["positioning#body", "technical-focus#body"]
+    },
+    {
+      "id": "react-typescript",
+      "query": "Does Ed have React and TypeScript product experience?",
+      "expectedSectionIds": ["technical-focus#body", "positioning#body"]
+    },
+    {
+      "id": "cloud-infrastructure",
+      "query": "What cloud infrastructure has Ed worked with, like AWS and Terraform?",
+      "expectedSectionIds": ["technical-focus#body", "positioning#body"]
+    },
+    {
+      "id": "how-ed-works",
+      "query": "How does Ed approach AI-assisted software delivery?",
+      "expectedSectionIds": ["how-i-work#body", "positioning#body"]
+    },
+    {
+      "id": "contact",
+      "query": "How can I contact Ed by email?",
+      "expectedSectionIds": ["colophon#body", "positioning#body"],
+      "note": "Contact details live in site chrome, not corpus prose — acceptable to refuse; this case asserts no crash and is marked mayRefuse.",
+      "mayRefuse": true
+    },
+    {
+      "id": "site-architecture",
+      "query": "How is this website built and deployed?",
+      "expectedSectionIds": ["colophon#body"]
+    }
+  ],
+  "refusals": [
+    { "id": "weather", "query": "What's the weather in London today?" },
+    { "id": "salary", "query": "What are Ed's salary expectations?" },
+    { "id": "general-knowledge", "query": "Who won the 2022 world cup final?" },
+    { "id": "gibberish", "query": "zzzz qqqq xxxx vvvv" }
+  ]
+}
