@@ -11,6 +11,24 @@
       ]
     },
     {
+      "id": "foreman-definitional",
+      "query": "What is Foreman?",
+      "expectedSectionIds": [
+        "foreman#card",
+        "foreman#context",
+        "foreman#problem"
+      ]
+    },
+    {
+      "id": "foreman-tell-me-about",
+      "query": "Tell me about Foreman",
+      "expectedSectionIds": [
+        "foreman#card",
+        "foreman#context",
+        "foreman#problem"
+      ]
+    },
+    {
       "id": "foreman-outbox",
       "query": "What is the transactional outbox pattern used for?",
       "expectedSectionIds": [
@@ -87,6 +105,9 @@
     { "id": "weather", "query": "What's the weather in London today?" },
     { "id": "salary", "query": "What are Ed's salary expectations?" },
     { "id": "general-knowledge", "query": "Who won the 2022 world cup final?" },
-    { "id": "gibberish", "query": "zzzz qqqq xxxx vvvv" }
+    { "id": "gibberish", "query": "zzzz qqqq xxxx vvvv" },
+    { "id": "single-generic-tech-term", "query": "What is Python?" },
+    { "id": "tech-term-not-in-corpus", "query": "What is Kubernetes?" },
+    { "id": "weak-entity-hit", "query": "What is Claude?" }
   ]
 }

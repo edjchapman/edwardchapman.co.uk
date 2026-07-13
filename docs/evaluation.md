@@ -27,7 +27,20 @@ versioned fixtures in `tests/agent/`:
 
 A regression here is a blocked merge, by design.
 
-## Live mode — `make eval-agent-live` (Phase 4)
+### Confidence-gate tuning record
+
+**2026-07-13 — single-term entity exception.** Observed live: "What is
+Foreman?" refused while the golden Foreman question answered, because the
+2-term minimum can never be met by a definitional question whose only
+meaningful token is the subject itself. Baseline was captured as failing
+fixtures first (`foreman-definitional`, `foreman-tell-me-about`). The gate
+now accepts a single matched term when it is a document-identity token
+(docId word) and the score clears `ENTITY_CONFIDENCE_THRESHOLD` (3.0) — set
+above the strongest observed spurious hits ("What is Claude?" 2.0, "What is
+quality?" 2.9) and below the weakest genuine one ("What is Foreman?" 3.7).
+Non-identity single-term collisions (weather/"London" 3.8, "What is Python?"
+2.5) still refuse; three refusal fixtures pin that boundary. No live-mode
+threshold changed.
 
 Calls the configured model (`ANTHROPIC_MODEL`) through the production
 adapter. Scores golden and adversarial sets for **groundedness,

@@ -12,6 +12,11 @@ export interface ScoredChunk {
   score: number;
   /** Distinct query terms this chunk matched — feeds the confidence gate. */
   matchedTerms: number;
+  /**
+   * Of the matched terms, how many are document-identity tokens (docId words,
+   * e.g. "foreman") — lets the gate trust strong single-term entity questions.
+   */
+  matchedEntityTerms: number;
 }
 
 export interface Retriever {
@@ -123,6 +128,7 @@ type IndexedChunk = {
   chunk: CorpusChunk;
   termFreq: Map<string, number>;
   boostTerms: Set<string>;
+  entityTerms: Set<string>;
   length: number;
 };
 
@@ -145,6 +151,7 @@ export class LexicalRetriever implements Retriever {
         chunk,
         termFreq,
         boostTerms: new Set(boostTokens),
+        entityTerms: new Set(tokenize(chunk.docId.replaceAll("-", " "))),
         length: bodyTokens.length + boostTokens.length,
       };
     });
@@ -172,10 +179,12 @@ export class LexicalRetriever implements Retriever {
     for (const doc of this.indexed) {
       let score = 0;
       let matchedTerms = 0;
+      let matchedEntityTerms = 0;
       for (const term of terms) {
         const frequency = doc.termFreq.get(term);
         if (!frequency) continue;
         matchedTerms += 1;
+        if (doc.entityTerms.has(term)) matchedEntityTerms += 1;
         const documentFrequency = this.docFreq.get(term) ?? 1;
         const idf = Math.log(
           1 + (totalDocs - documentFrequency + 0.5) / (documentFrequency + 0.5),
@@ -186,7 +195,13 @@ export class LexicalRetriever implements Retriever {
         const boost = doc.boostTerms.has(term) ? TITLE_BOOST : 1;
         score += idf * normalized * boost;
       }
-      if (score > 0) scored.push({ chunk: doc.chunk, score, matchedTerms });
+      if (score > 0)
+        scored.push({
+          chunk: doc.chunk,
+          score,
+          matchedTerms,
+          matchedEntityTerms,
+        });
     }
 
     const ranked = scored.sort(
@@ -225,16 +240,29 @@ function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
  * agent refuses rather than improvises. A single shared word (e.g. "London"
  * in a weather question) must never count as confident, so the top result
  * needs BOTH a minimum score and at least two distinct matched query terms.
- * Tuned against tests/agent/retrieval-cases.json — change only with the
- * fixtures.
+ *
+ * Exception: definitional questions about a document's own subject ("What is
+ * Foreman?") carry exactly one meaningful term after stopword removal. When
+ * that term is a document-identity token AND the score clears a stricter
+ * threshold, one term is enough. Body-text collisions ("London", "Python")
+ * are not identity tokens and still refuse; weak identity hits ("What is
+ * Claude?" ~2.0) sit below the stricter bar. Tuned against
+ * tests/agent/retrieval-cases.json — change only with the fixtures.
  */
 export const CONFIDENCE_THRESHOLD = 1.5;
 export const MIN_MATCHED_TERMS = 2;
+export const ENTITY_CONFIDENCE_THRESHOLD = 3.0;
 
 export function isConfident(results: ScoredChunk[]): boolean {
   const top = results[0];
   if (!top) return false;
+  if (
+    top.score >= CONFIDENCE_THRESHOLD &&
+    top.matchedTerms >= MIN_MATCHED_TERMS
+  ) {
+    return true;
+  }
   return (
-    top.score >= CONFIDENCE_THRESHOLD && top.matchedTerms >= MIN_MATCHED_TERMS
+    top.matchedEntityTerms >= 1 && top.score >= ENTITY_CONFIDENCE_THRESHOLD
   );
 }
