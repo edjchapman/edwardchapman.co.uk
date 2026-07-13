@@ -1,6 +1,6 @@
 ---
-title: "Ports and adapters, without the ceremony"
-description: "Hexagonal architecture is two ideas, not a diagram: the domain defines the port, and adapters depend inward. Where the pattern pays for itself — and where it's pure overhead."
+title: "Ports and adapters: dependency direction and test seams"
+description: "A practical account of ports and adapters: where interfaces belong, how dependencies point inward, what the pattern enables in tests, and when the indirection is unnecessary."
 pubDate: 2026-07-13
 tags:
   - architecture
@@ -9,75 +9,90 @@ draft: false
 relatedProject: foreman
 ---
 
-Hexagonal architecture has a marketing problem: it's usually presented as a
-diagram to memorise, when it's really two load-bearing ideas and a lot of
-optional ceremony. The ideas:
+The ports-and-adapters pattern, also called hexagonal architecture, separates
+application logic from external systems. The original
+[description by Alistair Cockburn](https://alistair.cockburn.us/hexagonal-architecture/)
+frames the application as an inside that communicates through ports, with
+adapters connecting those ports to databases, message brokers, user
+interfaces, and tests.
 
-1. **The domain defines the port.** The interface belongs to the business
-   logic — "I need something that can publish an event" — not to the
-   infrastructure that happens to implement it today.
-2. **Dependencies point inward.** Adapters (the queue client, the HTTP
-   handler, the model provider) import the domain's interface. The domain
-   imports nothing of theirs.
+Two dependency rules carry most of the value:
 
-Everything else — the hexagon shape, the naming conventions, the
-four-layer folder structure — is presentation. Get the dependency direction
-right and you have the benefits; get it wrong and no folder layout will
-save you.
+1. **The application owns the port.** The interface describes what the
+   application needs in its own vocabulary, such as retrieving evidence or
+   publishing an event.
+2. **Adapters depend inward.** Infrastructure implements or calls those
+   application-facing interfaces. The application does not depend on a
+   provider SDK or transport-specific type.
 
-## What the seam buys you, concretely
+The names of folders and layers are secondary to those dependency directions.
 
-The [ask agent on this site](https://edwardchapman.co.uk/ask) has exactly
-two ports worth having, and each earns its keep:
+## What the seam provides
 
-- **A `Retriever` interface.** The lexical BM25 implementation sits behind
-  it. If golden fixtures ever prove a semantic index retrieves better, it
-  swaps in without touching the request pipeline — and the fixtures that
-  justified the swap run unchanged against both.
-- **A model adapter.** Production binds the real Anthropic client; CI binds
-  a deterministic fake that replays canned responses. That one seam is what
-  lets the entire API contract — validation, error mapping, timeout
-  handling, citation whitelisting — run as required checks on every pull
-  request, keyless and flake-free.
+The [ask agent on this site](https://edwardchapman.co.uk/ask) contains two
+useful examples:
 
-[Foreman](https://edwardchapman.co.uk/projects/foreman) makes the same move
-at the broker boundary: retry state lives in PostgreSQL rather than inside
-the message broker, precisely so the interesting behaviour (claiming,
-retries, dead-lettering) is queryable, testable, and not coupled to one
-vendor's redelivery semantics.
+- **`Retriever`** defines the search operation used by the agent. The current
+  service constructs the lexical implementation directly, so this is a
+  documented replacement boundary rather than fully injected dependency. A
+  future semantic retriever would require wiring at service construction and
+  should run against the same golden retrieval cases.
+- **`ModelAdapter`** is injected into the agent service. Production supplies
+  the Anthropic adapter; tests supply deterministic behaviours for successful
+  answers, malformed responses, timeouts, rate limits, and invalid citations.
 
-In both cases the test seam is the real product of the pattern. "Swap the
-database someday" is a hypothetical; "test the domain without the
-infrastructure today" is a daily dividend.
+Both interfaces and their implementations are visible in the public
+[agent source](https://github.com/edjchapman/edwardchapman.co.uk/tree/main/src/lib/agent).
+The model port is the stronger example because the service receives it from
+outside rather than constructing a provider itself.
 
-## When not to bother
+[Foreman](https://edwardchapman.co.uk/projects/foreman) demonstrates a related
+boundary at the message broker. Retry and lease state is stored in PostgreSQL
+rather than delegated to Celery's retry mechanism. This is not itself a formal
+port, but it keeps the recovery rules queryable and testable without relying
+on one broker's internal redelivery state.
 
-A port with one implementation, no test that uses a fake, and no plausible
-second binding is speculative abstraction — an interface tax paid on every
-read of the code. I don't wrap the framework's router, the standard
-library, or anything I'd never stub in a test. The honest heuristic: create
-the seam when the second implementation exists or the test needs it,
-whichever comes first. On this site that produced exactly two ports, not
-twenty.
+## Criteria for adding a port
 
-The other failure mode is defining the port in infrastructure vocabulary —
-`KafkaPublisher` with topic names in the signature — then claiming
-hexagonality. If the interface leaks the adapter's dialect, the dependency
-arrow still points outward; you've drawn the hexagon and kept the coupling.
+A port is usually justified when at least one of these conditions applies:
 
-## Honest limitations
+- tests need a deterministic substitute for a slow, paid, or unreliable
+  dependency;
+- more than one implementation already exists;
+- a provider or transport is expected to change independently of the
+  application; or
+- the external API exposes more behaviour than the application should depend
+  on.
 
-Ports and adapters says nothing about the hard part of most systems: what
-the domain logic should _be_. It also adds real indirection — every seam is
-one more hop a reader traverses. On small codebases the pattern's full
-regalia costs more comprehension than it saves; the two-idea core (domain
-owns the interface, dependencies point in) is the part that scales down
-gracefully.
+The port should be narrower than the provider SDK. For example, an application
+interface might accept an event and return a publication result; topic names,
+client configuration, and broker-specific exceptions remain in the adapter.
 
-## Where to start
+## When a direct dependency is clearer
 
-Find the one dependency your tests keep fighting — the paid API, the
-broker, the clock. Define the narrowest interface your domain actually
-needs from it, in your domain's vocabulary. Write the fake, move the tests
-onto it, and stop. That single seam teaches you more about the pattern than
-any diagram will.
+An interface adds a name, a file, and another step for a reader to follow. If
+there is one stable implementation, no useful test substitute, and no boundary
+to protect, direct use may be clearer.
+
+Framework routers and standard-library functions are common examples. Wrapping
+them without an application-specific requirement often reproduces the original
+API without reducing coupling.
+
+## Limitations
+
+Ports and adapters controls dependency direction; it does not determine the
+domain model or make the business rules correct. It can also hide useful
+provider capabilities if the port is made too generic.
+
+On a small codebase, the full set of layers associated with hexagonal
+architecture may cost more comprehension than it saves. The useful minimum is
+an application-owned interface at a boundary where testing or replacement has
+a demonstrated benefit.
+
+## Practical starting point
+
+Choose one external dependency that makes a test slow or non-deterministic.
+List only the operations the application needs, define those operations in
+application terms, and implement both the production adapter and a deterministic
+test adapter. Keep the rest of the code direct until another boundary has the
+same evidence.

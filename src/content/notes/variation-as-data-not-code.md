@@ -1,6 +1,6 @@
 ---
-title: "Variation as data, not code"
-description: "When the tenth similar-but-different variant lands, the senior move is a schema-driven config engine — and the hard parts are validation, versioning, and migration, not the config table."
+title: "Modelling product variation as data"
+description: "When schema-validated configuration is a better model than branches or subclasses, with practical guidance on validation, versioning, migration, and operational risk."
 pubDate: 2026-07-13
 tags:
   - architecture
@@ -8,72 +8,78 @@ tags:
 draft: false
 ---
 
-Every product that survives contact with customers grows variants: another
-plan, another tenant, another regional rule, another form type. The first
-few arrive as `if` statements. Around the fifth, someone extracts a
-strategy class. Around the tenth, the codebase has a shadow config system —
-constants, feature flags, and subclass overrides that only three people can
-safely change — and every new variant is a deploy.
+Products often accumulate related variants: plans, tenant settings, regional
+rules, workflows, or form definitions. Implementing every difference as a
+branch or subclass can make the supported combinations difficult to inspect
+and can require a deployment for a data-only change.
 
-The structural fix is to promote the variation to **data**: a declarative
-description of each variant, validated against a schema, interpreted by one
-engine. Adding the next variant becomes authoring a document, not shipping
-code.
+One option is to represent stable variation as data: each variant is a
+declarative document, validated against a schema and interpreted by shared
+code. This is appropriate only when the differences fit a bounded model.
 
-## When data beats code
+## Suitable forms of variation
 
-The signal is shape, not size. Config-as-data wins when variants differ in
-_parameters and composition_ — which fields, which thresholds, which steps
-in which order — and lose when they differ in _algorithm_. A pricing rule
-that reorders and reweights known factors is data. A pricing rule that
-needs a new factor nobody modelled is code, and forcing it through the
-config engine turns your schema into a Turing tarpit. The moment config
-grows conditionals and loops, you've built a worse programming language
-with no debugger.
+Configuration works well when variants differ through parameters and
+composition, for example:
 
-A useful test: could a careful non-engineer author the next variant from
-documentation alone? If yes, it's configuration. If it needs a design
-review, it's code wearing a costume.
+- which fields are enabled;
+- threshold values within defined ranges;
+- which existing steps run and in what order; or
+- which existing policy options apply.
 
-## The three hard parts
+A change belongs in code when it introduces new behaviour that the interpreter
+does not understand. Adding conditionals, loops, or general expressions to
+configuration gradually creates a programming language, along with the need
+for debugging, security controls, and execution semantics.
 
-Describing the config table is the easy 20%. The engineering lives in the
-lifecycle:
+Useful design questions are:
 
-1. **Validation.** The schema is a contract, so enforce it like one — at
-   authoring time, not at interpretation time. A typo in a variant
-   definition should fail fast and name the field, in the tool where the
-   variant was authored. Runtime is too late; a customer found it first.
-   (This site runs the same discipline in miniature: typed content schemas
-   reject an invalid frontmatter field at build, never in production.)
-2. **Versioning.** Variants evolve, and running systems reference the
-   version they were created under. Decide explicitly whether an in-flight
-   entity re-reads current config or carries a snapshot — either is
-   defensible, but drifting between the two silently is how you get
-   irreproducible bugs.
-3. **Migration.** The schema itself will change. Every schema change needs
-   a story for existing variant documents: migrate them forward, or support
-   reading old versions indefinitely. Skipping this decision doesn't defer
-   it; it just moves it into an incident.
+1. Can the variation be expressed with a finite, documented schema?
+2. Can invalid combinations be rejected before activation?
+3. Do all variants use the same interpreter semantics?
+4. Is the authoring and review process appropriate for the risk of the change?
 
-Name the trade-off out loud when you propose the design: the engine's
-interpreter is now critical-path code, and its test suite needs a fixture
-per schema feature — because every author of every future variant is
-trusting the interpreter to mean what the schema says.
+Configuration can still require engineering review. The distinction is about
+the form of the variation, not the job title of the person editing it.
 
-## Honest limitations
+## Validation, versioning, and migration
 
-A config engine is an investment with a break-even point measured in
-variants. Below perhaps half a dozen, the `if` statements are honestly
-cheaper, and cheaper to delete. And the engine centralises risk: a bug in
-one strategy class breaks one variant; a bug in the interpreter breaks all
-of them at once. The test discipline has to match that blast radius.
+The schema is only the starting point. The lifecycle needs three explicit
+decisions:
 
-## Where to start
+1. **Validation.** Validate at the authoring or loading boundary, before a
+   configuration becomes active. Errors should identify the field and violated
+   constraint. This site applies the same principle to content: typed schemas
+   reject invalid frontmatter during the build rather than serving a partially
+   valid page.
+2. **Versioning.** Decide whether a running entity reads the latest
+   configuration, records a version, or stores a snapshot. The choice depends
+   on whether existing behaviour should change when the configuration changes.
+3. **Migration.** When the schema changes, either migrate stored documents or
+   keep readers for older versions. The supported versions and retirement path
+   should be explicit.
 
-Don't build the engine speculatively. When the pain is real: pick two
-existing variants, write the schema that describes only the ways they
-already differ, validate it in CI, and route just those two through the
-interpreter. The third variant migrates in a follow-up. Schemas grown from
-real variance stay honest; schemas designed in advance grow features
-nobody's variant ever uses.
+The interpreter becomes shared critical-path code. Tests should cover each
+schema feature, invalid combinations, version transitions, and representative
+complete documents.
+
+## Limitations
+
+The break-even point depends on the complexity, change rate, and operational
+risk of the variants; it cannot be determined from a fixed number of variants.
+For a small and stable set, direct code may remain easier to read and change.
+
+Configuration also centralises risk. A defect in a variant-specific branch may
+affect one path, while a defect in the shared interpreter can affect every
+variant. Validation, staged rollout, audit history, and rollback become more
+important as configuration controls more behaviour.
+
+## Practical starting point
+
+Choose two existing variants and describe only the differences already present
+in the code. Define a schema for those differences, validate the documents in
+CI, and route the two variants through the shared interpreter. Compare the new
+representation with the original code before migrating further variants.
+
+This incremental approach tests whether the schema reflects real variation and
+keeps new interpreter behaviour tied to an existing example.

@@ -1,6 +1,6 @@
 ---
 title: "LLM-as-judge as a CI quality gate"
-description: "How to make an LLM system's answer quality a property CI can enforce: a golden set with true negatives, deterministic providers so the gate runs keyless, and an LLM judge whose own bias is bounded by the fixtures."
+description: "A practical evaluation pattern for LLM systems: versioned golden cases, deterministic CI checks, separate live-model evaluation, and explicit limits for automated judges."
 pubDate: 2026-07-11
 tags:
   - ai-engineering
@@ -9,81 +9,99 @@ tags:
 relatedProject: ai-due-diligence-assistant
 ---
 
-"The answers look good" is not a property a build system can enforce. If an
-LLM sits inside your product, its output quality is behaviour — and behaviour
-you don't test regresses silently. The pattern that fixes this is old
-discipline in new clothes: score the system against a fixed reference on
-every push, and fail the build below threshold. The interesting problems are
-in the details, and I hit all of them building the
-[AI Due-Diligence Assistant](https://edwardchapman.co.uk/projects/ai-due-diligence-assistant), whose
-eval harness runs in CI on every push.
+LLM output cannot usually be checked with exact string assertions. It can still
+be evaluated against versioned expectations, provided the evaluation separates
+deterministic system behaviour from the variable behaviour of a live model.
 
-## The shape of the gate
+The
+[AI Due-Diligence Assistant](https://edwardchapman.co.uk/projects/ai-due-diligence-assistant)
+uses this pattern for a concrete task: producing structured, cited findings
+from company documents. Its public
+[case study](https://github.com/edjchapman/AI-Due-Diligence-Assistant/blob/main/docs/case-study.md)
+documents the golden set, provider interfaces, and CI evaluation harness.
 
-Three pieces:
+## Evaluation gate structure
 
-1. **A golden set** — reference inputs with expected outcomes, authored and
-   versioned like any other fixture. For a due-diligence agent: companies
-   whose filings should trigger specific flags, with the expected verdict per
-   check.
-2. **A judge** — something that scores the system's actual output against the
-   golden expectation. String equality is too brittle for generated prose;
-   an LLM-as-judge grades whether the finding _means_ the right thing and
-   cites the right evidence.
-3. **A threshold wired into CI** — the score gates the merge. Below
-   threshold, the build is red, exactly as if a unit test failed.
+The gate has three parts:
 
-## The part everyone gets wrong: true negatives
+1. **A golden set** — representative inputs with expected outcomes, versioned
+   alongside the code. Each case should identify the behaviour that matters,
+   such as the expected verdict, required evidence, or correct refusal.
+2. **A judge** — a function that compares the actual output with the expected
+   outcome. Exact matching may work for schemas and identifiers; generated
+   prose often needs semantic comparison, which can be provided by an LLM
+   judge in live evaluation.
+3. **An acceptance threshold** — a documented minimum that determines whether
+   the evaluated change can proceed. The threshold should reflect product risk
+   and observed variance, rather than an arbitrary target.
 
-A golden set of only positive cases teaches you nothing — a system that
-flags _everything_ passes it. The AI-DDA golden set was authored with a
-clean control company and a deliberately negated going-concern note, so the
-scoring has signal: flag-everything scores 66%, and only a system that
-correctly _clears_ the clean company reaches 100%. If your eval can't
-distinguish "cautious" from "correct", it isn't measuring quality; it's
-measuring verbosity.
+This structure makes the evaluation result reviewable: a failed case points to
+a specific input, expected outcome, and measured behaviour.
 
-The general rule: **build the corpus for the eval**, not the eval for
-whatever corpus you happen to have.
+## Why true negatives matter
 
-## The part that makes it CI-able: determinism
+A useful golden set needs both positive and negative cases. If every reference
+case expects a finding, a system that flags every document can appear accurate
+without distinguishing relevant evidence from irrelevant evidence.
 
-A paid, non-deterministic model call has no business in a required check —
-it makes merges flaky, couples CI to a production secret, and bills you per
-push. The fix is a provider seam: embeddings, reasoning, and the judge each
-sit behind a switch, with real providers in production and deterministic
-local stand-ins in CI. The deterministic judge catches structural and
-retrieval regressions on every push, keyless; the real-model evaluation runs
-on a schedule and before releases, where flakiness and cost are acceptable
-and drift is the thing you're actually hunting.
+The AI-DDA fixture set includes a clean control company and a deliberately
+negated going-concern statement. In the published scoring example, a
+flag-everything strategy reaches 66%; correctly clearing the negative cases is
+required to reach 100%. Those figures come from the authored fixture set, not
+from a claim about general model performance.
 
-That split — deterministic evaluation blocking merges, live evaluation
-gating releases — is the same architecture this site uses for its own
-"ask" agent (recorded as an ADR in the
-[site's repository](https://github.com/edjchapman/edwardchapman.co.uk)).
+Negative cases should represent real failure modes: absent evidence, negated
+language, out-of-scope documents, and inputs for which the correct result is
+"nothing to report".
 
-## What the gate actually catches
+## Deterministic checks and live evaluation
 
-In practice, the failures this surfaces are rarely "the model got dumber".
-They're system regressions the model was papering over: a retrieval change
-that stops surfacing the evidence chunk, a scoping bug that leaks another
-company's filings into context, a prompt edit that breaks the citation
-format, a golden-set edit that quietly weakened a case. All of those turn CI
-red the commit they happen — which is the entire point.
+A required pull-request check should be reproducible and should not depend on a
+paid external call. Provider interfaces allow CI to use deterministic stand-ins
+for embeddings, reasoning, and judging while production uses the configured
+providers.
 
-## Honest limitations
+Deterministic evaluation can verify retrieval results, document scoping,
+schemas, citation identifiers, error handling, and known decision boundaries.
+It cannot establish that the current live model produces high-quality prose.
+That requires a separate live evaluation using the production adapter and a
+recorded model configuration.
 
-An LLM judge inherits judge bias: it can be generous to fluent-but-wrong
-answers. True negatives in the golden set bound this but don't eliminate it,
-which is why the live evaluation layer exists and why spot-checking judge
-decisions by hand stays on the checklist. And a golden set is a snapshot —
-it needs to grow with every new capability, or the gate slowly stops
-guarding the thing you shipped last quarter.
+This site uses the same split for its ask agent:
+[deterministic checks](https://github.com/edjchapman/edwardchapman.co.uk/tree/main/tests/agent)
+run on every pull request, while
+[live evaluation](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/evaluation.md)
+runs on a schedule and before an agent release.
 
-## Where to start
+## What the gate can detect
 
-If you have an LLM feature and no eval: write five golden cases today —
-including at least one where the correct answer is "nothing to report" — and
-score them with the cheapest judge that can tell right from wrong. Wire it
-into CI before you tune anything. You can't improve what you haven't pinned
-down, and you can't trust what a red build can't protect.
+The evaluation cases can expose regressions outside the model itself, including:
+
+- retrieval changes that stop returning the expected evidence;
+- scoping errors that mix documents from different entities;
+- prompt or schema changes that break citation output;
+- fixture edits that remove an important negative case; and
+- provider changes that alter live answer quality.
+
+Keeping these dimensions visible makes the failure easier to diagnose than a
+single aggregate score.
+
+## Limitations
+
+An LLM judge can favour fluent language and still accept an unsupported answer.
+Negative cases reduce that risk but do not remove it. Judge decisions need
+periodic human review, and high-risk claims may need deterministic evidence
+checks in addition to semantic scoring.
+
+A golden set also reflects the system at the time it was written. New
+capabilities, sources, and refusal boundaries need corresponding cases. Without
+that maintenance, the gate continues to test an older definition of the
+product.
+
+## Practical starting point
+
+Start with a small set that covers one expected success, one absence of
+evidence, one negation, and one malformed or out-of-scope input. Record the
+expected outcome and the reason it matters. Run those cases deterministically
+in CI, then add a separate live-model evaluation for the behaviour that cannot
+be established without a real provider.

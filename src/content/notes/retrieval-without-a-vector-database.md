@@ -1,6 +1,6 @@
 ---
 title: "Retrieval without a vector database"
-description: "Grounded Q&A doesn't start with embeddings. How this site's ask agent runs on BM25, a confidence gate, and refusal-first design — and the evidence bar a vector index would have to clear."
+description: "The lexical retrieval baseline behind this site's ask agent: deterministic BM25-style scoring, a confidence gate, refusal behaviour, and the evidence required before adding embeddings."
 pubDate: 2026-07-13
 tags:
   - ai-engineering
@@ -9,85 +9,99 @@ tags:
 draft: false
 ---
 
-Every retrieval-augmented system I see starts the same way: pick a vector
-database, pick an embedding model, then work out what the product was. That
-ordering is backwards. Retrieval exists to put the _right evidence_ in front
-of the model — and for a bounded, well-authored corpus, the boring lexical
-option does that measurably well, with no index to operate, no embedding
-drift, and full explainability of every ranking decision.
+Embeddings are one way to retrieve context for grounded question answering,
+but they are not required for every corpus. This site's published corpus is
+small, deliberately authored, and uses consistent technical vocabulary. A
+deterministic lexical baseline is therefore easier to inspect and evaluate
+before introducing an embedding model or external index.
 
-The [ask agent on this site](https://edwardchapman.co.uk/ask) answers
-questions from published site content only. Its retrieval layer is a few
-hundred lines of TypeScript in the
-[public repository](https://github.com/edjchapman/edwardchapman.co.uk), and
-that's the point: you can read the whole ranking function.
+The decision and its revisit conditions are recorded in
+[ADR-0005](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/adr/0005-build-time-corpus-deterministic-retrieval.md)
+and
+[ADR-0006](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/adr/0006-no-vector-database-initially.md).
+The implementation is in the public
+[retrieval module](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/src/lib/agent/retrieval.ts).
 
-## What the lexical baseline actually is
+## Lexical retrieval pipeline
 
-At build time, published pages are split at heading boundaries into stable,
-addressable chunks — each with a document ID, section ID, title, and
-canonical URL. At request time:
+At build time, non-draft project and note entries plus approved profile entries
+are split at level-two Markdown headings. Each section receives a document ID,
+section ID, title, canonical URL, tags, and text.
 
-1. **Tokenise** the question: lowercase, strip punctuation, drop stopwords,
-   fold trivial plurals.
-2. **Expand** through a small curated synonym map (`k8s → kubernetes`,
-   `reliable → outbox, idempotent`) — a dozen entries beats a semantic model
-   when you authored the corpus and know its vocabulary.
-3. **Score** with BM25: term-frequency saturation, length normalisation, and
-   a boost when the term appears in a title, tag, or document ID.
-4. **Cap per document** so one long page can't flood every context slot —
-   synthesis questions need evidence that spans documents.
+At request time the retriever:
 
-Deterministic, versioned with the content, and testable in CI as plain
-fixtures: _this query must surface this section_. No network, no key, no
-flakiness.
+1. **Tokenises** the question by lowercasing, removing punctuation and
+   stopwords, and folding simple plurals.
+2. **Expands known terms** through a small, curated synonym map. The map
+   handles vocabulary used by this corpus, such as `k8s` → `kubernetes`; it is
+   not a general semantic model.
+3. **Scores sections** with a BM25-style calculation: inverse document
+   frequency, term-frequency saturation, length normalisation, and a boost for
+   title, tag, and document-ID matches. The underlying BM25 model is described
+   in the
+   [Stanford Introduction to Information Retrieval](https://nlp.stanford.edu/IR-book/html/htmledition/okapi-bm25-a-non-binary-model-1.html).
+4. **Limits sections per document** so one long page cannot occupy every
+   context position when a question needs evidence from several sources.
 
-## The load-bearing part is the refusal gate
+The implementation is deterministic and runs against versioned
+[retrieval cases](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/tests/agent/retrieval-cases.json)
+in CI. Those fixtures assert expected ranking and refusal behaviour without a
+network call or provider key.
 
-The retrieval score isn't just a ranking — it's the system's confidence
-estimate, and the agent treats low confidence as a hard stop. Below
-threshold, the model is never called; the user gets an explicit "I don't
-have published material on that" instead of an improvisation over weak
-evidence. Grounding failures in RAG systems are usually blamed on the model,
-but most of them are retrieval failures the pipeline silently forgave.
+## Refusal gate
 
-Gate design is where the actual tuning effort went. A single shared word
-must never count as confident (a city name appearing once in prose does not
-qualify the system as a local guide), so confidence requires
-both a minimum score and multiple matched terms — with one carve-out for
-definitional questions like "What is Foreman?", where the only meaningful
-token is the subject itself and the match lands on a document's own
-identity. Every one of those boundary decisions is pinned by a fixture, and
-changing a threshold without changing the fixtures fails the build.
+Retrieval produces both an ordering and a confidence signal. The current gate
+requires a minimum score and at least two matched query terms. It also has a
+stricter exception for a strong single-term document-identity match, which
+allows questions such as "What is Foreman?" without accepting generic
+single-term questions.
 
-## The evidence bar for embeddings
+If the result does not meet the gate, the model is not called. The service
+returns the documented refusal instead of asking the model to answer from weak
+context. The thresholds and representative boundary cases are recorded in
+[docs/evaluation.md](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/evaluation.md).
+Changing a threshold will fail CI when it changes one of the covered expected
+outcomes; review policy also requires the rationale for the change to be
+documented.
 
-The vector index stays out until one of these is observed, not imagined:
+This gate cannot prove that every accepted result is relevant. It reduces a
+known class of weak-context answers and makes the remaining errors measurable
+through golden and live evaluation.
 
-- Golden retrieval tests expose **semantic misses** — questions phrased in
-  vocabulary the corpus doesn't share, failing against lexical ranking.
-- The corpus **outgrows** lexical retrieval's precision.
-- Latency or prompt size becomes unreasonable.
-- A measured comparison shows an embedding index beats the baseline on the
-  same fixtures.
+## Criteria for adding embeddings
 
-That decision is recorded as an architecture decision record with explicit
-revisit conditions. The day a vector database earns its way in, the golden
-fixtures that justified it become the regression suite that keeps it honest.
+The architecture records four reasons to reconsider the lexical baseline:
 
-## Honest limitations
+- golden cases show semantic misses that a reviewed synonym map cannot resolve;
+- corpus growth reduces lexical precision or makes ranking too expensive;
+- latency or prompt size becomes unreasonable; or
+- an evaluation on the same cases shows that an embedding-based retriever
+  improves retrieval quality enough to justify its operational cost.
 
-Lexical retrieval is literal. It handles a curated synonym map's worth of
-vocabulary drift and nothing more; a question phrased entirely in concepts
-the corpus never names will under-score and refuse, even when a human could
-see the connection. For a small corpus that failure mode is acceptable —
-refusing is the designed behaviour when evidence is thin — but it is a real
-ceiling, and it's exactly what the golden-set misses are there to detect.
+The comparison should use the existing query-to-section fixtures. That keeps
+the decision tied to observed retrieval behaviour rather than to a preferred
+technology.
 
-## Where to start
+## Limitations
 
-If you're building grounded Q&A over content you control: chunk at heading
-boundaries, score with BM25 plus a title boost, wire a refusal threshold,
-and write ten retrieval fixtures before you write a prompt. You'll ship
-something explainable this week — and you'll have the measurement harness
-that tells you if you ever actually need the vector database.
+Lexical retrieval depends on shared vocabulary. A question expressed entirely
+with concepts absent from the corpus may receive a low score even when a human
+can infer the relationship. The curated synonym map covers known cases but does
+not generalise beyond them.
+
+The confidence score is also a heuristic, not a calibrated probability. Its
+value comes from the tested decision boundary: which representative questions
+are answered and which are refused.
+
+## Practical starting point
+
+For a bounded corpus, establish a lexical baseline before choosing additional
+infrastructure:
+
+1. create stable chunks with source metadata;
+2. implement a transparent ranking function;
+3. define explicit refusal behaviour; and
+4. write answerable and should-refuse retrieval cases.
+
+Use failures in those cases to decide whether synonym changes, scoring changes,
+or semantic retrieval are warranted.

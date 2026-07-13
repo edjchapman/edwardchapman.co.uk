@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/ed/Development/edwardchapman.co.uk/.codex/hooks/session-start.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
