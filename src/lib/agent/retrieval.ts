@@ -227,9 +227,11 @@ export class LexicalRetriever implements Retriever {
  * by evidence spanning several documents; without this, one long note floods
  * every slot and the model, given a single narrow source, refuses rather than
  * synthesises. The highest-scoring chunk (the confidence gate's input) is
- * always kept, so refusal behaviour is unchanged.
+ * always kept, so refusal behaviour is unchanged. Reduced 3 → 2 when the
+ * corpus grew to 78 chunks: a single new note took three of five slots on a
+ * synthesis question and the live model refused for lack of source diversity.
  */
-export const MAX_CHUNKS_PER_DOC = 3;
+export const MAX_CHUNKS_PER_DOC = 2;
 
 function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
   const perDoc = new Map<string, number>();

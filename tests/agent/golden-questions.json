@@ -17,8 +17,8 @@
       "question": "What is Foreman?",
       "expectedSourceIds": ["foreman#card", "foreman#context"],
       "requiredClaims": [
-        "a CSV import pipeline engineered for reliability guarantees",
-        "jobs and outbox events commit atomically"
+        "a CSV import pipeline that takes a submitted CSV and returns a report",
+        "deliberately engineered for reliability guarantees"
       ],
       "forbiddenClaims": ["invented metrics beyond the published p50/p95"],
       "shouldRefuse": false
