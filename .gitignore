@@ -13,6 +13,7 @@ eval-report.json
 test-results/
 playwright-report/
 coverage/
+.lighthouseci/
 
 # IDE / OS
 .idea/

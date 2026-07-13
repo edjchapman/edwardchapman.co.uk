@@ -9,7 +9,7 @@
 
 .PHONY: help setup dev preview check check-links check-anchors stack-check corpus \
         format-check lint typecheck test build check-content check-dist-links \
-        format lint-fix test-e2e check-external-links eval-agent eval-agent-live \
+        format lint-fix test-e2e check-perf check-external-links eval-agent eval-agent-live \
         deploy deploy-preview \
         deploy-www-redirect \
         check-commit-msg check-stale-branches sweep-branches lint-md
@@ -82,6 +82,9 @@ lint-fix: ## ESLint with --fix
 
 test-e2e: ## Playwright end-to-end suite (built site via wrangler dev)
 	@pnpm exec playwright test
+
+check-perf: ## Lighthouse budgets against the built site (lighthouserc.json)
+	@pnpm build && pnpm exec lhci autorun
 
 check-external-links: ## Probe external URLs in content (manual + weekly; not in `check`)
 	@node scripts/check-external-links.ts
