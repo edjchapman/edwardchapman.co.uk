@@ -43,9 +43,8 @@
         "ai-due-diligence-assistant#important-engineering-decisions"
       ],
       "requiredClaims": [
-        "golden set scored in CI",
-        "LLM-as-judge",
-        "deterministic providers for keyless CI"
+        "AI quality is measured with evaluation harnesses in CI rather than asserted",
+        "scores are held against thresholds that gate merges or releases"
       ],
       "forbiddenClaims": [],
       "shouldRefuse": false
