@@ -36,25 +36,27 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler deploy --config dist/server/wrangler.json
-      - name: Post-deploy smoke (health sha + real /api/ask POST)
-        # Cloudflare edge propagation after a custom-domain deploy can take up
-        # to ~a minute, so poll generously (12 × 8s) before failing rather than
-        # racing a cold edge.
+      - name: Post-deploy smoke (real /api/ask POST)
+        # The pre-merge e2e suite already exercises /api/ask against the built
+        # worker, so this is a prod-only backstop (bindings, secrets). It gates
+        # on the endpoint actually answering — not on sha propagation, which is
+        # per-colo and can lag minutes, and would only false-fail a deploy the
+        # deploy step already completed. sha visibility is logged, not gated.
         run: |
-          for i in $(seq 1 12); do
+          for i in $(seq 1 18); do
             sleep 8
             health=$(curl -sS https://edwardchapman.co.uk/api/health || true)
-            case "$health" in *"$GITHUB_SHA"*) ;; *) echo "attempt $i: health not on $GITHUB_SHA yet"; continue ;; esac
+            case "$health" in *"$GITHUB_SHA"*) sha="visible" ;; *) sha="propagating" ;; esac
             code=$(curl -sS -o ask-smoke.json -w '%{http_code}' https://edwardchapman.co.uk/api/ask \
               -H 'content-type: application/json' \
               -d '{"question":"How did Foreman handle reliable event processing?"}' || true)
             if [ "$code" = "200" ] && grep -q '"answer"' ask-smoke.json; then
-              echo "smoke ok: deployed sha serves and /api/ask answers"
+              echo "smoke ok: /api/ask answers (deployed sha $sha)"
               exit 0
             fi
-            echo "attempt $i: /api/ask HTTP $code"
+            echo "attempt $i: /api/ask HTTP $code (deployed sha $sha)"
           done
-          echo "post-deploy smoke failed"
+          echo "post-deploy smoke failed: /api/ask did not answer within the window"
           exit 1
       - name: Summary
         run: |
