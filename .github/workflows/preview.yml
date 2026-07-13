@@ -29,7 +29,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
-        run: pnpm exec astro build
+        # `make build` regenerates the agent corpus first (src/generated/
+        # corpus.json), which src/pages/api/ask.ts imports; bare `astro build`
+        # misses that prerequisite and fails to resolve the import.
+        run: make build
       - name: Upload preview version
         id: upload
         env:

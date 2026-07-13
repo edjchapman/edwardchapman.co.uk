@@ -37,9 +37,12 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler deploy --config dist/server/wrangler.json
       - name: Post-deploy smoke (health sha + real /api/ask POST)
+        # Cloudflare edge propagation after a custom-domain deploy can take up
+        # to ~a minute, so poll generously (12 × 8s) before failing rather than
+        # racing a cold edge.
         run: |
-          for i in 1 2 3; do
-            sleep 5
+          for i in $(seq 1 12); do
+            sleep 8
             health=$(curl -sS https://edwardchapman.co.uk/api/health || true)
             case "$health" in *"$GITHUB_SHA"*) ;; *) echo "attempt $i: health not on $GITHUB_SHA yet"; continue ;; esac
             code=$(curl -sS -o ask-smoke.json -w '%{http_code}' https://edwardchapman.co.uk/api/ask \
