@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 
 // The ask interface (spec §15): one unmocked round-trip against the real
 // worker endpoint, then mocked-backend cases for submission, loading,
-// answer + source rendering, failure states, and the unadvertised posture.
+// answer + source rendering, failure states, and the released posture.
 test.describe("/ask interface", () => {
   test("real endpoint answers a corpus question (no mocks)", async ({
     request,
@@ -27,7 +27,7 @@ test.describe("/ask interface", () => {
     }
   });
 
-  test("is unadvertised: no nav link, noindex, absent from sitemap", async ({
+  test("is released: linked in the nav, indexable, in the sitemap", async ({
     page,
     request,
   }) => {
@@ -36,16 +36,14 @@ test.describe("/ask interface", () => {
       page.getByRole("navigation", { name: "Site" }).getByRole("link", {
         name: "Ask",
       }),
-    ).toHaveCount(0);
+    ).toHaveCount(1);
 
     await page.goto("/ask");
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
-      "content",
-      /noindex/,
-    );
+    // SEO.astro only emits a robots meta when noindex is set; released => none.
+    await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
 
     const sitemap = await request.get("/sitemap-0.xml");
-    expect(await sitemap.text()).not.toContain("/ask");
+    expect(await sitemap.text()).toContain("/ask");
   });
 
   test("submits a question and renders the answer with source links", async ({

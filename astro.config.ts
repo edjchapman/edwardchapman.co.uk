@@ -11,9 +11,9 @@ export default defineConfig({
   integrations: [
     react(),
     sitemap({
-      // /404 is not a destination; /ask stays unadvertised until the Phase 4
-      // release gates pass (docs/evaluation.md).
-      filter: (page) => !page.includes("/404") && !page.includes("/ask"),
+      // /404 is not a destination. /ask is indexed since the Phase 4 release
+      // gates passed (docs/evaluation.md).
+      filter: (page) => !page.includes("/404"),
     }),
   ],
   // Sessions are unused on this site. Without an explicit driver the adapter

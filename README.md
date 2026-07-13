@@ -4,8 +4,8 @@
 
 Source for [edwardchapman.co.uk](https://edwardchapman.co.uk) — Ed Chapman's
 personal site: a recruiter-facing homepage, project case studies, technical
-notes, and (behind release gates) an "ask about my work" agent that answers
-only from published site content.
+notes, and an "ask about my work" agent that answers only from published site
+content.
 
 The repository is itself part of the portfolio. It is built spec-first
 ([docs/spec.md](docs/spec.md)), records its architecture decisions as ADRs
@@ -13,8 +13,9 @@ The repository is itself part of the portfolio. It is built spec-first
 and deploys reproducibly from CI.
 
 **Status: live at [edwardchapman.co.uk](https://edwardchapman.co.uk)
-(Phases 0–2 shipped; the ask agent — Phases 3–4 — is in progress behind
-release gates).**
+(Phases 0–4 shipped; the "ask about my work" agent is released — it passed
+its live-evaluation, red-team, and rate-limit gates, see
+[docs/evaluation.md](docs/evaluation.md)).**
 
 ## Architecture in one paragraph
 
@@ -83,18 +84,18 @@ and enforced by a scanner inside `make check`.
 No analytics, no cookies, no accounts. Private career material never enters
 this repository, its build artefacts, prompts, or logs — a fail-closed
 content-policy gate enforces the boundary
-([ADR-0007](docs/adr/0007-public-content-boundary.md)). The agent (when it
-ships) answers only from published content, refuses rather than improvises,
-and is gated by deterministic + live evaluations and a manual red-team pass
+([ADR-0007](docs/adr/0007-public-content-boundary.md)). The agent answers only
+from published content, refuses rather than improvises, and is gated by
+deterministic + live evaluations and a manual red-team pass
 ([docs/evaluation.md](docs/evaluation.md)). Threat model:
 [docs/threat-model.md](docs/threat-model.md).
 
 ## Repository status
 
-| Phase | Scope                                              | State           |
-| ----- | -------------------------------------------------- | --------------- |
-| 0     | Spec, bootstrap, scaffold, CI, temporary URL       | **in progress** |
-| 1     | Recruiter homepage, colophon, domain cutover       | pending         |
-| 2     | Case studies, notes, security headers              | pending         |
-| 3     | Agent foundation (corpus, retrieval, fake adapter) | pending         |
-| 4     | Live model integration, gated /ask release         | pending         |
+| Phase | Scope                                              | State   |
+| ----- | -------------------------------------------------- | ------- |
+| 0     | Spec, bootstrap, scaffold, CI, temporary URL       | shipped |
+| 1     | Recruiter homepage, colophon, domain cutover       | shipped |
+| 2     | Case studies, notes, security headers              | shipped |
+| 3     | Agent foundation (corpus, retrieval, fake adapter) | shipped |
+| 4     | Live model integration, gated /ask release         | shipped |
