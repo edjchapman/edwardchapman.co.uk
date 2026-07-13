@@ -47,7 +47,8 @@ jobs:
             sleep 8
             health=$(curl -sS https://edwardchapman.co.uk/api/health || true)
             case "$health" in *"$GITHUB_SHA"*) sha="visible" ;; *) sha="propagating" ;; esac
-            code=$(curl -sS -o ask-smoke.json -w '%{http_code}' https://edwardchapman.co.uk/api/ask \
+            code=$(curl -sS -D ask-smoke-headers.txt -o ask-smoke.json -w '%{http_code}' \
+              https://edwardchapman.co.uk/api/ask \
               -H 'content-type: application/json' \
               -d '{"question":"How did Foreman handle reliable event processing?"}' || true)
             if [ "$code" = "200" ] && grep -q '"answer"' ask-smoke.json; then
@@ -57,6 +58,12 @@ jobs:
             echo "attempt $i: /api/ask HTTP $code (deployed sha $sha)"
           done
           echo "post-deploy smoke failed: /api/ask did not answer within the window"
+          # Surface enough of the last response to attribute edge-level blocks
+          # (e.g. cf-mitigated: challenge) without rerunning from a runner.
+          echo "last response headers:"
+          grep -iE '^(HTTP|cf-|content-type)' ask-smoke-headers.txt || true
+          echo "last response body (first 300 bytes):"
+          head -c 300 ask-smoke.json || true; echo
           exit 1
       - name: Summary
         run: |
