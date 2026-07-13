@@ -47,12 +47,12 @@ const TOP_K = 5;
 export class AgentService {
   private readonly retriever: Retriever;
   private readonly bySectionId: Map<string, { title: string; url: string }>;
+  private readonly adapter: ModelAdapter;
+  private readonly log: AgentLogger;
 
-  constructor(
-    corpus: Corpus,
-    private readonly adapter: ModelAdapter,
-    private readonly log: AgentLogger,
-  ) {
+  constructor(corpus: Corpus, adapter: ModelAdapter, log: AgentLogger) {
+    this.adapter = adapter;
+    this.log = log;
     this.retriever = new LexicalRetriever(corpus.chunks);
     this.bySectionId = new Map(
       corpus.chunks.map((chunk) => [

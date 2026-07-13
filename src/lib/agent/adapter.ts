@@ -35,7 +35,11 @@ export type FakeBehaviour =
  * supplied document and cites it.
  */
 export class FakeModelAdapter implements ModelAdapter {
-  constructor(private readonly behaviour: FakeBehaviour) {}
+  private readonly behaviour: FakeBehaviour;
+
+  constructor(behaviour: FakeBehaviour) {
+    this.behaviour = behaviour;
+  }
 
   complete(request: ModelRequest): Promise<ModelResult> {
     const behaviour = this.behaviour;

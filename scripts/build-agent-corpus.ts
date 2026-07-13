@@ -204,7 +204,7 @@ export function buildCorpus(root: string): Corpus {
       title: parsed.title,
       url,
       type: "profile",
-      tags: [],
+      tags: parsed.tags,
       text,
     });
   }

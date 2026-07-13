@@ -53,51 +53,84 @@ type CaseResult = {
 
 let judgeCalls = 0;
 
+type Verdict = { grounded: boolean; claimsMet: boolean[] };
+
+/**
+ * Parse the judge's structured output, returning null (not a silent default)
+ * when the response is unusable — no text block (e.g. the token budget was
+ * spent before the JSON), non-JSON, or missing/mistyped fields. A silent
+ * default would miscount completeness and corrupt the release gate.
+ */
+function parseVerdict(
+  content: { type: string; text?: string }[],
+): Verdict | null {
+  const text = content.find((block) => block.type === "text")?.text;
+  if (text === undefined) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const candidate = parsed as Partial<Verdict>;
+  if (
+    typeof candidate.grounded !== "boolean" ||
+    !Array.isArray(candidate.claimsMet) ||
+    !candidate.claimsMet.every((met) => typeof met === "boolean")
+  ) {
+    return null;
+  }
+  return { grounded: candidate.grounded, claimsMet: candidate.claimsMet };
+}
+
 async function judge(
   client: Anthropic,
   model: string,
   answer: string,
   evidence: string,
   claims: string[],
-): Promise<{ grounded: boolean; claimsMet: boolean[] }> {
-  judgeCalls += 1;
-  const response = await client.messages.create({
-    model,
-    max_tokens: 512,
-    system:
-      "You are a strict evaluation judge. Grade ONLY from the provided evidence. Respond with JSON only.",
-    messages: [
-      {
-        role: "user",
-        content: `<evidence>\n${evidence}\n</evidence>\n\n<answer>\n${answer}\n</answer>\n\n<claims>\n${claims
-          .map((claim, index) => `${index}: ${claim}`)
-          .join(
-            "\n",
-          )}\n</claims>\n\nGrade: (1) is every factual statement in the answer supported by the evidence? (2) for each numbered claim, does the answer convey it (paraphrase acceptable)?`,
-      },
-    ],
-    output_config: {
-      format: {
-        type: "json_schema",
-        schema: {
-          type: "object",
-          properties: {
-            grounded: { type: "boolean" },
-            claimsMet: { type: "array", items: { type: "boolean" } },
+): Promise<Verdict> {
+  // Grading against supplied evidence is a lookup, not a reasoning task:
+  // effort "low" stops the (thinking-always-on) judge model from spending the
+  // token budget on a thinking block and hitting max_tokens before emitting
+  // the schema-constrained JSON — which silently produced empty verdicts.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    judgeCalls += 1;
+    const response = await client.messages.create({
+      model,
+      max_tokens: 1024,
+      system:
+        "You are a strict evaluation judge. Grade ONLY from the provided evidence. Respond with JSON only.",
+      messages: [
+        {
+          role: "user",
+          content: `<evidence>\n${evidence}\n</evidence>\n\n<answer>\n${answer}\n</answer>\n\n<claims>\n${claims
+            .map((claim, index) => `${index}: ${claim}`)
+            .join(
+              "\n",
+            )}\n</claims>\n\nGrade: (1) is every factual statement in the answer supported by the evidence? (2) for each numbered claim, does the answer convey it (paraphrase acceptable)?`,
+        },
+      ],
+      output_config: {
+        effort: "low",
+        format: {
+          type: "json_schema",
+          schema: {
+            type: "object",
+            properties: {
+              grounded: { type: "boolean" },
+              claimsMet: { type: "array", items: { type: "boolean" } },
+            },
+            required: ["grounded", "claimsMet"],
+            additionalProperties: false,
           },
-          required: ["grounded", "claimsMet"],
-          additionalProperties: false,
         },
       },
-    },
-  });
-  const text =
-    response.content.find((block) => block.type === "text")?.text ?? "{}";
-  const parsed = JSON.parse(text) as {
-    grounded: boolean;
-    claimsMet: boolean[];
-  };
-  return parsed;
+    });
+    const verdict = parseVerdict(response.content);
+    if (verdict) return verdict;
+  }
+  throw new Error("judge: no valid structured verdict after retry");
 }
 
 function chunksText(corpus: Corpus, urls: string[]): string {
