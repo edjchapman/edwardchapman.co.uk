@@ -61,6 +61,49 @@ test.describe("metadata", () => {
     }
   });
 
+  test("project and note pages carry their own social card, and it resolves", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/projects/foreman");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      "content",
+      `${ORIGIN}/og/projects/foreman.png`,
+    );
+    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute(
+      "content",
+      "article",
+    );
+
+    const card = await request.get("/og/projects/foreman.png");
+    expect(card.status()).toBe(200);
+    expect(card.headers()["content-type"]).toContain("image/png");
+
+    await page.goto("/notes/llm-as-judge-as-a-ci-quality-gate");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      "content",
+      `${ORIGIN}/og/notes/llm-as-judge-as-a-ci-quality-gate.png`,
+    );
+  });
+
+  test("RSS feed is served, advertised, and lists published notes", async ({
+    page,
+    request,
+  }) => {
+    const feed = await request.get("/rss.xml");
+    expect(feed.status()).toBe(200);
+    const body = await feed.text();
+    expect(body).toContain("<rss");
+    expect(body).toContain(
+      `<link>${ORIGIN}/notes/llm-as-judge-as-a-ci-quality-gate</link>`,
+    );
+
+    await page.goto("/");
+    await expect(
+      page.locator('link[rel="alternate"][type="application/rss+xml"]'),
+    ).toHaveAttribute("href", "/rss.xml");
+  });
+
   test("robots.txt advertises the sitemap", async ({ request }) => {
     const robots = await request.get("/robots.txt");
     expect(await robots.text()).toContain(

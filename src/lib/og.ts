@@ -1,0 +1,155 @@
+/**
+ * Build-time social-card rendering (spec §9). Runs only from
+ * scripts/build-og-cards.ts before `astro build`, so satori/resvg (a native
+ * module) and the font files never enter the Worker bundle — cards land in
+ * public/og/ and ship as static assets like any other image.
+ */
+
+import { createRequire } from "node:module";
+import { readFile } from "node:fs/promises";
+
+import { Resvg } from "@resvg/resvg-js";
+import satori from "satori";
+
+import { SITE } from "./site.ts";
+
+// Mirrors src/styles/tokens.css — satori can't read CSS custom properties.
+const TOKENS = {
+  paper: "#faf9f6",
+  ink: "#1a1a18",
+  muted: "#5c5a54",
+  accent: "#1a5fb4",
+  rule: "#e5e2da",
+};
+
+const require = createRequire(import.meta.url);
+
+async function interFont(file: string): Promise<Buffer> {
+  return readFile(require.resolve(`@fontsource/inter/files/${file}`));
+}
+
+/** Long titles step down so they never clip the 1200×630 canvas. */
+function titleSize(title: string): number {
+  if (title.length <= 40) return 72;
+  if (title.length <= 70) return 58;
+  return 48;
+}
+
+export async function renderOgCard(
+  title: string,
+  kicker: string,
+): Promise<Uint8Array> {
+  const [regular, bold] = await Promise.all([
+    interFont("inter-latin-400-normal.woff"),
+    interFont("inter-latin-700-normal.woff"),
+  ]);
+
+  // Satori's signature says ReactNode, but it documents plain element
+  // objects as valid input — this keeps React out of build scripts.
+  const card = {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        width: "100%",
+        height: "100%",
+        padding: "72px 80px",
+        backgroundColor: TOKENS.paper,
+        color: TOKENS.ink,
+        fontFamily: "Inter",
+      },
+      children: [
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+            },
+            children: [
+              {
+                type: "div",
+                props: {
+                  style: {
+                    width: 96,
+                    height: 8,
+                    backgroundColor: TOKENS.accent,
+                    marginBottom: 40,
+                  },
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: 26,
+                    letterSpacing: "0.08em",
+                    color: TOKENS.muted,
+                    marginBottom: 24,
+                  },
+                  children: kicker.toUpperCase(),
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: {
+                    fontSize: titleSize(title),
+                    fontWeight: 700,
+                    lineHeight: 1.12,
+                    maxWidth: 1000,
+                  },
+                  children: title,
+                },
+              },
+            ],
+          },
+        },
+        {
+          type: "div",
+          props: {
+            style: {
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderTop: `2px solid ${TOKENS.rule}`,
+              paddingTop: 32,
+              fontSize: 30,
+            },
+            children: [
+              {
+                type: "div",
+                props: {
+                  style: { fontWeight: 700 },
+                  children: SITE.name,
+                },
+              },
+              {
+                type: "div",
+                props: {
+                  style: { color: TOKENS.muted },
+                  children: "edwardchapman.co.uk",
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+
+  const svg = await satori(card as unknown as Parameters<typeof satori>[0], {
+    width: 1200,
+    height: 630,
+    fonts: [
+      { name: "Inter", data: regular, weight: 400, style: "normal" },
+      { name: "Inter", data: bold, weight: 700, style: "normal" },
+    ],
+  });
+
+  return new Resvg(svg, { fitTo: { mode: "width", value: 1200 } })
+    .render()
+    .asPng();
+}
