@@ -36,6 +36,23 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler deploy --config dist/server/wrangler.json
+      - name: Post-deploy smoke (health sha + real /api/ask POST)
+        run: |
+          for i in 1 2 3; do
+            sleep 5
+            health=$(curl -sS https://edwardchapman.co.uk/api/health || true)
+            case "$health" in *"$GITHUB_SHA"*) ;; *) echo "attempt $i: health not on $GITHUB_SHA yet"; continue ;; esac
+            code=$(curl -sS -o ask-smoke.json -w '%{http_code}' https://edwardchapman.co.uk/api/ask \
+              -H 'content-type: application/json' \
+              -d '{"question":"How did Foreman handle reliable event processing?"}' || true)
+            if [ "$code" = "200" ] && grep -q '"answer"' ask-smoke.json; then
+              echo "smoke ok: deployed sha serves and /api/ask answers"
+              exit 0
+            fi
+            echo "attempt $i: /api/ask HTTP $code"
+          done
+          echo "post-deploy smoke failed"
+          exit 1
       - name: Summary
         run: |
           echo "Deployed \`${GITHUB_SHA}\` — verify: \`curl https://edwardchapman.co.uk/api/health\`" >> "$GITHUB_STEP_SUMMARY"
