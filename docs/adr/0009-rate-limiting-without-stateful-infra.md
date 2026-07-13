@@ -35,9 +35,18 @@ provider side.
 
 ## Consequences
 
-- Limits are approximate per-edge-location rather than globally exact —
-  acceptable for abuse control (cost is additionally bounded by AI Gateway
-  caps and `max_tokens`).
+- Limits are approximate rather than globally exact. Cloudflare documents the
+  binding as "permissive, eventually consistent, and intentionally designed to
+  not be used as an accurate accounting system": the counter is cached
+  per-isolate and updated asynchronously, so a short burst of requests spread
+  across fresh isolates can pass without a 429. It converges and enforces under
+  sustained load on a warm isolate — verified live 2026-07-13 on a single
+  keep-alive connection (11×200 then 69×429; the 429 carries the stable
+  `rate_limited` envelope). Parallel one-shot connections do **not** reliably
+  trip it, which is expected, not a defect. Acceptable for abuse control (the
+  real threat is sustained cost-driving load, which this holds); cost is
+  additionally bounded by `max_tokens`, the Haiku model, and — when enabled —
+  AI Gateway caps.
 - The binding has no dashboard analytics; hits are visible through the
   structured `ask.provider_rate_limited`/`rate_limited` events in Workers
   logs.
