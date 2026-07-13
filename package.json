@@ -34,6 +34,7 @@
     "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^10.0.1",
     "@fontsource/inter": "^5.2.8",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.61.1",
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^26.1.1",

@@ -1,0 +1,37 @@
+name: perf
+
+# Lighthouse budgets on every PR. Like e2e, deliberately NOT a required
+# check (spec §16 "optional browser tests where runtime permits") — the
+# deterministic gate is `make check`; this job blocks silent performance
+# regressions against the baseline recorded in lighthouserc.json.
+#
+# Baseline (2026-07-13, local, built site via wrangler dev): /, /projects/*,
+# /notes/* all 100/100/100/100; /ask 93 performance (React island
+# hydration). Budgets sit just below so a regression fails without pinning
+# brittle perfect scores: perf ≥ 85, a11y/best-practices/seo ≥ 95.
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: perf-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: lighthouse budgets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Run Lighthouse against the built site
+        run: pnpm exec lhci autorun
