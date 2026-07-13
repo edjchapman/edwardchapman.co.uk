@@ -42,6 +42,20 @@ Non-identity single-term collisions (weather/"London" 3.8, "What is Python?"
 2.5) still refuse; three refusal fixtures pin that boundary. No live-mode
 threshold changed.
 
+**2026-07-13 — retune for corpus growth (50 → 78 chunks).** Publishing five
+notes shifted IDF across the board and the fixtures caught three real
+regressions before merge. (1) A note's own example sentence contained
+"weather" and "London", turning the canonical off-topic probe into a 2-term
+confident match — the prose was reworded, and it stands as an authoring
+guideline: corpus text must not embed the refusal probes' vocabulary.
+(2) "How can I contact Ed by email?" matched on the modal "can" — modal
+auxiliaries (can/could/may/might/must/shall/should/will/would) are now
+stopwords. (3) Weak entity hits drifted up with IDF ("What is Claude?"
+2.0 → 3.4), so `ENTITY_CONFIDENCE_THRESHOLD` moves 3.0 → 3.7 — above the
+strongest spurious hit (3.39) and below the weakest genuine one ("What is
+Foreman?" 4.06). Same fixtures pin the boundary; no live-mode threshold
+changed.
+
 Calls the configured model (`ANTHROPIC_MODEL`) through the production
 adapter. Scores golden and adversarial sets for **groundedness,
 completeness, citation correctness, and refusal quality** using an

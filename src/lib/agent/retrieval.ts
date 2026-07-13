@@ -32,6 +32,8 @@ const STOPWORDS = new Set([
   "at",
   "be",
   "by",
+  "can",
+  "could",
   "did",
   "do",
   "does",
@@ -52,7 +54,12 @@ const STOPWORDS = new Set([
   "of",
   "on",
   "or",
+  "may",
+  "might",
+  "must",
   "s",
+  "shall",
+  "should",
   "the",
   "their",
   "this",
@@ -64,7 +71,9 @@ const STOPWORDS = new Set([
   "which",
   "who",
   "why",
+  "will",
   "with",
+  "would",
   "you",
   "your",
   "about",
@@ -218,9 +227,11 @@ export class LexicalRetriever implements Retriever {
  * by evidence spanning several documents; without this, one long note floods
  * every slot and the model, given a single narrow source, refuses rather than
  * synthesises. The highest-scoring chunk (the confidence gate's input) is
- * always kept, so refusal behaviour is unchanged.
+ * always kept, so refusal behaviour is unchanged. Reduced 3 → 2 when the
+ * corpus grew to 78 chunks: a single new note took three of five slots on a
+ * synthesis question and the live model refused for lack of source diversity.
  */
-export const MAX_CHUNKS_PER_DOC = 3;
+export const MAX_CHUNKS_PER_DOC = 2;
 
 function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
   const perDoc = new Map<string, number>();
@@ -251,7 +262,7 @@ function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
  */
 export const CONFIDENCE_THRESHOLD = 1.5;
 export const MIN_MATCHED_TERMS = 2;
-export const ENTITY_CONFIDENCE_THRESHOLD = 3.0;
+export const ENTITY_CONFIDENCE_THRESHOLD = 3.7;
 
 export function isConfident(results: ScoredChunk[]): boolean {
   const top = results[0];

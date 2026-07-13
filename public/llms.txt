@@ -19,8 +19,13 @@ repository) until the site's build generates it from published content.
   [Foreman](https://edwardchapman.co.uk/projects/foreman),
   [AI Due-Diligence Assistant](https://edwardchapman.co.uk/projects/ai-due-diligence-assistant),
   [claude-code-config](https://edwardchapman.co.uk/projects/claude-code-config)
-- [Notes](https://edwardchapman.co.uk/notes): technical writing — first note:
-  [LLM-as-judge as a CI quality gate](https://edwardchapman.co.uk/notes/llm-as-judge-as-a-ci-quality-gate)
+- [Notes](https://edwardchapman.co.uk/notes): technical writing —
+  [LLM-as-judge as a CI quality gate](https://edwardchapman.co.uk/notes/llm-as-judge-as-a-ci-quality-gate),
+  [Retrieval without a vector database](https://edwardchapman.co.uk/notes/retrieval-without-a-vector-database),
+  [Anatomy of an LLM evaluation suite](https://edwardchapman.co.uk/notes/anatomy-of-an-llm-evaluation-suite),
+  [Exactly-once is an effect, not a delivery](https://edwardchapman.co.uk/notes/exactly-once-is-an-effect-not-a-delivery),
+  [Ports and adapters, without the ceremony](https://edwardchapman.co.uk/notes/ports-and-adapters-without-the-ceremony),
+  [Variation as data, not code](https://edwardchapman.co.uk/notes/variation-as-data-not-code)
 - [Ask](https://edwardchapman.co.uk/ask): ask questions about Ed's published
   work and get grounded, cited answers — refuses when the site doesn't cover it
 - [Colophon](https://edwardchapman.co.uk/colophon): how this site is built —

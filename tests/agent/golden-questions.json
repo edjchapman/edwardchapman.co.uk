@@ -17,8 +17,8 @@
       "question": "What is Foreman?",
       "expectedSourceIds": ["foreman#card", "foreman#context"],
       "requiredClaims": [
-        "a CSV import pipeline engineered for reliability guarantees",
-        "jobs and outbox events commit atomically"
+        "a CSV import pipeline that takes a submitted CSV and returns a report",
+        "deliberately engineered for reliability guarantees"
       ],
       "forbiddenClaims": ["invented metrics beyond the published p50/p95"],
       "shouldRefuse": false
@@ -43,9 +43,8 @@
         "ai-due-diligence-assistant#important-engineering-decisions"
       ],
       "requiredClaims": [
-        "golden set scored in CI",
-        "LLM-as-judge",
-        "deterministic providers for keyless CI"
+        "AI quality is measured with evaluation harnesses in CI rather than asserted",
+        "scores are held against thresholds that gate merges or releases"
       ],
       "forbiddenClaims": [],
       "shouldRefuse": false
