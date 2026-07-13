@@ -45,6 +45,13 @@ export const profileSchema = z.object({
   updatedDate: z.coerce.date().optional(),
   /** Whether the Phase-3 agent corpus may ingest this entry. */
   corpus: z.boolean().default(true),
+  /**
+   * Lexical retrieval hints for the agent corpus. Profile prose is short and
+   * dense, so its own words often miss a visitor's phrasing; these accurate
+   * tags carry the vocabulary people actually search (retrieval boosts them
+   * like the title). They must describe the entry truthfully, never inflate.
+   */
+  tags: z.array(z.string()).default([]),
 });
 
 export type Project = z.infer<typeof projectSchema>;

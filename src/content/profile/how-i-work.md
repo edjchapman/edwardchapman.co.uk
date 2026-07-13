@@ -2,6 +2,12 @@
 title: "How I work"
 order: 2
 updatedDate: 2026-07-10
+tags:
+  - AI-assisted software delivery
+  - approach to AI engineering
+  - agentic tooling in a harness
+  - evaluation-driven development
+  - working method and process
 ---
 
 - **Spec first.** The hard thinking happens in writing before broad

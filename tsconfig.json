@@ -5,6 +5,10 @@
   "compilerOptions": {
     "types": ["node"],
     "allowImportingTsExtensions": true,
+    // scripts/*.ts (and everything they import) run under Node's erasable-only
+    // type-stripping; enforce it repo-wide so non-erasable syntax (parameter
+    // properties, enums, namespaces) fails `astro check`, not the live eval.
+    "erasableSyntaxOnly": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react"
   }

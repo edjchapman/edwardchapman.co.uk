@@ -27,8 +27,14 @@ const MAX_TOKENS = 1024;
 
 export class AnthropicAdapter implements ModelAdapter {
   private readonly client: Anthropic;
+  private readonly model: string;
 
-  constructor(private readonly config: AnthropicAdapterConfig) {
+  // Explicit field + body assignment, not a `private` parameter property:
+  // this module is imported by scripts/run-agent-evals.ts, which Node runs
+  // through erasable-only type-stripping — parameter properties emit an
+  // assignment and are rejected there (ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX).
+  constructor(config: AnthropicAdapterConfig) {
+    this.model = config.model;
     this.client = new Anthropic({
       apiKey: config.apiKey,
       ...(config.baseURL ? { baseURL: config.baseURL } : {}),
@@ -40,7 +46,7 @@ export class AnthropicAdapter implements ModelAdapter {
   async complete(request: ModelRequest): Promise<ModelResult> {
     try {
       const message = await this.client.messages.create({
-        model: this.config.model,
+        model: this.model,
         max_tokens: MAX_TOKENS,
         system: request.system,
         messages: [{ role: "user", content: request.user }],

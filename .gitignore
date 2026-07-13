@@ -5,6 +5,7 @@ dist/
 .wrangler/
 .dev.vars
 src/generated/
+eval-report.json
 
 # Test artefacts
 test-results/
