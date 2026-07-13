@@ -1,6 +1,6 @@
 ---
-title: "Exactly-once is an effect, not a delivery"
-description: "No broker delivers exactly once. Systems that behave exactly-once engineer it at the edges: atomic intent capture, idempotent effects, and fencing against the worker that wasn't dead."
+title: "Exactly-once effects in an at-least-once pipeline"
+description: "How a transactional outbox, idempotent writes, leases, and fencing tokens combine to give database effects exactly-once behaviour while delivery remains at-least-once."
 pubDate: 2026-07-13
 tags:
   - backend
@@ -10,75 +10,94 @@ draft: false
 relatedProject: foreman
 ---
 
-"Does the queue guarantee exactly-once?" is the wrong question, and
-interviews and design reviews alike keep asking it. Delivery is a property
-of a lossy network conversation: the message can always arrive twice, or
-arrive while the acknowledgement dies. What a system can engineer is
-**exactly-once effect** — duplicates may flow, but state changes as if each
-logical operation happened once. That property lives at the edges you
-control, not in the broker.
+Delivery semantics and effect semantics describe different boundaries. Some
+platforms provide exactly-once processing within a constrained transaction;
+for example,
+[Kafka documents exactly-once processing](https://kafka.apache.org/42/design/design/#message-delivery-semantics)
+when reading, processing, and writing Kafka records transactionally. That
+guarantee does not automatically extend to an external database, email
+provider, or third-party API.
 
-[Foreman](https://edwardchapman.co.uk/projects/foreman) is my working
-demonstration of the full chain — a deliberately small pipeline with
-deliberately large guarantees, every decision recorded as an ADR in the
-public repo. The chain has three links.
+[Foreman](https://edwardchapman.co.uk/projects/foreman) uses Celery,
+PostgreSQL, and Redis. Its delivery path is at-least-once, while the database
+is designed to converge on the same state when work is repeated. The public
+[case study](https://github.com/edjchapman/Foreman/blob/main/docs/case-study.md)
+and
+[transactional-outbox ADR](https://github.com/edjchapman/Foreman/blob/main/docs/adr/0001-transactional-outbox.md)
+describe the implementation and its failure windows.
 
-## Capture intent atomically: the outbox
+## Transactional outbox
 
-The classic lost-work bug is committing to the database and _then_
-publishing to the queue — two systems, no shared transaction, and a crash
-between them silently drops the event. The transactional outbox closes the
-gap: the domain row and an outbox event commit in **one** database
-transaction, and a relay publishes pending events afterwards. Multiple
-relays claim disjoint batches with `SELECT … FOR UPDATE SKIP LOCKED`, so
-scaling the relay tier doesn't create duplicate publishers.
+Writing a domain row and then publishing a message creates a dual-write
+problem. If the process stops between those operations, the row can commit
+without the message being published.
 
-The cost is honest: the relay retries, so downstream now sees
-**at-least-once**. The outbox doesn't eliminate duplicates — it converts
-"maybe never" into "maybe twice", which is the only trade in stock.
+Foreman writes the `Job` and its `OutboxEvent` in one PostgreSQL transaction.
+A relay later publishes pending events. Parallel relays use
+`SELECT … FOR UPDATE SKIP LOCKED` to claim different rows without waiting for
+one another; PostgreSQL documents this as an appropriate use of `SKIP LOCKED`
+for
+[multiple consumers of a queue-like table](https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE).
 
-## Absorb duplicates: idempotent effects
+The row lock prevents concurrent relays from claiming the same pending event.
+It does not remove redelivery: if the relay publishes and stops before its
+database transaction commits, the row remains pending and is published again.
+The consumer must therefore tolerate duplicate messages.
 
-"Maybe twice" is fine when the second time is a no-op. Foreman's workers
-get there with two mechanisms, belt and braces: a **state guard** (only
-process a job in the expected state) and a **natural-key constraint** (the
-database physically refuses a second insert of the same logical work). The
-constraint is the one that holds under true concurrency — two workers can
-both pass a state check, but only one wins the unique index.
+## Idempotent effects
 
-Failure handling is classified, not generic: poison input fails fast to a
-redrivable dead-letter queue; transient failures retry with capped
-full-jitter backoff. Retry state lives in PostgreSQL rather than the
-broker, so "what's stuck and why" is a query, not an archaeology session —
-and it survives broker restarts.
+Foreman uses two database controls:
 
-## Fence the survivor: leases and tokens
+- a **state guard** claims a job only while it is `PENDING`; and
+- a **natural-key constraint** on `(job, external_id)` prevents repeated
+  imports from creating duplicate property records.
 
-The subtlest duplicate isn't a redelivery — it's a worker that was slow,
-not dead. Its lease expires, a reaper hands the job to a new claimant, and
-then the original wakes up and writes. Foreman stamps each claim with a
-fresh **fencing token**; a late write carrying a stale token is rejected.
-Without fencing, every timeout-based recovery mechanism is a race with a
-ghost.
+The constraint is the final protection when two attempts overlap. It is
+enforced by PostgreSQL rather than by an earlier read that could become stale
+under concurrency.
 
-One residual window stays open, documented rather than hidden: a crash in
-the instant after dispatch is recovered only by broker-level late
-acknowledgement. Reliability work is like that — the honest version names
-the window it couldn't close.
+Failure handling follows the categories in the public
+[worker implementation](https://github.com/edjchapman/Foreman/blob/main/jobs/tasks.py):
+permanent ingest errors move directly to `FAILED`; transient errors retry with
+capped full-jitter backoff and move to the redrivable `DEAD_LETTER` state only
+after the attempt limit is reached. Retry state is stored in PostgreSQL so it
+remains queryable and survives broker restarts.
 
-## Honest limitations
+## Leases and fencing tokens
 
-This chain costs a database that participates in every hop, and it leans on
-PostgreSQL's locking and unique constraints; at some throughput the outbox
-table becomes the thing you're operating. And "exactly-once effect" is
-scoped to effects the constraint can see — side effects outside the
-database (a notification, a third-party call) need their own idempotency
-story, usually a provider-side key.
+A worker can be slow rather than dead. If its lease expires, a reaper may
+return the job to `PENDING` and another worker may claim it while the original
+attempt is still running.
 
-## Where to start
+Each Foreman claim receives a new lease token. Terminal and retry updates are
+conditional on the job still being `PROCESSING` with that token. A late update
+from an earlier claimant therefore matches no row. The natural-key constraint
+independently keeps repeated record inserts idempotent.
 
-Trace one write path in your system and ask three questions: is intent
-captured in the same transaction as the state change; what happens if this
-consumer runs twice; and what happens if a presumed-dead worker writes
-late. The first question finds your lost work, the second your duplicates,
-the third your rarest and worst incident. Fix them in that order.
+Broker late acknowledgements and visibility timeouts cover a different window:
+a worker failure before the claim commits. After a claim commits, Foreman's
+state guard prevents ordinary broker redelivery from processing the job again,
+so the lease reaper is responsible for recovery.
+
+## Limitations
+
+The guarantee is scoped to state held behind the database constraints. An
+email or third-party request needs its own idempotency key or reconciliation
+process. The design also adds operational work: outbox rows, retry schedules,
+leases, and dead-lettered jobs all need monitoring and retention policies.
+
+There is also a broker boundary. Once an outbox event is marked dispatched,
+the application relies on the broker's durability and redelivery settings; it
+does not run a separate scanner for new jobs whose message disappears after
+that point.
+
+## Practical starting point
+
+For one asynchronous write path, document three boundaries:
+
+1. whether the domain change and publication intent commit atomically;
+2. how the consumer behaves when the same logical message runs twice; and
+3. how a late worker is prevented from overwriting a newer claim.
+
+Then record which component recovers each crash window and which effects remain
+outside the guarantee.

@@ -50,7 +50,7 @@
       "query": "What does evaluation-driven AI engineering mean here?",
       "expectedSectionIds": [
         "llm-as-judge-as-a-ci-quality-gate#intro",
-        "llm-as-judge-as-a-ci-quality-gate#the-shape-of-the-gate",
+        "llm-as-judge-as-a-ci-quality-gate#evaluation-gate-structure",
         "ai-due-diligence-assistant#important-engineering-decisions"
       ]
     },
@@ -104,34 +104,34 @@
       "id": "note-vector-db-evidence-bar",
       "query": "Why doesn't the site use a vector database for retrieval?",
       "expectedSectionIds": [
-        "retrieval-without-a-vector-database#the-evidence-bar-for-embeddings",
+        "retrieval-without-a-vector-database#criteria-for-adding-embeddings",
         "retrieval-without-a-vector-database#intro",
-        "retrieval-without-a-vector-database#what-the-lexical-baseline-actually-is"
+        "retrieval-without-a-vector-database#lexical-retrieval-pipeline"
       ]
     },
     {
       "id": "note-hexagonal-when",
       "query": "When is hexagonal architecture worth the ceremony?",
       "expectedSectionIds": [
-        "ports-and-adapters-without-the-ceremony#when-not-to-bother",
+        "ports-and-adapters-without-the-ceremony#when-a-direct-dependency-is-clearer",
         "ports-and-adapters-without-the-ceremony#intro",
-        "ports-and-adapters-without-the-ceremony#what-the-seam-buys-you-concretely"
+        "ports-and-adapters-without-the-ceremony#what-the-seam-provides"
       ]
     },
     {
       "id": "note-config-as-data",
       "query": "When should product variation become configuration data instead of code?",
       "expectedSectionIds": [
-        "variation-as-data-not-code#when-data-beats-code",
+        "variation-as-data-not-code#suitable-forms-of-variation",
         "variation-as-data-not-code#intro",
-        "variation-as-data-not-code#the-three-hard-parts"
+        "variation-as-data-not-code#validation-versioning-and-migration"
       ]
     },
     {
       "id": "note-fencing-tokens",
       "query": "What are fencing tokens used for in job processing?",
       "expectedSectionIds": [
-        "exactly-once-is-an-effect-not-a-delivery#fence-the-survivor-leases-and-tokens",
+        "exactly-once-is-an-effect-not-a-delivery#leases-and-fencing-tokens",
         "foreman#architecture"
       ]
     },
@@ -139,7 +139,7 @@
       "id": "note-eval-dimensions",
       "query": "Which dimensions should an LLM evaluation suite measure?",
       "expectedSectionIds": [
-        "anatomy-of-an-llm-evaluation-suite#the-dimensions-that-pull-apart",
+        "anatomy-of-an-llm-evaluation-suite#evaluation-dimensions",
         "anatomy-of-an-llm-evaluation-suite#intro"
       ]
     }

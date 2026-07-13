@@ -1,6 +1,6 @@
 ---
-title: "Anatomy of an LLM evaluation suite"
-description: "One score can't tell you why an LLM feature regressed. The suite that can: separated dimensions, thresholds frozen from measured baselines, and a release gate distinct from the merge gate."
+title: "Designing an LLM evaluation suite"
+description: "How to separate retrieval, groundedness, completeness, citation validity, refusals, and adversarial behaviour into measurements that identify the source of a regression."
 pubDate: 2026-07-13
 tags:
   - ai-engineering
@@ -8,85 +8,88 @@ tags:
 draft: false
 ---
 
-The first evaluation most LLM features get is a single number — "the agent
-scores 87%" — and a single number is almost useless. When it drops, you
-don't know if retrieval broke, the model started hallucinating, citations
-went stale, or the refusal behaviour got timid. An evaluation suite earns
-its keep by **separating the dimensions**, so a regression names its own
-cause.
+A single evaluation score can show that overall behaviour changed, but it does
+not identify the cause. A lower score might come from retrieval, unsupported
+claims, missing information, invalid citations, or refusal behaviour. Measuring
+those dimensions separately makes a failed evaluation actionable.
 
-I've written before about
-[making the score a CI gate](https://edwardchapman.co.uk/notes/llm-as-judge-as-a-ci-quality-gate);
-this note is about what to measure. The worked example is this site's own
-[ask agent](https://edwardchapman.co.uk/ask), whose full harness —
-fixtures, thresholds, reports — is in the
-[public repository](https://github.com/edjchapman/edwardchapman.co.uk).
+The worked example is this site's
+[ask agent](https://edwardchapman.co.uk/ask). Its
+[fixtures](https://github.com/edjchapman/edwardchapman.co.uk/tree/main/tests/agent),
+[live evaluation runner](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/scripts/run-agent-evals.ts),
+and
+[recorded thresholds](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/evaluation.md)
+are public.
 
-## The dimensions that pull apart
+## Evaluation dimensions
 
-Six questions, each answerable independently:
+The suite measures six related behaviours:
 
-1. **Retrieval** — given this question, did the right sections surface?
-   Pure fixtures, no model involved.
-2. **Groundedness** — is every claim in the answer supported by the
-   supplied passages? This is the hallucination dimension.
-3. **Completeness** — did the answer include the claims it _should_ have?
-   Groundedness alone rewards timid answers; completeness is its
-   counterweight.
-4. **Citation correctness** — do the returned sources correspond to
-   passages actually supplied? Enforceable mechanically with a whitelist,
-   which makes it an invariant, not a score.
-5. **Refusal quality** — do questions the corpus can't answer take the
-   refusal path? A suite without should-refuse cases rewards a system that
-   answers everything.
-6. **Adversarial safety** — injection attempts, role-change requests,
-   probes for private data. Scored pass/fail per case, spot-checked by
-   hand.
+1. **Retrieval relevance** — did the expected sections appear for the query?
+   This can be tested deterministically from query-to-section fixtures.
+2. **Groundedness** — is each factual statement in the answer supported by
+   the supplied passages?
+3. **Completeness** — does the answer include the required claims? A fully
+   grounded answer can still omit important information.
+4. **Citation validity** — do citation identifiers refer to passages that were
+   supplied to the model? This site enforces membership with a whitelist.
+   Whether a cited passage supports a particular claim remains part of the
+   groundedness assessment.
+5. **Refusal accuracy** — does the system refuse questions that the published
+   corpus cannot support without refusing answerable questions unnecessarily?
+6. **Adversarial behaviour** — how does the system respond to prompt
+   injection, role-change requests, private-data requests, and unrelated
+   questions? Automated checks are supplemented by a manual red-team review.
 
-The pairings are the design insight: groundedness without completeness
-breeds timidity, completeness without groundedness breeds confabulation,
-and neither means anything if retrieval quietly broke upstream.
+These dimensions need to be interpreted together. For example, increasing
+completeness is not an improvement if groundedness falls, and a grounded model
+cannot compensate for retrieval that omitted the relevant source.
 
-## Thresholds: measured, then frozen
+## Setting and maintaining thresholds
 
-Where do the passing bars come from? Not from aspiration. Run the suite,
-record the baseline, set each threshold at or just below the measured
-score, and **freeze it in a document that requires a justified edit to
-change**. Two failure modes die with this move: thresholds invented before
-evidence (which fail forever and get deleted), and thresholds quietly
-lowered to make a red run green — the evaluation equivalent of deleting
-the failing test. This site's rule is written down: weakening a bar to
-pass is prohibited; fix the behaviour or justify the change in the
-evaluation doc.
+Thresholds should combine two forms of evidence:
 
-Leave headroom below perfect scores even when you hit them — an LLM judge
-has variance, and a threshold pinned at 1.00 turns judge noise into build
-noise.
+- the minimum behaviour required by the product and its risk profile; and
+- repeated baseline runs showing the normal variance of the measurement.
 
-## Two gates, not one
+A baseline is descriptive, not automatically acceptable. If the current
+system performs below the product requirement, the threshold should expose the
+gap rather than redefine it as success. For stochastic judge scores, repeated
+runs help establish enough tolerance to avoid treating ordinary judge variance
+as a regression.
 
-The merge gate runs deterministically — fixtures, fake model adapter,
-keyless, on every pull request. The release gate runs live — real model,
-LLM-as-judge scoring, on a schedule and before anything user-visible
-changes. The split matters because they hunt different prey: the merge
-gate catches _your_ regressions the commit they happen; the live run
-catches _drift_ — the provider updated the model and your groundedness
-moved without any commit at all. A weekly cadence bounds that detection
-window; it doesn't eliminate it.
+Once agreed, thresholds should be recorded with their baseline and rationale.
+Changing one should require an explicit explanation in the same review as the
+change. This site's policy is documented in
+[docs/evaluation.md](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/evaluation.md):
+fix the behaviour or justify the threshold change; do not lower a value only to
+make a run pass.
 
-## Honest limitations
+## Merge and release gates
 
-An LLM judge inherits bias and can be generous to fluent nonsense —
-true-negative cases bound the effect but don't remove it, so human
-spot-checks stay on the checklist. And every fixture set is a snapshot of
-the corpus and capabilities you had when you wrote it: each new feature
-needs new golden cases in the same change, or the suite decays into a
-guard for last quarter's product.
+The merge gate runs deterministic fixtures with a fake model adapter on every
+pull request. It checks changes made in the repository without requiring a
+secret or a non-deterministic provider call.
 
-## Where to start
+The live gate calls the configured production model and uses an LLM judge. It
+runs weekly and before an agent release. This gate can detect model or provider
+drift that occurs without a repository change. A schedule limits the time such
+drift can remain undetected, but it does not provide continuous detection.
 
-Write the six dimensions as column headers. For your feature, fill in: how
-each is measured, what the current score is, and which gate it runs in. The
-empty cells are your roadmap — and the moment every cell is full, you have
-something rarer than a benchmark: an argument, with evidence, that your
-LLM feature works.
+## Limitations
+
+LLM judges inherit model bias and may accept confident but unsupported prose.
+Human review and deterministic invariants remain necessary. The current
+adversarial score also tests a bounded set of known attacks; it is evidence
+about those cases, not a general proof of safety.
+
+Fixtures are snapshots of the current corpus and capability set. When a new
+feature changes what the system should retrieve, answer, or refuse, the same
+change should add representative evaluation cases.
+
+## Practical starting point
+
+Create a table with one row for each dimension and columns for the measurement,
+fixture source, execution mode, threshold, and known limitation. Unfilled cells
+identify work that is not yet covered. This produces a reviewable evaluation
+plan before any aggregate score is introduced.
