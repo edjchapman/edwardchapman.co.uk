@@ -5,6 +5,8 @@ dist/
 .wrangler/
 .dev.vars
 src/generated/
+public/og/projects/
+public/og/notes/
 eval-report.json
 
 # Test artefacts

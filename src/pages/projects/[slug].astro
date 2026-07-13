@@ -23,7 +23,12 @@ const relatedNotes = await getCollection(
 );
 ---
 
-<BaseLayout title={`${title} — Ed Chapman`} description={problem}>
+<BaseLayout
+  title={`${title} — Ed Chapman`}
+  description={problem}
+  image={`/og/projects/${project.id}.png`}
+  type="article"
+>
   <article>
     <header>
       <h1>{title}</h1>
