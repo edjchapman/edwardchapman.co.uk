@@ -5,7 +5,7 @@ pubDate: 2026-07-13
 tags:
   - ai-engineering
   - evaluation
-draft: true
+draft: false
 ---
 
 The first evaluation most LLM features get is a single number — "the agent

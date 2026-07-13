@@ -5,7 +5,7 @@ pubDate: 2026-07-13
 tags:
   - architecture
   - testing
-draft: true
+draft: false
 relatedProject: foreman
 ---
 

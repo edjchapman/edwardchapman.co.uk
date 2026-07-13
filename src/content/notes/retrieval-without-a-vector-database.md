@@ -6,7 +6,7 @@ tags:
   - ai-engineering
   - retrieval
   - architecture
-draft: true
+draft: false
 ---
 
 Every retrieval-augmented system I see starts the same way: pick a vector
@@ -52,8 +52,8 @@ evidence. Grounding failures in RAG systems are usually blamed on the model,
 but most of them are retrieval failures the pipeline silently forgave.
 
 Gate design is where the actual tuning effort went. A single shared word
-must never count as confident ("London" appearing in one note does not make
-the system qualified to answer a weather question), so confidence requires
+must never count as confident (a city name appearing once in prose does not
+qualify the system as a local guide), so confidence requires
 both a minimum score and multiple matched terms — with one carve-out for
 definitional questions like "What is Foreman?", where the only meaningful
 token is the subject itself and the match lands on a document's own

@@ -5,7 +5,7 @@ pubDate: 2026-07-13
 tags:
   - architecture
   - backend
-draft: true
+draft: false
 ---
 
 Every product that survives contact with customers grows variants: another

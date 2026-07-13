@@ -32,6 +32,8 @@ const STOPWORDS = new Set([
   "at",
   "be",
   "by",
+  "can",
+  "could",
   "did",
   "do",
   "does",
@@ -52,7 +54,12 @@ const STOPWORDS = new Set([
   "of",
   "on",
   "or",
+  "may",
+  "might",
+  "must",
   "s",
+  "shall",
+  "should",
   "the",
   "their",
   "this",
@@ -64,7 +71,9 @@ const STOPWORDS = new Set([
   "which",
   "who",
   "why",
+  "will",
   "with",
+  "would",
   "you",
   "your",
   "about",
@@ -251,7 +260,7 @@ function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
  */
 export const CONFIDENCE_THRESHOLD = 1.5;
 export const MIN_MATCHED_TERMS = 2;
-export const ENTITY_CONFIDENCE_THRESHOLD = 3.0;
+export const ENTITY_CONFIDENCE_THRESHOLD = 3.7;
 
 export function isConfident(results: ScoredChunk[]): boolean {
   const top = results[0];

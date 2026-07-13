@@ -6,7 +6,7 @@ tags:
   - backend
   - reliability
   - distributed-systems
-draft: true
+draft: false
 relatedProject: foreman
 ---
 
@@ -72,8 +72,8 @@ This chain costs a database that participates in every hop, and it leans on
 PostgreSQL's locking and unique constraints; at some throughput the outbox
 table becomes the thing you're operating. And "exactly-once effect" is
 scoped to effects the constraint can see — side effects outside the
-database (an email, a third-party call) need their own idempotency story,
-usually a provider-side key.
+database (a notification, a third-party call) need their own idempotency
+story, usually a provider-side key.
 
 ## Where to start
 
