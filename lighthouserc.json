@@ -9,7 +9,7 @@
         "http://localhost:8788/notes/llm-as-judge-as-a-ci-quality-gate",
         "http://localhost:8788/ask"
       ],
-      "numberOfRuns": 1
+      "numberOfRuns": 3
     },
     "assert": {
       "assertions": {
