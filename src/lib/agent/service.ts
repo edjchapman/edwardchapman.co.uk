@@ -22,7 +22,8 @@ export type AgentEvent = {
     | "ask.provider_error"
     | "ask.response_invalid"
     | "ask.citations_stripped"
-    | "ask.answered";
+    | "ask.answered"
+    | "ask.unhandled_error";
   requestId: string;
   durationMs?: number;
   sectionIds?: string[];

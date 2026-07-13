@@ -1,9 +1,32 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-// The ask interface with a mocked backend (spec §15): submission, loading,
+// The ask interface (spec §15): one unmocked round-trip against the real
+// worker endpoint, then mocked-backend cases for submission, loading,
 // answer + source rendering, failure states, and the unadvertised posture.
 test.describe("/ask interface", () => {
+  test("real endpoint answers a corpus question (no mocks)", async ({
+    request,
+  }) => {
+    // Regression guard: unit tests fake `locals` and the other e2e cases fake
+    // the network, so only this probe exercises the deployed handler's env
+    // access and rate-limiter path inside workerd.
+    const response = await request.post("/api/ask", {
+      data: { question: "How did Foreman handle reliable event processing?" },
+    });
+    expect(response.status()).toBe(200);
+    const body = (await response.json()) as {
+      answer: string;
+      sources: { url: string }[];
+      requestId: string;
+    };
+    expect(body.answer.length).toBeGreaterThan(0);
+    expect(body.sources.length).toBeGreaterThan(0);
+    for (const source of body.sources) {
+      expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+    }
+  });
+
   test("is unadvertised: no nav link, noindex, absent from sitemap", async ({
     page,
     request,

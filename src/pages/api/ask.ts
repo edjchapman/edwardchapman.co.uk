@@ -71,6 +71,22 @@ const structuredLog: AgentLogger = (event) => {
 };
 
 /**
+ * Worker env access. `cloudflare:workers` is the only supported source in
+ * the deployed Worker and under `wrangler dev` — the adapter's
+ * `locals.runtime.env` is a removed API whose property access throws. The
+ * module doesn't resolve in Node (vitest), so tests keep injecting env
+ * through `locals`.
+ */
+async function resolveEnv(locals: unknown): Promise<AskEnv> {
+  try {
+    const { env } = await import("cloudflare:workers");
+    return env as AskEnv;
+  } catch {
+    return (locals as { runtime?: { env?: AskEnv } }).runtime?.env ?? {};
+  }
+}
+
+/**
  * Adapter selection: the live Anthropic adapter when the Worker secret is
  * present (Phase 4), the deterministic fake otherwise (local dev, CI,
  * previews — which are host-gated off anyway). Model id and base URL are
@@ -87,7 +103,7 @@ function selectAdapter(env: AskEnv): ModelAdapter {
   return new FakeModelAdapter({ mode: "echo-first-citation" });
 }
 
-export const POST: APIRoute = async (context) => {
+const handleAsk: APIRoute = async (context) => {
   const requestId = crypto.randomUUID();
   const { request, locals } = context;
 
@@ -121,7 +137,7 @@ export const POST: APIRoute = async (context) => {
 
   // Rate limiting via the GA Workers binding, keyed on Cloudflare's trusted
   // client IP header (spec §10 — never trust browser-supplied IP info).
-  const env = (locals as { runtime?: { env?: AskEnv } }).runtime?.env ?? {};
+  const env = await resolveEnv(locals);
   const limiter = env.ASK_RATE_LIMITER;
   if (limiter) {
     const key = request.headers.get("cf-connecting-ip") ?? "unknown";
@@ -158,6 +174,18 @@ export const POST: APIRoute = async (context) => {
       return errorResponse("rate_limited", requestId);
     case "upstream_error":
       return errorResponse("upstream_error", requestId);
+  }
+};
+
+// Last-resort guard: whatever throws, the caller still gets the stable JSON
+// error envelope (spec §10) instead of the platform's bare 500.
+export const POST: APIRoute = async (context) => {
+  try {
+    return await handleAsk(context);
+  } catch {
+    const requestId = crypto.randomUUID();
+    structuredLog({ event: "ask.unhandled_error", requestId });
+    return errorResponse("upstream_error", requestId);
   }
 };
 
