@@ -21,6 +21,8 @@ repository) until the site's build generates it from published content.
   [claude-code-config](https://edwardchapman.co.uk/projects/claude-code-config)
 - [Notes](https://edwardchapman.co.uk/notes): technical writing — first note:
   [LLM-as-judge as a CI quality gate](https://edwardchapman.co.uk/notes/llm-as-judge-as-a-ci-quality-gate)
+- [Ask](https://edwardchapman.co.uk/ask): ask questions about Ed's published
+  work and get grounded, cited answers — refuses when the site doesn't cover it
 - [Colophon](https://edwardchapman.co.uk/colophon): how this site is built —
   Astro on Cloudflare Workers, static-first, spec-driven, gated by CI
 - [Privacy](https://edwardchapman.co.uk/privacy): no analytics, no cookies,

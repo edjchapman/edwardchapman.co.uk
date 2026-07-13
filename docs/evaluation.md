@@ -76,6 +76,14 @@ red-team checklist passes ∧ rate limiting verified live ∧ privacy copy
 published ∧ operational logging verified redacted. Until then `/ask` stays
 unlinked, unindexed, and out of the sitemap.
 
+**Passed 2026-07-13.** Deterministic mode green; live baseline all four
+dimensions at 1.00 (above thresholds); red-team 15/15
+([docs/red-team.md](red-team.md)); rate limiting verified live
+([ADR-0009](adr/0009-rate-limiting-without-stateful-infra.md)); privacy copy on
+`/ask` links [/privacy](https://edwardchapman.co.uk/privacy); Worker logs carry
+only redacted structured events (ids and event names, never question or answer
+text). `/ask` is now linked in the nav, indexed, and in the sitemap.
+
 ## Limitations (recorded honestly)
 
 - LLM-as-judge scoring inherits judge bias; adversarial grading is spot-
