@@ -160,6 +160,7 @@ const handleAsk: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({
           answer: outcome.answer,
+          citations: outcome.citations,
           sources: outcome.sources,
           requestId,
         }),
@@ -167,7 +168,12 @@ const handleAsk: APIRoute = async (context) => {
       );
     case "refused":
       return new Response(
-        JSON.stringify({ answer: outcome.answer, sources: [], requestId }),
+        JSON.stringify({
+          answer: outcome.answer,
+          citations: [],
+          sources: [],
+          requestId,
+        }),
         { status: 200, headers: jsonHeaders },
       );
     case "upstream_rate_limited":

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { REFUSAL_TEXT } from "../../src/lib/agent/prompt";
+import { askResponseSchema } from "../../src/lib/agent/schema";
 import { ALL, POST } from "../../src/pages/api/ask";
 
 const ENDPOINT = "https://edwardchapman.co.uk/api/ask";
@@ -34,19 +35,22 @@ function postJson(
 }
 
 describe("POST /api/ask contract", () => {
-  it("answers a supported question with sources and a requestId", async () => {
+  it("answers a supported question with citations, sources and a requestId", async () => {
     const response = await postJson({
       question: "How did Foreman handle reliable event processing?",
     });
     expect(response.status).toBe(200);
-    const body = (await response.json()) as {
-      answer: string;
-      sources: { title: string; url: string }[];
-      requestId: string;
-    };
-    expect(body.answer.length).toBeGreaterThan(0);
-    expect(body.sources.length).toBeGreaterThan(0);
-    expect(body.requestId).toMatch(/[0-9a-f-]{36}/);
+    const body: unknown = await response.json();
+    // The shared contract schema enforces the span invariants (spec §10):
+    // half-open ranges into answer, sourceIndex into sources, sorted starts.
+    const parsed = askResponseSchema.safeParse(body);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.answer.length).toBeGreaterThan(0);
+      expect(parsed.data.citations.length).toBeGreaterThan(0);
+      expect(parsed.data.sources.length).toBeGreaterThan(0);
+      expect(parsed.data.requestId).toMatch(/[0-9a-f-]{36}/);
+    }
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
@@ -57,9 +61,11 @@ describe("POST /api/ask contract", () => {
     expect(response.status).toBe(200);
     const body = (await response.json()) as {
       answer: string;
+      citations: unknown[];
       sources: unknown[];
     };
     expect(body.answer).toBe(REFUSAL_TEXT);
+    expect(body.citations).toEqual([]);
     expect(body.sources).toEqual([]);
   });
 
@@ -154,13 +160,22 @@ describe("adversarial cases (deterministic invariants)", () => {
       expect(response.status).toBe(200);
       const body = (await response.json()) as {
         answer: string;
+        citations?: { start: number; end: number; sourceIndex: number }[];
         sources: { url: string }[];
       };
-      // Whatever happened, the policy never leaks and sources stay on-origin.
+      // Whatever happened, the policy never leaks, sources stay on-origin,
+      // and any citation surface satisfies the span invariants.
       expect(body.answer).not.toContain("Rules, in priority order");
       expect(body.answer.toLowerCase()).not.toContain("system policy");
       for (const source of body.sources) {
         expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+      }
+      for (const citation of body.citations ?? []) {
+        expect(citation.start).toBeGreaterThanOrEqual(0);
+        expect(citation.start).toBeLessThan(citation.end);
+        expect(citation.end).toBeLessThanOrEqual(body.answer.length);
+        expect(citation.sourceIndex).toBeGreaterThanOrEqual(0);
+        expect(citation.sourceIndex).toBeLessThan(body.sources.length);
       }
     });
   }

@@ -17,6 +17,7 @@ test.describe("/ask interface", () => {
     expect(response.status()).toBe(200);
     const body = (await response.json()) as {
       answer: string;
+      citations: { start: number; end: number; sourceIndex: number }[];
       sources: { url: string }[];
       requestId: string;
     };
@@ -24,6 +25,16 @@ test.describe("/ask interface", () => {
     expect(body.sources.length).toBeGreaterThan(0);
     for (const source of body.sources) {
       expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+    }
+    // The fake adapter path exercises API-enforced citations end-to-end
+    // inside workerd (ADR-0012): spans must satisfy the contract invariants.
+    expect(body.citations.length).toBeGreaterThan(0);
+    for (const citation of body.citations) {
+      expect(citation.start).toBeGreaterThanOrEqual(0);
+      expect(citation.start).toBeLessThan(citation.end);
+      expect(citation.end).toBeLessThanOrEqual(body.answer.length);
+      expect(citation.sourceIndex).toBeGreaterThanOrEqual(0);
+      expect(citation.sourceIndex).toBeLessThan(body.sources.length);
     }
   });
 
@@ -46,7 +57,7 @@ test.describe("/ask interface", () => {
     expect(await sitemap.text()).toContain("/ask");
   });
 
-  test("submits a question and renders the answer with source links", async ({
+  test("submits a question and renders the answer with inline citations", async ({
     page,
   }) => {
     await page.route("**/api/ask", async (route) => {
@@ -55,6 +66,7 @@ test.describe("/ask interface", () => {
         contentType: "application/json",
         body: JSON.stringify({
           answer: "Foreman uses a transactional outbox.",
+          citations: [{ start: 0, end: 36, sourceIndex: 0 }],
           sources: [
             {
               title: "Foreman — Architecture",
@@ -74,8 +86,16 @@ test.describe("/ask interface", () => {
 
     const status = page.getByRole("status");
     await expect(status).toContainText("transactional outbox");
+    // Inline marker anchors to the numbered source entry (ADR-0012)…
+    const marker = status.getByRole("link", {
+      name: "Source 1: Foreman — Architecture",
+    });
+    await expect(marker).toHaveAttribute("href", "#ask-source-1");
+    // …and the numbered source links out to the canonical page.
     await expect(
-      status.getByRole("link", { name: "Foreman — Architecture" }),
+      status.locator("#ask-source-1").getByRole("link", {
+        name: "Foreman — Architecture",
+      }),
     ).toHaveAttribute("href", "https://edwardchapman.co.uk/projects/foreman");
     await expect(status).toContainText("Generated from published site content");
   });
@@ -88,7 +108,12 @@ test.describe("/ask interface", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ answer: "Done.", sources: [], requestId: "t" }),
+        body: JSON.stringify({
+          answer: "Done.",
+          citations: [],
+          sources: [],
+          requestId: "t",
+        }),
       });
     });
 
@@ -131,7 +156,12 @@ test.describe("/ask interface", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ answer: "Ok.", sources: [], requestId: "t" }),
+        body: JSON.stringify({
+          answer: "Ok.",
+          citations: [],
+          sources: [],
+          requestId: "t",
+        }),
       });
     });
 
