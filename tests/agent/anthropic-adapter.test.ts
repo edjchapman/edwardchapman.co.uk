@@ -306,16 +306,22 @@ describe("anthropic adapter error mapping", () => {
     expect(result).toEqual({ type: "rate_limited" });
   });
 
-  it("maps 500 to a generic provider error with status only", async () => {
+  it("maps 500 to a provider error carrying status and error type", async () => {
     const { fetch } = stubFetch([errorResponse(500), errorResponse(500)]);
     const result = await makeAdapter(fetch).complete(REQUEST);
-    expect(result).toEqual({ type: "provider_error", detail: "status 500" });
+    expect(result).toEqual({
+      type: "provider_error",
+      detail: "status 500 api_error",
+    });
   });
 
   it("maps 400 to a provider error without retrying", async () => {
     const { fetch, calls } = stubFetch([errorResponse(400)]);
     const result = await makeAdapter(fetch).complete(REQUEST);
-    expect(result).toEqual({ type: "provider_error", detail: "status 400" });
+    expect(result).toEqual({
+      type: "provider_error",
+      detail: "status 400 api_error",
+    });
     expect(calls.length).toBe(1);
   });
 });

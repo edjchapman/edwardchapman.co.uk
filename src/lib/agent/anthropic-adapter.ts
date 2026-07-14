@@ -142,9 +142,12 @@ function mapProviderError(error: unknown): ModelResult {
     return { type: "rate_limited" };
   }
   if (error instanceof Anthropic.APIError) {
+    // Status + API error type only — content-free, safe for logs and eval
+    // reports, and enough to tell a rejected request shape (400) from an
+    // auth or capacity failure.
     return {
       type: "provider_error",
-      detail: `status ${String(error.status)}`,
+      detail: `status ${String(error.status)} ${error.type ?? ""}`.trim(),
     };
   }
   return { type: "provider_error", detail: "unexpected adapter failure" };
