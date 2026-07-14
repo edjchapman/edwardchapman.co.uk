@@ -14,14 +14,23 @@ dashboard-only behaviour.
 Preview uploads use `wrangler versions upload`, which **cannot** touch
 triggers or custom domains — a preview can never affect production routing.
 
-## Secrets (GitHub Actions)
+## Secrets
 
-| Secret                  | Scope                                                         |
-| ----------------------- | ------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Minimal-scope API token (see below)                           |
-| `CLOUDFLARE_ACCOUNT_ID` | Account id (not secret-sensitive, stored as one for tidiness) |
+Credentials live in three independent stores; none are in source control. The
+Anthropic API key sits in two of them (different consumers), so rotating it
+means updating **both** — see [Rotating the Anthropic API
+key](#rotating-the-anthropic-api-key).
 
-Token recipe (create at dash.cloudflare.com → My Profile → API Tokens):
+### GitHub Actions
+
+| Secret                  | Scope                                                         | Consumer                                          |
+| ----------------------- | ------------------------------------------------------------- | ------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Minimal-scope API token (see below)                           | `deploy.yml`                                      |
+| `CLOUDFLARE_ACCOUNT_ID` | Account id (not secret-sensitive, stored as one for tidiness) | `deploy.yml`                                      |
+| `ANTHROPIC_API_KEY`     | `production` **environment** secret                           | `eval-live.yml` (live agent evaluation, ADR-0008) |
+
+Cloudflare token recipe (create at dash.cloudflare.com → My Profile → API
+Tokens):
 
 - Account → **Workers Scripts : Edit**
 - Zone (edwardchapman.co.uk) → **Workers Routes : Edit**, **DNS : Edit**,
@@ -30,8 +39,53 @@ Token recipe (create at dash.cloudflare.com → My Profile → API Tokens):
 
 The zone-scoped permissions exist for the Phase 1 cutover (custom domain,
 stale-record removal, www redirect, email routing); Workers Scripts is what
-day-to-day deploys use. No secrets live in source control; local development
-needs none.
+day-to-day deploys use.
+
+### Cloudflare Worker (runtime)
+
+`ANTHROPIC_API_KEY` — a Worker secret the deployed Worker reads at request time
+as `env.ANTHROPIC_API_KEY` to answer `/api/ask` (Phase 4). Stored on the
+Worker, never in the repo. This is a **separate** store from the GitHub secret
+of the same name.
+
+### Local (optional)
+
+`ANTHROPIC_API_KEY_EDWARDCHAPMAN` — a shell environment variable used only to
+run `make eval-agent-live` locally. Not needed for CI, deploys, or production.
+Local development of everything else needs no secrets.
+
+## Rotating the Anthropic API key
+
+The key is consumed in three independent places. They fix different things, so
+a full rotation updates all three:
+
+| Where                             | Fixes                        | Command                                                                                                                     |
+| --------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| GitHub Actions (`production` env) | the live-eval workflow       | `gh secret set ANTHROPIC_API_KEY --env production`                                                                          |
+| Cloudflare Worker                 | production `/api/ask`        | `wrangler versions secret put ANTHROPIC_API_KEY --name edwardchapman`, then `wrangler versions deploy --name edwardchapman` |
+| Local shell (optional)            | local `make eval-agent-live` | update `ANTHROPIC_API_KEY_EDWARDCHAPMAN` wherever you export it (profile / `.env` / secrets manager)                        |
+
+**Reading the commands: every token shown is literal — type it exactly.**
+`ANTHROPIC_API_KEY` is the secret's _name_ (not its value), `edwardchapman` is
+the Worker's name, `production` is the GitHub environment name. **The new key
+value never appears on the command line** — `gh` and `wrangler` prompt for it
+(`Paste your secret:` / `Enter a secret value:`), which keeps it out of shell
+history.
+
+**Cloudflare versioned-deploy trap.** This Worker deploys as versions, so the
+plain `wrangler secret put` fails with _"the latest version of your Worker
+isn't currently deployed."_ Use `wrangler versions secret put` — it stores the
+secret in a new version built from the **currently deployed code** (not your
+local working tree), then `wrangler versions deploy` promotes it to traffic.
+Secrets persist across versions, so the next CI deploy inherits it
+automatically: set each secret once.
+
+**Verify the rotation:**
+
+- Production Worker: `curl https://edwardchapman.co.uk/api/ask -H 'content-type: application/json' -d '{"question":"How did Foreman handle reliable event processing?"}'` returns an answer, not `upstream_error`.
+- GitHub Actions: dispatch `eval-live.yml` (Actions → live agent evaluation →
+  Run workflow, or `gh workflow run eval-live.yml`) and confirm it runs the
+  evaluation rather than logging _"ANTHROPIC_API_KEY is not configured"_.
 
 ## Deploy flow
 
