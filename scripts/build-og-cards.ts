@@ -51,10 +51,26 @@ async function write(
   return cards.length;
 }
 
+async function writeDefault(root: string): Promise<number> {
+  const raw = await readFile(
+    join(root, "src/content/profile/positioning.md"),
+    "utf8",
+  );
+  const tagline = frontmatter(raw)["tagline"];
+  if (typeof tagline !== "string" || tagline.length === 0) {
+    throw new Error("positioning.md is missing the tagline frontmatter field");
+  }
+  const png = await renderOgCard(tagline, "Ed Chapman — personal site");
+  await mkdir(join(root, "public/og"), { recursive: true });
+  await writeFile(join(root, "public/og/default.png"), png);
+  return 1;
+}
+
 const root = process.cwd();
 const projects = await collect(root, "projects", (d) => projectSchema.parse(d));
 const notes = await collect(root, "notes", (d) => noteSchema.parse(d));
 const written =
   (await write(root, "projects", "Project case study", projects)) +
-  (await write(root, "notes", "Note", notes));
+  (await write(root, "notes", "Note", notes)) +
+  (await writeDefault(root));
 console.log(`build-og-cards: OK — ${written} cards into public/og/`);

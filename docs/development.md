@@ -55,9 +55,9 @@ them against dist.
 
 **Social cards are generated, never hand-edited**: `make build` runs
 `scripts/build-og-cards.ts`, which renders `public/og/{projects,notes}/*.png`
-from non-draft frontmatter (those directories are gitignored). Only
-`public/og/default.png`, the site-wide fallback card, is committed — see
-docs/architecture.md § Build pipeline.
+from non-draft frontmatter and the site-wide fallback `public/og/default.png`
+from the positioning tagline. The whole `public/og/` directory is gitignored
+— see docs/architecture.md § Build pipeline.
 
 **`public/llms.txt` is maintained by hand**: when pages or featured projects
 change, update it in the same PR (it is a discovery aid, not a security
