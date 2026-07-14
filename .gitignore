@@ -15,6 +15,9 @@ playwright-report/
 coverage/
 .lighthouseci/
 
+# Local session logs (personal working notes; never published)
+standups/
+
 # IDE / OS
 .idea/
 .junie/
