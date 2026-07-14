@@ -152,7 +152,8 @@ Private career documents may be used by the developer to help draft public-safe 
 - Copied wholesale.
 - Bundled into the deployed application.
 - committed to the public repository.
-- included in prompts.
+- included in prompts. _(superseded for Ed-directed drafting sessions —
+  see [ADR-0011](adr/0011-cv-derived-positioning-via-reviewed-drafting.md))_
 - included in build artefacts.
 - logged.
 - exposed through source maps or API responses.
