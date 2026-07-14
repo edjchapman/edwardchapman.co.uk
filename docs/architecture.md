@@ -23,8 +23,22 @@ The Worker exists only for routes that declare `prerender = false`.
 
 ## Build pipeline
 
+`make build` runs two pre-build generators before `astro build`, in order:
+
+1. **`scripts/build-agent-corpus.ts`** — the versioned agent corpus
+   ([ADR-0005](adr/0005-build-time-corpus-deterministic-retrieval.md)).
+2. **`scripts/build-og-cards.ts`** — per-page social cards (spec §9). It
+   renders one 1200×630 PNG per non-draft project and note into
+   `public/og/{projects,notes}/` (gitignored; `public/og/default.png` is the
+   committed site-wide fallback). Rasterisation uses `@resvg/resvg-js`, a
+   native module — it must run as a Node pre-build step because the Worker
+   bundler can never see it.
+
+Both are deterministic from published content, so CI and local builds emit
+identical assets.
+
 `astro build` (adapter: `@astrojs/cloudflare` v14, which wraps
-`@cloudflare/vite-plugin`) emits:
+`@cloudflare/vite-plugin`) then emits:
 
 - `dist/client/` — prerendered pages and assets, served by Workers Static
   Assets. Includes an adapter-managed `_headers` file.
@@ -73,6 +87,14 @@ markdown link/anchor checks, Prettier, ESLint, `astro check`, Vitest,
 the production build, the content-policy scan, and built-output link/canonical
 validation. Playwright e2e runs separately (`make test-e2e`) and in a
 non-required CI job.
+
+**Lighthouse budgets** are a second, non-blocking layer
+([ADR-0010](adr/0010-lighthouse-budgets-and-early-rss.md)): `make check-perf`
+runs `lhci autorun` against the built site with thresholds pinned in
+`lighthouserc.json` (performance ≥ 0.85; accessibility, best practices and
+SEO ≥ 0.95). CI runs it on every PR via `perf.yml`; like e2e it is
+deliberately not a required check — it is not part of `make check` and does
+not gate merges.
 
 ## Environment bindings
 
