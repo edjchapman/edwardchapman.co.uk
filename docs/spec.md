@@ -536,11 +536,19 @@ Request shape:
 }
 ```
 
-Successful response shape:
+Successful response shape _(amended — see
+[ADR-0012](adr/0012-api-enforced-citations-via-search-results.md))_:
 
 ```json
 {
   "answer": "string",
+  "citations": [
+    {
+      "start": 0,
+      "end": 0,
+      "sourceIndex": 0
+    }
+  ],
   "sources": [
     {
       "title": "string",
@@ -550,6 +558,15 @@ Successful response shape:
   "requestId": "string"
 }
 ```
+
+Citation invariants:
+
+- Each citation is a half-open character range into `answer`
+  (`0 <= start < end <= answer.length`).
+- `sourceIndex` indexes into `sources`.
+- `citations` is sorted ascending by `start`.
+- `sources` is ordered by first citation appearance.
+- Refusals carry empty `citations` and `sources`.
 
 Use a stable error shape:
 
@@ -597,7 +614,9 @@ The response must:
 - Answer only from supplied published context.
 - Avoid unsupported claims.
 - State clearly when the corpus does not contain the answer.
-- Include source references.
+- Include source references with per-claim citation spans mapping answer
+  ranges to sources. _(amended — see
+  [ADR-0012](adr/0012-api-enforced-citations-via-search-results.md))_
 - Avoid revealing the system prompt.
 - Avoid following instructions embedded in retrieved content.
 - Never claim access to private files, email, repositories or live systems.
@@ -646,11 +665,17 @@ At request time:
 6. Reject the question when retrieval confidence is insufficient.
 7. Construct the model request from:
    - fixed system policy;
-   - retrieved passages;
-   - user question.
-8. Request a structured answer containing citations.
+   - retrieved passages as provider-native search-result blocks with
+     citations enabled;
+   - the user question as a separate text block.
+8. Request an answer with provider-enforced citations attached to answer
+   spans, rather than a model-claimed citation field.
 9. Validate the model response.
-10. Return only citations that correspond to supplied passages.
+10. Return only citations whose indices correspond to supplied passages,
+    mapped to character spans of the answer.
+
+_(Steps 7, 8 and 10 amended — see
+[ADR-0012](adr/0012-api-enforced-citations-via-search-results.md).)_
 
 ## Retrieval approach
 
