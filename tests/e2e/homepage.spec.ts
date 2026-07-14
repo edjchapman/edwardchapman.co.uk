@@ -38,6 +38,42 @@ test.describe("homepage", () => {
     await expect(
       page.getByRole("heading", { level: 2, name: "Technical focus" }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Recent notes" }),
+    ).toBeVisible();
+  });
+
+  test("recent notes list the three newest published notes and resolve", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const section = page.getByRole("region", { name: "Recent notes" });
+    const links = section.locator(".recent-notes a");
+    await expect(links).toHaveCount(3);
+    await expect(
+      section.getByRole("link", { name: "All notes →" }),
+    ).toHaveAttribute("href", "/notes");
+
+    const firstHref = await links.first().getAttribute("href");
+    expect(firstHref).toMatch(/^\/notes\/[a-z0-9-]+$/);
+    const response = await page.goto(firstHref ?? "/notes");
+    expect(response?.status()).toBe(200);
+  });
+
+  test("closing pointer links live content and the ask agent, no stale copy", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const deeper = page.locator(".deeper");
+    await expect(deeper.getByRole("link", { name: "colophon" })).toBeVisible();
+    await expect(
+      deeper.getByRole("link", { name: "case studies" }),
+    ).toHaveAttribute("href", "/projects");
+    await expect(deeper.getByRole("link", { name: "Ask" })).toHaveAttribute(
+      "href",
+      "/ask",
+    );
+    await expect(page.locator("body")).not.toContainText("on the way");
   });
 
   test("project cards link to repositories and live demos", async ({

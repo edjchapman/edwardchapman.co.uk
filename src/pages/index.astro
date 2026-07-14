@@ -23,6 +23,17 @@ const { Content: TechnicalFocus } = await render(technicalFocus);
 const projects = (
   await getCollection("projects", ({ data }) => data.featured && !data.draft)
 ).sort((a, b) => a.data.order - b.data.order);
+
+const recentNotes = (await getCollection("notes", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const formatDate = (date: Date) =>
+  date.toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 ---
 
 <BaseLayout title={SITE.title} description={SITE.description}>
@@ -41,15 +52,60 @@ const projects = (
     <Prose><TechnicalFocus /></Prose>
   </Section>
 
+  <Section id="recent-notes" heading="Recent notes">
+    <ul class="recent-notes">
+      {
+        recentNotes.map((note) => (
+          <li>
+            <a href={`/notes/${note.id}`}>{note.data.title}</a>
+            <time datetime={note.data.pubDate.toISOString().slice(0, 10)}>
+              {formatDate(note.data.pubDate)}
+            </time>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="all-notes"><a href="/notes">All notes →</a></p>
+  </Section>
+
   <p class="deeper">
     This site is a project too — the <a href="/colophon">colophon</a> explains how
-    it's built. Case studies and notes are on the way.
+    it's built, and full <a href="/projects">case studies</a> sit behind each project
+    above. Questions about the work? <a href="/ask">Ask</a> — it answers from this
+    site's published content only.
   </p>
 
   <JsonLdPerson />
 </BaseLayout>
 
 <style>
+  .recent-notes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .recent-notes li {
+    margin-bottom: var(--space-3);
+  }
+
+  .recent-notes a {
+    font-family: var(--font-serif);
+    font-weight: 600;
+  }
+
+  .recent-notes time {
+    display: block;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    margin-top: var(--space-1);
+  }
+
+  .all-notes {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-sm);
+  }
+
   .deeper {
     margin-top: var(--space-5);
     padding-top: var(--space-3);
