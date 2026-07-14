@@ -1199,11 +1199,13 @@ Possible work, not pre-authorised requirements:
 - streaming answers.
 - richer analytics.
 - additional case studies.
-- RSS.
+- RSS. _(shipped early, Phase 2 — see
+  [ADR-0010](adr/0010-lighthouse-budgets-and-early-rss.md))_
 - tag pages.
 - search.
 - dark mode.
-- automated social-card generation.
+- automated social-card generation. _(shipped early, Phase 2 — see
+  [ADR-0010](adr/0010-lighthouse-budgets-and-early-rss.md))_
 
 Before implementing any item, document:
 

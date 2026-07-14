@@ -24,6 +24,7 @@ make check    # the full gate — green on a fresh clone
 | `make preview`                  | Production build served through `wrangler dev` (real asset/Worker semantics)                                 |
 | `make check`                    | The whole gate: md links/anchors, format, lint, `astro check`, unit tests, build, content policy, dist links |
 | `make test-e2e`                 | Playwright suite against the built site (first run: `pnpm exec playwright install chromium`)                 |
+| `make check-perf`               | Lighthouse budgets against the built site (optional — not in `make check`; CI runs it per PR via `perf.yml`) |
 | `make format` / `make lint-fix` | Write-mode formatting / autofixable lint                                                                     |
 | `make help`                     | Everything else                                                                                              |
 
@@ -51,6 +52,12 @@ will hold you to it.
 link checker validates repo-file links, and the Phase-3 corpus needs
 canonical citation URLs anyway. The built-output checker still validates
 them against dist.
+
+**Social cards are generated, never hand-edited**: `make build` runs
+`scripts/build-og-cards.ts`, which renders `public/og/{projects,notes}/*.png`
+from non-draft frontmatter (those directories are gitignored). Only
+`public/og/default.png`, the site-wide fallback card, is committed — see
+docs/architecture.md § Build pipeline.
 
 **`public/llms.txt` is maintained by hand**: when pages or featured projects
 change, update it in the same PR (it is a discovery aid, not a security

@@ -53,6 +53,7 @@ Details and troubleshooting: [docs/development.md](docs/development.md).
 | ------------------------------------------ | --------------------------------------------------------------------------------------------- |
 | `make check`                               | format, lint, `astro check`, unit tests, build, content-policy scan, built-output link checks |
 | `make test-e2e`                            | Playwright against the built site                                                             |
+| `make check-perf`                          | Lighthouse budgets (non-blocking; CI runs it on every PR)                                     |
 | `make preview`                             | production build via `wrangler dev`                                                           |
 | `make eval-agent` / `make eval-agent-live` | agent evaluations (defined in Phases 3–4; see [docs/evaluation.md](docs/evaluation.md))       |
 | `make help`                                | everything else                                                                               |
