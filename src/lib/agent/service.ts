@@ -16,6 +16,8 @@ export type AgentEvent = {
   event:
     | "ask.accepted"
     | "ask.refused_low_confidence"
+    | "ask.refused_model_declined"
+    | "ask.refused_no_citations"
     | "ask.provider_ok"
     | "ask.provider_timeout"
     | "ask.provider_rate_limited"
@@ -35,6 +37,15 @@ export type AgentLogger = (event: AgentEvent) => void;
 /** Half-open character span into the answer, pointing at a sources entry. */
 export type CitationSpan = { start: number; end: number; sourceIndex: number };
 
+/**
+ * Why a question was refused. Content-free (no answer text) so it is safe to
+ * log and surface in eval reports: `low_confidence` = retrieval gate;
+ * `model_declined` = the model returned the refusal sentence; `no_citations` =
+ * the model answered but nothing cited a supplied passage.
+ */
+export type RefusalReason =
+  "low_confidence" | "model_declined" | "no_citations";
+
 export type AgentOutcome =
   | {
       kind: "answered";
@@ -42,7 +53,7 @@ export type AgentOutcome =
       citations: CitationSpan[];
       sources: { title: string; url: string }[];
     }
-  | { kind: "refused"; answer: string }
+  | { kind: "refused"; answer: string; reason: RefusalReason }
   | { kind: "upstream_error" }
   | { kind: "upstream_rate_limited" };
 
@@ -66,7 +77,11 @@ export class AgentService {
     const results = this.retriever.search(question, TOP_K);
     if (!isConfident(results)) {
       this.log({ event: "ask.refused_low_confidence", requestId });
-      return { kind: "refused", answer: REFUSAL_TEXT };
+      return {
+        kind: "refused",
+        answer: REFUSAL_TEXT,
+        reason: "low_confidence",
+      };
     }
 
     const result = await this.adapter.complete({
@@ -124,12 +139,20 @@ export class AgentService {
       return { kind: "upstream_error" };
     }
 
-    if (
-      parsed.data.text.includes(REFUSAL_TEXT) ||
-      validCitations.length === 0
-    ) {
-      this.log({ event: "ask.refused_low_confidence", requestId });
-      return { kind: "refused", answer: REFUSAL_TEXT };
+    // Two distinct refusal causes, kept separate so the reason is observable
+    // (content-free) rather than collapsed: the model itself declined, versus
+    // the model answered but nothing cited a supplied passage.
+    if (parsed.data.text.includes(REFUSAL_TEXT)) {
+      this.log({ event: "ask.refused_model_declined", requestId });
+      return {
+        kind: "refused",
+        answer: REFUSAL_TEXT,
+        reason: "model_declined",
+      };
+    }
+    if (validCitations.length === 0) {
+      this.log({ event: "ask.refused_no_citations", requestId });
+      return { kind: "refused", answer: REFUSAL_TEXT, reason: "no_citations" };
     }
 
     const mapped = mapCitationsToSources(

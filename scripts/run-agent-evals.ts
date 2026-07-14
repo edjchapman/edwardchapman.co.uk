@@ -254,19 +254,23 @@ async function main(): Promise<void> {
         id: testCase.id,
         kind: "golden",
         pass,
-        detail: pass ? "refused as expected" : `got ${outcome.kind}`,
+        detail: pass
+          ? `refused as expected (${outcome.reason})`
+          : `got ${outcome.kind}`,
       });
       continue;
     }
 
     if (outcome.kind !== "answered") {
+      const why =
+        outcome.kind === "refused"
+          ? `refused: ${outcome.reason}`
+          : (failure.note ?? outcome.kind);
       results.push({
         id: testCase.id,
         kind: "golden",
         pass: false,
-        detail: `expected answer, got ${outcome.kind}${
-          failure.note ? ` (${failure.note})` : ""
-        }`,
+        detail: `expected answer, got ${why}`,
       });
       groundedTotal += 1;
       claimsTotal += testCase.requiredClaims.length;

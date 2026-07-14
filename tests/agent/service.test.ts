@@ -58,7 +58,10 @@ describe("agent service outcomes", () => {
       "req-2",
     );
     expect(outcome.kind).toBe("refused");
-    if (outcome.kind === "refused") expect(outcome.answer).toBe(REFUSAL_TEXT);
+    if (outcome.kind === "refused") {
+      expect(outcome.answer).toBe(REFUSAL_TEXT);
+      expect(outcome.reason).toBe("low_confidence");
+    }
     expect(events.map((event) => event.event)).toContain(
       "ask.refused_low_confidence",
     );
@@ -126,6 +129,7 @@ describe("agent service outcomes", () => {
     );
     const outcome = await service.ask(SUPPORTED_QUESTION, "req-8");
     expect(outcome.kind).toBe("refused");
+    if (outcome.kind === "refused") expect(outcome.reason).toBe("no_citations");
   });
 
   it("treats the refusal sentence as a refusal even when cited", async () => {
@@ -134,7 +138,10 @@ describe("agent service outcomes", () => {
     );
     const outcome = await service.ask(SUPPORTED_QUESTION, "req-9");
     expect(outcome.kind).toBe("refused");
-    if (outcome.kind === "refused") expect(outcome.answer).toBe(REFUSAL_TEXT);
+    if (outcome.kind === "refused") {
+      expect(outcome.answer).toBe(REFUSAL_TEXT);
+      expect(outcome.reason).toBe("model_declined");
+    }
   });
 
   it("never logs question text in structured events", async () => {
