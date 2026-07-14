@@ -22,7 +22,10 @@ versioned fixtures in `tests/agent/`:
 - prompt construction (snapshot)
 - API contract via the fake model adapter: validation, error shapes,
   timeouts, provider-failure mapping, rate-limit behaviour
-- citation whitelisting and security invariants
+- the live adapter's provider contract over a stubbed transport
+  (`anthropic-adapter.test.ts`): search-result block construction,
+  citation-span parsing, provider-error mapping
+- citation whitelisting, span invariants, and security invariants
   (`adversarial-questions.json`)
 
 A regression here is a blocked merge, by design.
@@ -56,6 +59,24 @@ strongest spurious hit (3.39) and below the weakest genuine one ("What is
 Foreman?" 4.06). Same fixtures pin the boundary; no live-mode threshold
 changed.
 
+### Grounding-mechanism record
+
+**2026-07-14 — citations move from model-claimed to API-enforced
+([ADR-0012](adr/0012-api-enforced-citations-via-search-results.md)).**
+Previously the model returned `{answer, citations}` as structured output and
+the service whitelisted the claimed sectionIds — which caught fabricated ids
+but not miscredited ones. Passages now travel as search-result blocks with
+citations enabled, and the API attaches citations to spans of the answer,
+verbatim-bound to the supplied blocks. The service keeps the whitelist as an
+index-bounds tripwire (`ask.citations_stripped` should never fire live), the
+harness gains a mechanical span-invariant check on every answered case, and
+the deterministic suite gains full adapter coverage over a stubbed transport.
+Zero-citation answers still refuse; the refusal sentence is unchanged. **No
+live-mode threshold changed** — the release verification for this change is a
+post-deploy live run plus a red-team re-run (the system prompt changed).
+
+## Live evaluation mode — `make eval-agent-live` (Phase 4)
+
 Calls the configured model (`ANTHROPIC_MODEL`) through the production
 adapter. Scores golden and adversarial sets for **groundedness,
 completeness, citation correctness, and refusal quality** using an
@@ -76,9 +97,11 @@ prompts, questions, or secrets.
 | Groundedness (LLM judge)             | 0.90      | 1.00     | frozen |
 | Completeness (required claims)       | 0.85      | 1.00     | frozen |
 
-Citation correctness is enforced mechanically (the whitelist strips anything
-not supplied), so it is a deterministic invariant rather than a scored
-dimension. Thresholds live in `scripts/run-agent-evals.ts`; the first baseline
+Citation correctness is enforced mechanically rather than scored: the API
+attaches citations to the supplied passages at generation time (ADR-0012),
+the service strips any out-of-bounds index as a tripwire, and the harness
+fails any answered case whose citation spans violate the response contract.
+Thresholds live in `scripts/run-agent-evals.ts`; the first baseline
 confirms them **here**, and they are then frozen. **Weakening a threshold to
 make a run pass is prohibited** (see CLAUDE.md).
 

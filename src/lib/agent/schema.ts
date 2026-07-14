@@ -1,7 +1,7 @@
 /**
- * Agent API contracts (spec §10): request/response validation for /api/ask
- * and the structured shape the model must return. Pure zod — shared by the
- * Worker route, the service layer, and the test suites.
+ * Agent API contracts (spec §10, ADR-0012): request/response validation for
+ * /api/ask and the normalised answer shape adapters must produce. Pure zod —
+ * shared by the Worker route, the service layer, and the test suites.
  */
 
 import { z } from "zod";
@@ -21,11 +21,50 @@ export const sourceSchema = z.object({
   url: z.url(),
 });
 
-export const askResponseSchema = z.object({
-  answer: z.string(),
-  sources: z.array(sourceSchema),
-  requestId: z.string(),
+/** Half-open character span into `answer`, pointing at a `sources` entry. */
+export const citationSpanSchema = z.object({
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+  sourceIndex: z.number().int().min(0),
 });
+
+export const askResponseSchema = z
+  .object({
+    answer: z.string(),
+    citations: z.array(citationSpanSchema),
+    sources: z.array(sourceSchema),
+    requestId: z.string(),
+  })
+  .superRefine((value, ctx) => {
+    let previousStart = -1;
+    for (const [index, citation] of value.citations.entries()) {
+      if (
+        citation.start >= citation.end ||
+        citation.end > value.answer.length
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["citations", index],
+          message: "span must satisfy 0 <= start < end <= answer.length",
+        });
+      }
+      if (citation.sourceIndex >= value.sources.length) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["citations", index, "sourceIndex"],
+          message: "sourceIndex must reference an entry in sources",
+        });
+      }
+      if (citation.start < previousStart) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["citations", index, "start"],
+          message: "citations must be sorted ascending by start",
+        });
+      }
+      previousStart = citation.start;
+    }
+  });
 
 export const askErrorSchema = z.object({
   error: z.object({
@@ -41,31 +80,34 @@ export const askErrorSchema = z.object({
   requestId: z.string(),
 });
 
-/** What the model must return (structured output), before whitelisting. */
-export const modelAnswerSchema = z.object({
-  answer: z.string().min(1),
-  citations: z.array(z.string()).default([]),
+/**
+ * Normalised adapter output (ADR-0012), before service whitelisting.
+ * Out-of-range `documentIndex` values are deliberately not schema-invalid:
+ * bounds need the supplied-passage count, which is the service's job.
+ */
+export const modelCitationSchema = z.object({
+  start: z.number().int().min(0),
+  end: z.number().int().min(0),
+  documentIndex: z.number().int().min(0),
 });
 
-/** JSON Schema handed to the provider's structured-output constraint. */
-export const MODEL_ANSWER_JSON_SCHEMA = {
-  type: "object",
-  properties: {
-    answer: {
-      type: "string",
-      description: "The grounded answer, or the exact refusal sentence.",
-    },
-    citations: {
-      type: "array",
-      items: { type: "string" },
-      description: "sectionIds of the supplied passages actually used.",
-    },
-  },
-  required: ["answer", "citations"],
-  additionalProperties: false,
-} as const;
+export const modelAnswerSchema = z
+  .object({
+    text: z.string().min(1),
+    citations: z.array(modelCitationSchema),
+  })
+  .superRefine((value, ctx) => {
+    for (const [index, citation] of value.citations.entries()) {
+      if (citation.start >= citation.end || citation.end > value.text.length) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["citations", index],
+          message: "span must satisfy 0 <= start < end <= text.length",
+        });
+      }
+    }
+  });
 
 export type AskRequest = z.infer<typeof askRequestSchema>;
 export type AskResponse = z.infer<typeof askResponseSchema>;
 export type AskError = z.infer<typeof askErrorSchema>;
-export type ModelAnswer = z.infer<typeof modelAnswerSchema>;

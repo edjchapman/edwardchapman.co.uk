@@ -13,9 +13,10 @@ tags:
 - **Spec first.** The hard thinking happens in writing before broad
   implementation — this site's own commissioning spec and architecture
   decision records are public in its repository.
-- **Evidence over claims.** Reliability numbers come from load tests; AI
-  quality comes from evaluation harnesses in CI. If it isn't measured, it
-  isn't asserted.
+- **Evidence over claims — evaluation-driven AI engineering.** Reliability
+  numbers come from load tests; AI quality comes from evaluation harnesses in
+  CI, scored against thresholds that gate merges and releases. If it isn't
+  measured, it isn't asserted.
 - **Boundaries by machine, not memory.** Content policy, commit standards,
   and quality gates run as code on every change — a violation is a red build,
   not a retrospective.

@@ -1,4 +1,6 @@
-import { useRef, useState, type FormEvent } from "react";
+import { Fragment, useRef, useState, type FormEvent } from "react";
+
+import { segmentAnswer, type CitationSpan } from "./ask-citations.ts";
 
 /**
  * The site's one React island (ADR-0004): the ask form's state machine —
@@ -11,7 +13,12 @@ type Source = { title: string; url: string };
 type AskState =
   | { phase: "idle" }
   | { phase: "loading" }
-  | { phase: "answered"; answer: string; sources: Source[] }
+  | {
+      phase: "answered";
+      answer: string;
+      citations: CitationSpan[];
+      sources: Source[];
+    }
   | { phase: "error"; message: string };
 
 const EXAMPLE_QUESTIONS = [
@@ -52,10 +59,15 @@ export default function AskForm() {
         return;
       }
 
-      const ok = body as { answer: string; sources: Source[] };
+      const ok = body as {
+        answer: string;
+        citations?: CitationSpan[];
+        sources?: Source[];
+      };
       setState({
         phase: "answered",
         answer: ok.answer,
+        citations: ok.citations ?? [],
         sources: ok.sources ?? [],
       });
     } catch {
@@ -123,17 +135,37 @@ export default function AskForm() {
         {state.phase === "error" && <p className="error">{state.message}</p>}
         {state.phase === "answered" && (
           <div className="answer">
-            <p>{state.answer}</p>
+            <p>
+              {segmentAnswer(
+                state.answer,
+                state.citations,
+                state.sources.length,
+              ).map((segment, index) => (
+                <Fragment key={index}>
+                  {segment.text}
+                  {segment.markers.map((marker) => (
+                    <sup key={marker} className="citation">
+                      <a
+                        href={`#ask-source-${marker}`}
+                        aria-label={`Source ${marker}: ${state.sources[marker - 1]?.title ?? ""}`}
+                      >
+                        [{marker}]
+                      </a>
+                    </sup>
+                  ))}
+                </Fragment>
+              ))}
+            </p>
             {state.sources.length > 0 && (
               <>
                 <p className="sources-label">Sources on this site:</p>
-                <ul className="sources">
-                  {state.sources.map((source) => (
-                    <li key={source.url}>
+                <ol className="sources">
+                  {state.sources.map((source, index) => (
+                    <li key={source.url} id={`ask-source-${index + 1}`}>
                       <a href={source.url}>{source.title}</a>
                     </li>
                   ))}
-                </ul>
+                </ol>
               </>
             )}
             <p className="disclosure">

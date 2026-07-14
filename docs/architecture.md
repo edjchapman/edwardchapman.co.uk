@@ -80,6 +80,27 @@ ingestion) + authored pages. The boundary is enforced mechanically by
 `scripts/check-content-policy.ts` inside `make check`
 ([ADR-0007](adr/0007-public-content-boundary.md)).
 
+## Ask agent request path
+
+`POST /api/ask` ([ADR-0012](adr/0012-api-enforced-citations-via-search-results.md)):
+
+1. Validate (Content-Type, byte cap, zod question schema) and rate-limit
+   (per-IP binding, [ADR-0009](adr/0009-rate-limiting-without-stateful-infra.md)).
+2. Retrieve top-5 corpus chunks (deterministic BM25-style scoring); refuse
+   below the confidence gate without calling the model.
+3. Send the chunks as `search_result` blocks (canonical URL + title, citations
+   enabled) plus the framed question; the API attaches citations to spans of
+   the answer.
+4. Normalise at the adapter seam to `{text, citations}`; validate spans;
+   whitelist citation indices (anomaly tripwire); check policy-leak
+   fingerprints; treat the refusal sentence or zero citations as a refusal.
+5. Return `{answer, citations, sources, requestId}` — spans map answer ranges
+   to sources, deduplicated by URL and ordered by first citation; the island
+   renders them as inline markers.
+
+The fake adapter speaks the same normalised shape, so the whole path runs
+deterministically in CI and local dev without a key.
+
 ## Quality gate
 
 One command, everywhere: `make check` — run locally, by the pre-commit hook
