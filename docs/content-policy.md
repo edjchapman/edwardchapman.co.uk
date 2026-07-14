@@ -20,12 +20,13 @@ Content may be drawn from, and only from:
 
 Private material — including the private `career-portfolio` repository,
 application notes, recruiter correspondence, and interview information — may
-inform _drafting_, including drafting in a local assistant session at Ed's
-explicit direction ([ADR-0011](adr/0011-cv-derived-positioning-via-reviewed-drafting.md)).
+inform _drafting_ (emphasis, ordering, phrasing), including drafting in a
+local assistant session at Ed's explicit direction
+([ADR-0011](adr/0011-cv-derived-positioning-via-reviewed-drafting.md)).
 No text, metric, or fact traceable only to a private source may be
-committed, built, or logged here except as positioning material explicitly
-approved by Ed (category 4) through the CV-derived drafting workflow below;
-raw private text is never copied wholesale.
+committed, built, or logged here — private context may choose which public
+facts to foreground, never add facts of its own. Raw private text is never
+copied wholesale.
 
 ## Prohibited information
 
@@ -65,15 +66,17 @@ line — `content-policy-allow:<rule-id>` — never by weakening a rule.
 - Changes to `content-policy-rules.json` are policy changes: the PR
   description must say what is being allowed/forbidden and why.
 
-### CV-derived drafting workflow (ADR-0011)
+### CV-informed drafting workflow (ADR-0011)
 
-When positioning copy is drafted from private career documents:
+When positioning copy is drafted with private career documents as context:
 
 1. Ed explicitly directs the drafting session to the private source.
 2. The draft is new public-facing prose — never raw excerpts.
-3. The PR description lists every claim that traces only to the private
-   source; Ed's approval of that PR is the publication approval that makes
-   each claim category-4 material.
+3. Private context informs emphasis, ordering, and phrasing only. Every
+   claim in the draft must be supported by an identifiable public source
+   (categories 1–5 above), named in the PR description if it isn't obvious
+   from the diff. A claim whose only support is private material is not
+   publishable, regardless of review.
 4. The prohibited-information list above still applies without exception,
    and nothing private may appear in commit messages, fixtures, tests,
    logs, or the agent corpus.

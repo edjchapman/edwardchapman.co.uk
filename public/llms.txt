@@ -1,10 +1,10 @@
 # Ed Chapman — edwardchapman.co.uk
 
-> Personal site of Ed Chapman, a senior backend and platform engineer in
-> London: production Python/Django, infrastructure ownership on AWS/Terraform,
-> product engineering in TypeScript and React, and AI-native delivery with
-> evaluation discipline (eval harnesses in CI, grounded generation with
-> citations).
+> Personal site of Ed Chapman, a senior software engineer in London: backend
+> and platform depth in Python/Django, infrastructure ownership on
+> AWS/Terraform, product engineering in TypeScript and React, and AI-native
+> delivery with evaluation discipline (eval harnesses in CI, grounded
+> generation with citations).
 
 This file is a discovery aid, not a security boundary. It is maintained by
 hand alongside content changes (process: docs/development.md in the site
