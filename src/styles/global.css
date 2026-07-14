@@ -10,7 +10,7 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: light dark;
 }
 
 body {
@@ -85,5 +85,32 @@ code {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Print — force ink-on-white regardless of the OS theme (a dark-scheme visitor
+ * would otherwise print a dark page), and drop site chrome from the page. */
+@media print {
+  :root {
+    --color-paper: #fff;
+    --color-ink: #000;
+    --color-muted: #333;
+    --color-accent: #000;
+    --color-rule: #ccc;
+    --color-paper-raised: #fff;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  header,
+  footer,
+  .skip-link {
+    display: none;
+  }
+
+  a {
+    text-decoration: underline;
   }
 }

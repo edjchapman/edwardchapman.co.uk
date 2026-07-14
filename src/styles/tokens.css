@@ -14,6 +14,7 @@
   --color-accent: #1a5fb4;
   --color-rule: #e5e2da;
   --color-paper-raised: #ffffff;
+  --color-error: #8a2b1d;
 
   /* type */
   --font-sans:
@@ -26,8 +27,9 @@
   --text-base: 1.0625rem;
   --text-lg: 1.25rem;
   --text-xl: 1.5625rem;
-  --text-2xl: 1.953rem;
-  --text-3xl: 2.441rem;
+  /* display sizes scale down on narrow screens (clamp), fixed on desktop */
+  --text-2xl: clamp(1.6rem, 1.3rem + 1.4vw, 1.953rem);
+  --text-3xl: clamp(1.9rem, 1.4rem + 2.2vw, 2.441rem);
 
   --leading-tight: 1.2;
   --leading-body: 1.6;
@@ -43,4 +45,22 @@
 
   --radius: 4px;
   --rule: 1px solid var(--color-rule);
+}
+
+/*
+ * Dark theme — system-driven via prefers-color-scheme, no toggle (ADR-0013).
+ * Overrides the colour tokens only; type/space/radius are colour-independent
+ * and stay in :root. Same WCAG 2.2 AA target as light — every pair is verified
+ * by the axe scans that run in both schemes (tests/e2e/a11y.spec.ts).
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #171614;
+    --color-ink: #eceae4;
+    --color-muted: #a29d92;
+    --color-accent: #7fb0ef;
+    --color-rule: #302e2a;
+    --color-paper-raised: #201e1b;
+    --color-error: #f0a99b;
+  }
 }

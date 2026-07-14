@@ -435,7 +435,9 @@ Avoid:
 - Overly elaborate dark mode.
 - Generic AI-generated illustrations.
 
-Dark mode is optional and must not delay the MVP.
+Dark mode is optional and must not delay the MVP. Delivered as a minimal,
+system-driven theme (follows `prefers-color-scheme`, no toggle) — see
+[ADR-0013](adr/0013-dark-mode-via-prefers-color-scheme.md).
 
 Use motion only where it improves state communication. Respect `prefers-reduced-motion`.
 
@@ -1229,7 +1231,8 @@ Possible work, not pre-authorised requirements:
   [ADR-0010](adr/0010-lighthouse-budgets-and-early-rss.md))_
 - tag pages.
 - search.
-- dark mode.
+- dark mode. _(shipped early as a minimal system-driven theme — see
+  [ADR-0013](adr/0013-dark-mode-via-prefers-color-scheme.md))_
 - automated social-card generation. _(shipped early, Phase 2 — see
   [ADR-0010](adr/0010-lighthouse-budgets-and-early-rss.md))_
 
