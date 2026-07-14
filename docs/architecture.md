@@ -29,10 +29,11 @@ The Worker exists only for routes that declare `prerender = false`.
    ([ADR-0005](adr/0005-build-time-corpus-deterministic-retrieval.md)).
 2. **`scripts/build-og-cards.ts`** — per-page social cards (spec §9). It
    renders one 1200×630 PNG per non-draft project and note into
-   `public/og/{projects,notes}/` (gitignored; `public/og/default.png` is the
-   committed site-wide fallback). Rasterisation uses `@resvg/resvg-js`, a
-   native module — it must run as a Node pre-build step because the Worker
-   bundler can never see it.
+   `public/og/{projects,notes}/`, plus the site-wide fallback
+   `public/og/default.png` from the positioning tagline (the whole
+   `public/og/` directory is gitignored). Rasterisation uses
+   `@resvg/resvg-js`, a native module — it must run as a Node pre-build step
+   because the Worker bundler can never see it.
 
 Both are deterministic from published content, so CI and local builds emit
 identical assets.
