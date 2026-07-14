@@ -2,9 +2,9 @@
 
 export const SITE = {
   name: "Ed Chapman",
-  title: "Ed Chapman — Senior Backend & Platform Engineer",
+  title: "Ed Chapman — Senior Software Engineer",
   description:
-    "Ed Chapman, senior backend and platform engineer in London: production Python/Django, infrastructure ownership on AWS, React/TypeScript product work, and evaluation-driven AI engineering.",
+    "Ed Chapman, senior software engineer in London: backend and platform depth in Python/Django, infrastructure ownership on AWS, React/TypeScript product work, and evaluation-driven AI engineering.",
   origin: "https://edwardchapman.co.uk",
   github: "https://github.com/edjchapman",
   linkedin: "https://www.linkedin.com/in/edjchapman/",

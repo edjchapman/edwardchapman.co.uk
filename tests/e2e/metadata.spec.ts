@@ -61,6 +61,23 @@ test.describe("metadata", () => {
     }
   });
 
+  test("default social card is generated as a valid 1200×630 PNG", async ({
+    request,
+  }) => {
+    const card = await request.get("/og/default.png");
+    expect(card.status()).toBe(200);
+    expect(card.headers()["content-type"]).toContain("image/png");
+
+    // PNG layout: 8-byte signature, then the IHDR chunk with big-endian
+    // width at byte 16 and height at byte 20.
+    const body = await card.body();
+    expect([...body.subarray(0, 8)]).toEqual([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+    expect(body.readUInt32BE(16)).toBe(1200);
+    expect(body.readUInt32BE(20)).toBe(630);
+  });
+
   test("project and note pages carry their own social card, and it resolves", async ({
     page,
     request,

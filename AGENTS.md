@@ -15,10 +15,15 @@ This repo is a public demonstration artefact. These rules override convenience.
 - **Never invent professional claims.** Every statement about Ed's work must
   trace to a public source (public repos, live demos, published site content).
   No unverifiable metrics, no embellishment.
-- **Never ingest private material.** The private `career-portfolio` repo,
-  private notes, recruiter conversations, salary details, and anything under
-  `~/Reference` are off-limits — not in content, not in prompts, not in
-  fixtures, not in commit messages. `docs/content-policy.md` is authoritative;
+- **Never ingest private material uninvited.** Private notes, recruiter
+  conversations, salary details, and anything under `~/Reference` are
+  off-limits — not in content, not in prompts, not in fixtures, not in commit
+  messages. Sole exception: at Ed's explicit direction, the private
+  `career-portfolio` repo may be read to inform the emphasis, ordering, and
+  phrasing of positioning copy under the reviewed workflow in
+  `docs/content-policy.md` (ADR-0011) — it may never introduce a claim that
+  lacks a public source, and prohibited information stays absolute.
+  `docs/content-policy.md` is authoritative;
   `scripts/check-content-policy.ts` enforces it mechanically.
 - The agent corpus (Phase 3+) may only contain published, non-draft content
   collections. Never widen the corpus boundary to make an answer possible.
