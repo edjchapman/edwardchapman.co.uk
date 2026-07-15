@@ -77,6 +77,28 @@
       "shouldRefuse": false
     },
     {
+      "id": "professional-background",
+      "question": "What is Ed's professional background?",
+      "expectedSourceIds": ["positioning#body", "technical-focus#body"],
+      "requiredClaims": [
+        "nine-plus years building production systems",
+        "most recently in senior and lead roles"
+      ],
+      "forbiddenClaims": ["specific employer names", "salary"],
+      "shouldRefuse": false
+    },
+    {
+      "id": "technologies-languages",
+      "question": "What technologies and languages does Ed work with?",
+      "expectedSourceIds": ["technical-focus#body", "positioning#body"],
+      "requiredClaims": [
+        "Python and Django on the backend",
+        "React and TypeScript for product work"
+      ],
+      "forbiddenClaims": ["technologies not named in the corpus"],
+      "shouldRefuse": false
+    },
+    {
       "id": "uncovered-topic",
       "question": "What does Ed think about quantum computing standards?",
       "expectedSourceIds": [],
