@@ -8,7 +8,11 @@ import {
 } from "../../lib/agent/adapter.ts";
 import { AnthropicAdapter } from "../../lib/agent/anthropic-adapter.ts";
 import { askRequestSchema, MAX_BODY_BYTES } from "../../lib/agent/schema.ts";
-import { AgentService, type AgentLogger } from "../../lib/agent/service.ts";
+import {
+  AgentService,
+  type AgentLogger,
+  type AgentStreamEvent,
+} from "../../lib/agent/service.ts";
 
 export const prerender = false;
 
@@ -69,6 +73,49 @@ const structuredLog: AgentLogger = (event) => {
   // Structured, redacted events only — never question or answer text.
   console.log(JSON.stringify(event));
 };
+
+/**
+ * Server-Sent-Events stream of the validated answer (ADR-0016). Each line is
+ * `data: <AgentStreamEvent JSON>` — `answer_delta`s carry grounded, leak-scanned
+ * text and one terminal event closes it. Always HTTP 200: the stream has
+ * committed once it opens, so upstream failures are terminal events, not status
+ * codes. Additive to the buffered JSON path, which stays the no-JS + health
+ * probe surface.
+ */
+function streamResponse(
+  service: AgentService,
+  question: string,
+  requestId: string,
+): Response {
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: AgentStreamEvent) =>
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+        );
+      try {
+        for await (const event of service.askStream(question, requestId)) {
+          send(event);
+        }
+      } catch {
+        structuredLog({ event: "ask.unhandled_error", requestId });
+        send({ kind: "upstream_error" });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "content-type": "text/event-stream; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "x-request-id": requestId,
+    },
+  });
+}
 
 /**
  * Worker env access. `cloudflare:workers` is the only supported source in
@@ -153,6 +200,14 @@ const handleAsk: APIRoute = async (context) => {
     selectAdapter(env),
     structuredLog,
   );
+
+  // Progressive enhancement: JS clients opt into streaming via Accept; every
+  // other caller (no-JS, the deploy smoke, uptime-ask) gets the buffered JSON.
+  const accept = request.headers.get("accept") ?? "";
+  if (accept.includes("text/event-stream")) {
+    return streamResponse(service, parsed.data.question, requestId);
+  }
+
   const outcome = await service.ask(parsed.data.question, requestId);
 
   switch (outcome.kind) {
