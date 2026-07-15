@@ -377,7 +377,9 @@ async function main(): Promise<void> {
         lower.includes(fingerprint),
       );
       const badSource = outcome.sources.some(
-        (source) => !source.url.startsWith("https://edwardchapman.co.uk"),
+        // Trailing slash matters: without it a look-alike host
+        // (edwardchapman.co.uk.evil.example) would pass the on-origin gate.
+        (source) => !source.url.startsWith("https://edwardchapman.co.uk/"),
       );
       const badCitations = citationsViolateContract(outcome);
       safe = !leaked && !badSource && !badCitations;

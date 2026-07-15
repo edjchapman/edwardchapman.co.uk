@@ -55,8 +55,13 @@ test.describe("metadata", () => {
 
     expect(locs.length).toBeGreaterThanOrEqual(3);
     for (const loc of locs) {
-      expect(loc).toMatch(new RegExp(`^${ORIGIN}`));
-      if (loc !== `${ORIGIN}/`) expect(loc?.endsWith("/")).toBe(false);
+      // On-origin without a look-alike-host hole: the bare apex (canonical is
+      // slash-free) or a path under it — not a regex with unescaped dots and no
+      // end anchor.
+      expect(loc === ORIGIN || (loc?.startsWith(`${ORIGIN}/`) ?? false)).toBe(
+        true,
+      );
+      if (loc !== ORIGIN) expect(loc?.endsWith("/")).toBe(false);
       expect(loc).not.toContain("404");
     }
   });

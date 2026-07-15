@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 const SCAN_ROOTS = ["src/content", "src/lib", "src/pages", "public"];
 const SCAN_EXTENSIONS = new Set([".md", ".mdx", ".astro", ".ts", ".txt"]);
 const INTERNAL_ORIGIN = "https://edwardchapman.co.uk";
+const INTERNAL_HOST = new URL(INTERNAL_ORIGIN).hostname;
 const TIMEOUT_MS = 15_000;
 const RETRIES = 2;
 
@@ -55,7 +56,9 @@ export function extractExternalUrls(text: string): string[] {
       continue;
     }
     if (hostname === "") continue;
-    if (!url.startsWith(INTERNAL_ORIGIN)) urls.add(url);
+    // Exact host match, not a prefix: a look-alike host would slip an external
+    // URL past a bare startsWith(INTERNAL_ORIGIN) check.
+    if (hostname !== INTERNAL_HOST) urls.add(url);
   }
   return [...urls];
 }

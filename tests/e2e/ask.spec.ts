@@ -24,7 +24,7 @@ test.describe("/ask interface", () => {
     expect(body.answer.length).toBeGreaterThan(0);
     expect(body.sources.length).toBeGreaterThan(0);
     for (const source of body.sources) {
-      expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+      expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
     }
     // The fake adapter path exercises API-enforced citations end-to-end
     // inside workerd (ADR-0012): spans must satisfy the contract invariants.

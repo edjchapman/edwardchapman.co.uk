@@ -33,8 +33,17 @@ function* walk(dir: string): Generator<string> {
   }
 }
 
+/**
+ * True only for the canonical origin itself or a path under it — never a
+ * look-alike host (edwardchapman.co.uk.evil.example) that a bare prefix check
+ * would wrongly accept as on-origin.
+ */
+function isCanonicalOrigin(url: string): boolean {
+  return url === CANONICAL_ORIGIN || url.startsWith(`${CANONICAL_ORIGIN}/`);
+}
+
 function isExternal(url: string): boolean {
-  return /^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith(CANONICAL_ORIGIN);
+  return /^[a-z][a-z0-9+.-]*:/i.test(url) && !isCanonicalOrigin(url);
 }
 
 /** Resolve an internal path to its dist/ file, honouring build.format "file". */
@@ -63,7 +72,7 @@ export function checkUrl(
   if (isExternal(rawUrl)) return null; // external links: separate checker
 
   let path = rawUrl;
-  if (rawUrl.startsWith(CANONICAL_ORIGIN)) {
+  if (isCanonicalOrigin(rawUrl)) {
     path = rawUrl.slice(CANONICAL_ORIGIN.length) || "/";
   }
   if (!path.startsWith("/")) {
@@ -103,7 +112,7 @@ function checkSitemaps(distDir: string): LinkProblem[] {
     for (const match of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
       const loc = match[1] ?? "";
       if (loc.endsWith(".xml")) continue; // sitemap-index entries
-      if (!loc.startsWith(CANONICAL_ORIGIN)) {
+      if (!isCanonicalOrigin(loc)) {
         problems.push({
           file: sitemap,
           url: loc,
