@@ -2,7 +2,13 @@
 title: "Positioning"
 order: 1
 tagline: "Senior software engineer — backend and platform depth in Python and Django, infrastructure ownership on AWS and Terraform, product work in React and TypeScript, and AI-native delivery with evaluation discipline."
-updatedDate: 2026-07-14
+updatedDate: 2026-07-15
+tags:
+  - professional background and experience
+  - senior and lead engineering roles
+  - career history and seniority
+  - industries and domains worked in
+  - proptech, supply-chain logistics, and energy
 ---
 
 I'm a senior software engineer in London with nine-plus years building

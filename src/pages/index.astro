@@ -12,13 +12,15 @@ import { SITE } from "../lib/site";
 const positioning = await getEntry("profile", "positioning");
 const howIWork = await getEntry("profile", "how-i-work");
 const technicalFocus = await getEntry("profile", "technical-focus");
-if (!positioning || !howIWork || !technicalFocus) {
+const contact = await getEntry("profile", "contact");
+if (!positioning || !howIWork || !technicalFocus || !contact) {
   throw new Error("Homepage profile entries are missing from the collection");
 }
 
 const { Content: Positioning } = await render(positioning);
 const { Content: HowIWork } = await render(howIWork);
 const { Content: TechnicalFocus } = await render(technicalFocus);
+const { Content: Contact } = await render(contact);
 
 const projects = (
   await getCollection("projects", ({ data }) => data.featured && !data.draft)
@@ -66,6 +68,10 @@ const formatDate = (date: Date) =>
       }
     </ul>
     <p class="all-notes"><a href="/notes">All notes →</a></p>
+  </Section>
+
+  <Section id="contact" heading="Contact">
+    <Prose><Contact /></Prose>
   </Section>
 
   <p class="deeper">

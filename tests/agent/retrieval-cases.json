@@ -111,9 +111,12 @@
     {
       "id": "contact",
       "query": "How can I contact Ed by email?",
-      "expectedSectionIds": ["colophon#body", "positioning#body"],
-      "note": "Contact details live in site chrome, not corpus prose — acceptable to refuse; this case asserts no crash and is marked mayRefuse.",
-      "mayRefuse": true
+      "expectedSectionIds": ["contact#body"]
+    },
+    {
+      "id": "contact-get-in-touch",
+      "query": "How do I get in touch with Ed?",
+      "expectedSectionIds": ["contact#body"]
     },
     {
       "id": "site-architecture",

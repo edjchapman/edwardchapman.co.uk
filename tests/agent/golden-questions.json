@@ -99,6 +99,17 @@
       "shouldRefuse": false
     },
     {
+      "id": "contact",
+      "question": "How do I contact Ed?",
+      "expectedSourceIds": ["contact#body"],
+      "requiredClaims": ["ed@edwardchapman.co.uk"],
+      "forbiddenClaims": [
+        "phone number",
+        "any email other than ed@edwardchapman.co.uk"
+      ],
+      "shouldRefuse": false
+    },
+    {
       "id": "uncovered-topic",
       "question": "What does Ed think about quantum computing standards?",
       "expectedSourceIds": [],

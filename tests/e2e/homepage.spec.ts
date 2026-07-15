@@ -41,6 +41,11 @@ test.describe("homepage", () => {
     await expect(
       page.getByRole("heading", { level: 2, name: "Recent notes" }),
     ).toBeVisible();
+
+    const contact = page.getByRole("region", { name: "Contact" });
+    await expect(
+      contact.getByRole("link", { name: "ed@edwardchapman.co.uk" }),
+    ).toHaveAttribute("href", "mailto:ed@edwardchapman.co.uk");
   });
 
   test("recent notes list the three newest published notes and resolve", async ({
