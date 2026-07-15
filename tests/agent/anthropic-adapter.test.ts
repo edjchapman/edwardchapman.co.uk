@@ -381,17 +381,8 @@ describe("anthropic adapter streaming (ADR-0016)", () => {
       data: {
         type: "content_block_delta",
         index: 0,
-        delta: {
-          type: "text_delta",
-          text: "Foreman uses a transactional outbox",
-        },
-      },
-    },
-    {
-      event: "content_block_delta",
-      data: {
-        type: "content_block_delta",
-        index: 0,
+        // Real ordering: the API announces the block's citation BEFORE its
+        // text, so the span isn't known until content_block_stop.
         delta: { type: "citations_delta", citation: searchCitation(0) },
       },
     },
@@ -400,7 +391,10 @@ describe("anthropic adapter streaming (ADR-0016)", () => {
       data: {
         type: "content_block_delta",
         index: 0,
-        delta: { type: "text_delta", text: " and idempotent workers." },
+        delta: {
+          type: "text_delta",
+          text: "Foreman uses a transactional outbox and idempotent workers.",
+        },
       },
     },
     {
@@ -418,7 +412,7 @@ describe("anthropic adapter streaming (ADR-0016)", () => {
     { event: "message_stop", data: { type: "message_stop" } },
   ];
 
-  it("yields text deltas, an in-place citation span, then completed", async () => {
+  it("resolves a citation announced before its text to the block span at stop", async () => {
     const { fetch, calls } = stubFetch([sseResponse(HAPPY_PATH)]);
     const events = await collectStream(makeAdapter(fetch).stream(REQUEST));
 
@@ -429,19 +423,17 @@ describe("anthropic adapter streaming (ADR-0016)", () => {
     >;
     expect(body["stream"]).toBe(true);
 
-    // Citation span covers the block text seen when the citation arrived —
-    // finer-grained than the buffered path, and grounded before the tail text.
+    // The citation arrived with no text yet; its span is resolved to the
+    // block's full text range at content_block_stop (mirrors parseCompletion),
+    // so it is emitted after the text — not dropped as an empty span.
+    const answer =
+      "Foreman uses a transactional outbox and idempotent workers.";
     expect(events).toEqual([
-      { type: "text", delta: "Foreman uses a transactional outbox" },
+      { type: "text", delta: answer },
       {
         type: "citation",
-        citation: {
-          start: 0,
-          end: "Foreman uses a transactional outbox".length,
-          documentIndex: 0,
-        },
+        citation: { start: 0, end: answer.length, documentIndex: 0 },
       },
-      { type: "text", delta: " and idempotent workers." },
       { type: "completed" },
     ]);
   });

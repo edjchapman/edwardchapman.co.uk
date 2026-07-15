@@ -81,6 +81,11 @@ export class AnthropicAdapter implements ModelAdapter {
   async *stream(request: ModelRequest): AsyncGenerator<ModelStreamEvent> {
     let text = "";
     let blockStart = 0;
+    // The streaming API announces a text block's citations BEFORE its text
+    // arrives, so a citation's answer-span is unknown when it lands. Collect
+    // each block's cited document indices, then resolve them against the
+    // block's full text range at content_block_stop (mirrors parseCompletion).
+    let blockCitations: number[] = [];
     try {
       const stream = await this.client.messages.create({
         model: this.model,
@@ -92,6 +97,7 @@ export class AnthropicAdapter implements ModelAdapter {
       for await (const event of stream) {
         if (event.type === "content_block_start") {
           blockStart = text.length;
+          blockCitations = [];
         } else if (event.type === "content_block_delta") {
           const { delta } = event;
           if (delta.type === "text_delta") {
@@ -101,15 +107,13 @@ export class AnthropicAdapter implements ModelAdapter {
             delta.type === "citations_delta" &&
             delta.citation.type === "search_result_location"
           ) {
-            const span = trimSpan(text, blockStart, text.length);
-            if (span) {
-              yield {
-                type: "citation",
-                citation: {
-                  ...span,
-                  documentIndex: delta.citation.search_result_index,
-                },
-              };
+            blockCitations.push(delta.citation.search_result_index);
+          }
+        } else if (event.type === "content_block_stop") {
+          const span = trimSpan(text, blockStart, text.length);
+          if (span) {
+            for (const documentIndex of blockCitations) {
+              yield { type: "citation", citation: { ...span, documentIndex } };
             }
           }
         }
