@@ -11,7 +11,7 @@
         format-check lint typecheck test build check-content check-dist-links \
         format lint-fix test-e2e check-perf check-external-links eval-agent eval-agent-live \
         deploy deploy-preview \
-        deploy-www-redirect \
+        deploy-www-redirect rotate-anthropic-key \
         check-commit-msg check-stale-branches sweep-branches lint-md
 
 .DEFAULT_GOAL := help
@@ -106,6 +106,9 @@ deploy-preview: ## Upload a preview version (ALIAS=<name>, defaults to local)
 
 deploy-www-redirect: ## Deploy the www→apex redirect worker (rarely changes)
 	@pnpm exec wrangler deploy --config workers/www-redirect/wrangler.jsonc
+
+rotate-anthropic-key: ## Rotate ANTHROPIC_API_KEY across Worker + GitHub in one command (ADR-0014)
+	@./scripts/rotate-anthropic-key.sh
 
 check-commit-msg: ## Validate a commit subject (FILE=<path> or pipe via --stdin)
 	@./scripts/check-commit-msg.sh $${FILE:---stdin}

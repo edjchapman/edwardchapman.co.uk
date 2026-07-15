@@ -1,6 +1,6 @@
 # ADR-0014: Centralise Anthropic key rotation as one command, not one store
 
-**Status:** Proposed (2026-07-15)
+**Status:** Accepted (2026-07-15)
 
 ## Context
 
