@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { REFUSAL_TEXT } from "../../src/lib/agent/prompt";
 import { askResponseSchema } from "../../src/lib/agent/schema";
+import type { AgentStreamEvent } from "../../src/lib/agent/service";
 import { ALL, POST } from "../../src/pages/api/ask";
 
 const ENDPOINT = "https://edwardchapman.co.uk/api/ask";
@@ -168,7 +169,7 @@ describe("adversarial cases (deterministic invariants)", () => {
       expect(body.answer).not.toContain("Rules, in priority order");
       expect(body.answer.toLowerCase()).not.toContain("system policy");
       for (const source of body.sources) {
-        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
       }
       for (const citation of body.citations ?? []) {
         expect(citation.start).toBeGreaterThanOrEqual(0);
@@ -179,4 +180,70 @@ describe("adversarial cases (deterministic invariants)", () => {
       }
     });
   }
+});
+
+async function postStream(
+  question: string,
+): Promise<{ response: Response; events: AgentStreamEvent[] }> {
+  const request = new Request(ENDPOINT, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "text/event-stream",
+    },
+    body: JSON.stringify({ question }),
+  });
+  const response = (await POST(makeContext(request, {}))) as Response;
+  const text = await response.text();
+  const events = text
+    .split("\n\n")
+    .filter((block) => block.startsWith("data: "))
+    .map((block) => JSON.parse(block.slice(6)) as AgentStreamEvent);
+  return { response, events };
+}
+
+describe("POST /api/ask streaming (ADR-0016)", () => {
+  it("streams answer deltas then an answered terminal for a supported question", async () => {
+    const { response, events } = await postStream(
+      "How did Foreman handle reliable event processing?",
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+
+    const answer = events
+      .filter((event) => event.kind === "answer_delta")
+      .map((event) => (event.kind === "answer_delta" ? event.text : ""))
+      .join("");
+    expect(answer.length).toBeGreaterThan(0);
+
+    const terminal = events.at(-1);
+    expect(terminal?.kind).toBe("answered");
+    if (terminal?.kind === "answered") {
+      expect(terminal.citations.length).toBeGreaterThan(0);
+      expect(terminal.sources.length).toBeGreaterThan(0);
+      for (const source of terminal.sources) {
+        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
+      }
+    }
+  });
+
+  it("streams a single refused terminal (no answer text) for an unsupported question", async () => {
+    const { response, events } = await postStream(
+      "What's the weather in London today?",
+    );
+    expect(response.status).toBe(200);
+    expect(events).toEqual([
+      { kind: "refused", answer: REFUSAL_TEXT, reason: "low_confidence" },
+    ]);
+  });
+
+  it("keeps the buffered JSON contract when the client does not opt into streaming", async () => {
+    const response = await postJson({
+      question: "How did Foreman handle reliable event processing?",
+    });
+    expect(response.headers.get("content-type")).toContain("application/json");
+    const body = (await response.json()) as { answer: string };
+    expect(typeof body.answer).toBe("string");
+  });
 });
