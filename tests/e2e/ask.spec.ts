@@ -100,6 +100,69 @@ test.describe("/ask interface", () => {
     await expect(status).toContainText("Generated from published site content");
   });
 
+  test("streams an SSE answer and finalises inline citations (ADR-0016)", async ({
+    page,
+  }) => {
+    const events = [
+      { kind: "answer_delta", text: "Foreman uses " },
+      { kind: "answer_delta", text: "a transactional outbox." },
+      {
+        kind: "answered",
+        citations: [{ start: 0, end: 36, sourceIndex: 0 }],
+        sources: [
+          {
+            title: "Foreman — Architecture",
+            url: "https://edwardchapman.co.uk/projects/foreman",
+          },
+        ],
+      },
+    ];
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: events
+          .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+          .join(""),
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("How does Foreman work?");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    const status = page.getByRole("status");
+    // The reassembled deltas render as the full answer…
+    await expect(status).toContainText("Foreman uses a transactional outbox.");
+    // …and the terminal event finalises the inline marker + numbered source.
+    await expect(
+      status.getByRole("link", { name: "Source 1: Foreman — Architecture" }),
+    ).toHaveAttribute("href", "#ask-source-1");
+    await expect(
+      status.locator("#ask-source-1").getByRole("link"),
+    ).toHaveAttribute("href", "https://edwardchapman.co.uk/projects/foreman");
+  });
+
+  test("renders a streamed refusal with no sources", async ({ page }) => {
+    const refusal =
+      "I could not find enough published information on this site to answer that reliably.";
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ kind: "refused", answer: refusal, reason: "low_confidence" })}\n\n`,
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("What is the weather?");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    const status = page.getByRole("status");
+    await expect(status).toContainText("could not find enough published");
+    await expect(status.locator("ol.sources")).toHaveCount(0);
+  });
+
   test("shows the loading state while a request is in flight", async ({
     page,
   }) => {
