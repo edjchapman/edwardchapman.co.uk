@@ -110,6 +110,18 @@
       "shouldRefuse": false
     },
     {
+      "id": "languages-and-cloud",
+      "question": "What programming languages and cloud platforms does Ed use?",
+      "expectedSourceIds": ["technical-focus#body"],
+      "requiredClaims": [
+        "Python and TypeScript",
+        "Kotlin",
+        "AWS and Google Cloud"
+      ],
+      "forbiddenClaims": ["languages or platforms not named in the corpus"],
+      "shouldRefuse": false
+    },
+    {
       "id": "uncovered-topic",
       "question": "What does Ed think about quantum computing standards?",
       "expectedSourceIds": [],

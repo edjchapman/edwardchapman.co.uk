@@ -109,6 +109,16 @@
       "expectedSectionIds": ["positioning#body"]
     },
     {
+      "id": "programming-languages",
+      "query": "What programming languages does Ed use?",
+      "expectedSectionIds": ["technical-focus#body", "positioning#body"]
+    },
+    {
+      "id": "google-cloud",
+      "query": "Has Ed worked with Google Cloud?",
+      "expectedSectionIds": ["technical-focus#body"]
+    },
+    {
       "id": "contact",
       "query": "How can I contact Ed by email?",
       "expectedSectionIds": ["contact#body"]
