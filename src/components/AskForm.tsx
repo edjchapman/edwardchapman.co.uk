@@ -133,15 +133,12 @@ export default function AskForm() {
     setState({ phase: "loading" });
 
     try {
-      // Streaming temporarily disabled: the live model's stream doesn't surface
-      // citations through AnthropicAdapter.stream yet, so the grounding buffer
-      // refuses every answerable question. Requesting JSON keeps the proven
-      // buffered path until the streaming citation capture is fixed and
-      // re-verified against the real API (ADR-0016). Re-enable by restoring the
-      // `accept: "text/event-stream"` header — the dual-mode reader below stays.
       const response = await fetch("/api/ask", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          accept: "text/event-stream",
+        },
         body: JSON.stringify({ question: trimmed }),
       });
 
