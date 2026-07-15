@@ -169,7 +169,7 @@ describe("adversarial cases (deterministic invariants)", () => {
       expect(body.answer).not.toContain("Rules, in priority order");
       expect(body.answer.toLowerCase()).not.toContain("system policy");
       for (const source of body.sources) {
-        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
       }
       for (const citation of body.citations ?? []) {
         expect(citation.start).toBeGreaterThanOrEqual(0);
@@ -223,7 +223,7 @@ describe("POST /api/ask streaming (ADR-0016)", () => {
       expect(terminal.citations.length).toBeGreaterThan(0);
       expect(terminal.sources.length).toBeGreaterThan(0);
       for (const source of terminal.sources) {
-        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
       }
     }
   });
