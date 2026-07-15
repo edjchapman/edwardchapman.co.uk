@@ -1,0 +1,40 @@
+name: codeql
+
+# Static-analysis security scanning (CodeQL) for the JavaScript/TypeScript
+# sources — the Worker route, agent library, React island, and build scripts.
+# Populates the Security tab's code-scanning alerts. Not a required merge check:
+# `make check` (lint, types, tests, content policy) remains the gate; this adds
+# a security lens on a schedule and per-PR, surfacing findings rather than
+# blocking. JS/TS is interpreted, so no build step is needed to analyse.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 7 * * 4" # Thursdays 07:00 UTC — off-peak from the other crons
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: analyze javascript-typescript
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # upload results to code scanning
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
