@@ -82,9 +82,12 @@ const STOPWORDS = new Set([
   "chapmans",
 ]);
 
-// Small curated technical vocabulary (spec §11): maps variants onto the
-// token actually used in the corpus.
+// Small curated vocabulary (spec §11): maps query variants onto the tokens
+// actually used in the corpus. Keys are matched AFTER tokenize() folds trivial
+// plurals, so plural forms are keyed in their folded shape ("skills" → "skill",
+// "technologies" → "technologie", "languages" → "language").
 const SYNONYMS: Record<string, string[]> = {
+  // Technical variants → the corpus's spelling.
   postgres: ["postgresql"],
   js: ["javascript"],
   ts: ["typescript"],
@@ -93,19 +96,37 @@ const SYNONYMS: Record<string, string[]> = {
   llm: ["ai", "model"],
   evals: ["evaluation"],
   eval: ["evaluation"],
-  cv: ["experience", "background"],
-  resume: ["experience", "background"],
-  résumé: ["experience", "background"],
   queue: ["celery", "outbox"],
   frontend: ["react", "typescript"],
   backend: ["platform", "django", "python"],
-  email: ["contact"],
   reliable: ["reliability", "outbox", "idempotent"],
   reliability: ["outbox", "idempotent", "retries"],
   processing: ["process", "pipeline"],
   website: ["site"],
   deployed: ["deploy", "deployment", "ship"],
   deployment: ["deploy", "ship"],
+  // Recruiter/professional vocabulary → the profile's own wording. A visitor
+  // asks about "background" and "technologies"; the positioning prose says
+  // "senior engineer", "Python", "TypeScript". Without this bridge the highest-
+  // intent questions share no lexical terms with the corpus and refuse.
+  cv: ["senior", "engineer", "role"],
+  resume: ["senior", "engineer", "role"],
+  résumé: ["senior", "engineer", "role"],
+  background: ["senior", "engineer", "role"],
+  experience: ["senior", "engineer", "role"],
+  career: ["senior", "role"],
+  professional: ["senior", "engineer"],
+  technologie: ["python", "typescript", "aws"],
+  technology: ["python", "typescript", "aws"],
+  language: ["python", "typescript", "kotlin"],
+  tech: ["python", "typescript", "aws"],
+  stack: ["python", "django", "typescript", "aws"],
+  skill: ["python", "typescript", "aws"],
+  tool: ["terraform", "docker", "aws"],
+  domain: ["proptech", "logistics", "energy"],
+  industrie: ["proptech", "logistics", "energy"],
+  industry: ["proptech", "logistics", "energy"],
+  email: ["contact"],
 };
 
 /** Fold trivial plurals so "events" matches "event" on both sides. */

@@ -89,11 +89,34 @@
       "expectedSectionIds": ["how-i-work#body", "positioning#body"]
     },
     {
+      "id": "professional-background",
+      "query": "What is Ed's professional background?",
+      "expectedSectionIds": ["positioning#body", "technical-focus#body"]
+    },
+    {
+      "id": "technologies-languages",
+      "query": "What technologies and languages does Ed work with?",
+      "expectedSectionIds": ["technical-focus#body", "positioning#body"]
+    },
+    {
+      "id": "technical-skills",
+      "query": "What are Ed's technical skills?",
+      "expectedSectionIds": ["technical-focus#body", "positioning#body"]
+    },
+    {
+      "id": "industries-worked",
+      "query": "What industries has Ed worked in?",
+      "expectedSectionIds": ["positioning#body"]
+    },
+    {
       "id": "contact",
       "query": "How can I contact Ed by email?",
-      "expectedSectionIds": ["colophon#body", "positioning#body"],
-      "note": "Contact details live in site chrome, not corpus prose — acceptable to refuse; this case asserts no crash and is marked mayRefuse.",
-      "mayRefuse": true
+      "expectedSectionIds": ["contact#body"]
+    },
+    {
+      "id": "contact-get-in-touch",
+      "query": "How do I get in touch with Ed?",
+      "expectedSectionIds": ["contact#body"]
     },
     {
       "id": "site-architecture",
