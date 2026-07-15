@@ -16,9 +16,10 @@ triggers or custom domains — a preview can never affect production routing.
 
 ## Secrets
 
-Credentials live in three independent stores; none are in source control. The
-Anthropic API key sits in two of them (different consumers), so rotating it
-means updating **both** — see [Rotating the Anthropic API
+Credentials live in independent stores; none are in source control. The
+Anthropic API key has **two authoritative copies** (different consumers on
+different platforms) plus an optional local one — `make rotate-anthropic-key`
+updates them in one command (ADR-0014); see [Rotating the Anthropic API
 key](#rotating-the-anthropic-api-key).
 
 ### GitHub Actions
@@ -56,13 +57,21 @@ Local development of everything else needs no secrets.
 
 ## Rotating the Anthropic API key
 
-The key is consumed in three independent places. They fix different things, so
-a full rotation updates all three:
+**Use `make rotate-anthropic-key`** (ADR-0014). It reads the new value once from
+a hidden prompt and updates both authoritative stores in the right order —
+Cloudflare Worker (the versioned two-step below, automated end to end) then the
+GitHub `production` env — and finishes by verifying the live endpoint returns a
+grounded answer. Requires local `wrangler` (Cloudflare auth) and `gh` (GitHub
+auth); it does not touch the optional local `ANTHROPIC_API_KEY_EDWARDCHAPMAN`.
+
+The rest of this section documents what the command does, for when it can't be
+used (no local auth) or a store must be updated by hand. The key is consumed in
+three independent places, which fix different things:
 
 | Where                             | Fixes                        | Command                                                                                                                     |
 | --------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| GitHub Actions (`production` env) | the live-eval workflow       | `gh secret set ANTHROPIC_API_KEY --env production`                                                                          |
 | Cloudflare Worker                 | production `/api/ask`        | `wrangler versions secret put ANTHROPIC_API_KEY --name edwardchapman`, then `wrangler versions deploy --name edwardchapman` |
+| GitHub Actions (`production` env) | the live-eval workflow       | `gh secret set ANTHROPIC_API_KEY --env production`                                                                          |
 | Local shell (optional)            | local `make eval-agent-live` | update `ANTHROPIC_API_KEY_EDWARDCHAPMAN` wherever you export it (profile / `.env` / secrets manager)                        |
 
 **Reading the commands: every token shown is literal — type it exactly.**
