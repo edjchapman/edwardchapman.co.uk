@@ -96,6 +96,25 @@ automatically: set each secret once.
 3. The deployment URL and sha land in the workflow summary.
 4. Verification: `curl https://<host>/api/health` returns the deployed sha.
 
+## Monitoring the ask endpoint
+
+`/api/ask`'s live model path depends on the Worker `ANTHROPIC_API_KEY`, an
+external credential that can rot between deploys (rotation, revocation, expiry).
+Two checks guard it, both keyed on the same invariant — a **grounded** answer,
+i.e. HTTP 200 with a non-empty `sources` array (the invariant
+`tests/e2e/ask.spec.ts` asserts). A refusal (`"sources":[]`) or an
+`upstream_error` 502 fails both:
+
+- **Post-deploy smoke** (`deploy.yml`) — gates every production deploy on a real
+  `/api/ask` POST returning a grounded answer. It asserts non-empty `sources`,
+  not merely an `"answer"` field, because a refusal is also `200 {"answer":…}` —
+  grepping `"answer"` would pass a dead key.
+- **Synthetic monitor** (`uptime-ask.yml`) — runs the same probe on a 6-hourly
+  cron (plus `workflow_dispatch`) to catch credential rot **between** deploys,
+  which the deploy-time smoke cannot. It hits only the public endpoint, so it
+  needs no secrets; a red run is the alert. Dispatch it manually after rotating
+  the key to confirm production recovered.
+
 ## Rollback
 
 Application-level, in order of preference:
@@ -173,3 +192,11 @@ make deploy-www-redirect
   assets; confirm `dist/server/wrangler.json` was used (not the repo config).
 - **Wrong content serving** — compare `/api/health` sha to `main`; if stale,
   the deploy didn't run or rolled back.
+- **`/api/ask` returns `upstream_error` (502)** — the Worker reached Anthropic
+  but the call failed; the usual cause is a missing/rotated `ANTHROPIC_API_KEY`
+  (a rejected key → 401 → `provider_error`). Confirm with
+  `wrangler tail --name edwardchapman` (look for `ask.provider_error`,
+  `detail: "status 401 …"`) and re-key via [Rotating the Anthropic API
+  key](#rotating-the-anthropic-api-key). Note: questions that don't clear the
+  retrieval confidence gate return a 200 refusal regardless, so probe with a
+  question known to retrieve (e.g. the smoke question above).

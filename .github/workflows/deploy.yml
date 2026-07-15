@@ -39,9 +39,14 @@ jobs:
       - name: Post-deploy smoke (real /api/ask POST)
         # The pre-merge e2e suite already exercises /api/ask against the built
         # worker, so this is a prod-only backstop (bindings, secrets). It gates
-        # on the endpoint actually answering — not on sha propagation, which is
-        # per-colo and can lag minutes, and would only false-fail a deploy the
-        # deploy step already completed. sha visibility is logged, not gated.
+        # on the endpoint producing a *grounded* answer — a non-empty `sources`
+        # array — not merely on an `answer` field: a refusal (dead/rotated key,
+        # empty corpus) is also HTTP 200 with `"answer"` but `"sources":[]`, so
+        # grepping `"answer"` would pass a broken key. This mirrors the e2e
+        # invariant (tests/e2e/ask.spec.ts: sources.length > 0). Not gated on
+        # sha propagation, which is per-colo and can lag minutes, and would only
+        # false-fail a deploy the deploy step already completed. sha visibility
+        # is logged, not gated.
         run: |
           for i in $(seq 1 18); do
             sleep 8
@@ -51,13 +56,13 @@ jobs:
               https://edwardchapman.co.uk/api/ask \
               -H 'content-type: application/json' \
               -d '{"question":"How did Foreman handle reliable event processing?"}' || true)
-            if [ "$code" = "200" ] && grep -q '"answer"' ask-smoke.json; then
-              echo "smoke ok: /api/ask answers (deployed sha $sha)"
+            if [ "$code" = "200" ] && jq -e '.sources | length > 0' ask-smoke.json >/dev/null 2>&1; then
+              echo "smoke ok: /api/ask returns a grounded answer (deployed sha $sha)"
               exit 0
             fi
-            echo "attempt $i: /api/ask HTTP $code (deployed sha $sha)"
+            echo "attempt $i: /api/ask HTTP $code, not yet grounded (deployed sha $sha)"
           done
-          echo "post-deploy smoke failed: /api/ask did not answer within the window"
+          echo "post-deploy smoke failed: /api/ask did not return a grounded answer within the window"
           # Surface enough of the last response to attribute edge-level blocks
           # (e.g. cf-mitigated: challenge) without rerunning from a runner.
           echo "last response headers:"
