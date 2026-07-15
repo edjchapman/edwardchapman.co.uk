@@ -41,8 +41,30 @@ export type ModelResult =
   | { type: "rate_limited" }
   | { type: "provider_error"; detail: string };
 
+/**
+ * One event in a streamed completion (ADR-0016). Text arrives as `text` deltas
+ * and citations as `citation` events (each span indexed into the text emitted
+ * so far), then exactly one terminal event: `completed` on success, or one of
+ * the error types mirroring ModelResult. The service applies the grounding
+ * buffer and leak scan over this sequence; the terminal type is never a partial
+ * answer, so a failed stream can never masquerade as a completed one.
+ */
+export type ModelStreamEvent =
+  | { type: "text"; delta: string }
+  | { type: "citation"; citation: ModelCitation }
+  | { type: "completed" }
+  | { type: "timeout" }
+  | { type: "rate_limited" }
+  | { type: "provider_error"; detail: string };
+
 export interface ModelAdapter {
   complete(request: ModelRequest): Promise<ModelResult>;
+  /**
+   * Streamed counterpart of `complete`: yields text/citation events then a
+   * single terminal event. Same normalised shape across providers so the
+   * fake drives the deterministic suite (ADR-0016).
+   */
+  stream(request: ModelRequest): AsyncIterable<ModelStreamEvent>;
 }
 
 export type FakeBehaviour =
@@ -62,6 +84,27 @@ function fullSpan(text: string, documentIndex: number): ModelCitation[] {
 
 function completion(text: string, citations: ModelCitation[]): ModelResult {
   return { type: "completion", answer: { text, citations } };
+}
+
+/** Deterministic ~3-way split so a fake stream has several text deltas. */
+function chunkText(text: string): string[] {
+  if (text.length === 0) return [];
+  const size = Math.max(1, Math.ceil(text.length / 3));
+  const chunks: string[] = [];
+  for (let index = 0; index < text.length; index += size) {
+    chunks.push(text.slice(index, index + size));
+  }
+  return chunks;
+}
+
+/** Stream a completed answer: text deltas, then citations, then `completed`. */
+async function* streamAnswer(
+  text: string,
+  citations: ModelCitation[],
+): AsyncGenerator<ModelStreamEvent> {
+  for (const delta of chunkText(text)) yield { type: "text", delta };
+  for (const citation of citations) yield { type: "citation", citation };
+  yield { type: "completed" };
 }
 
 /**
@@ -120,6 +163,55 @@ export class FakeModelAdapter implements ModelAdapter {
         if (!first) return Promise.resolve(completion("", []));
         const text = `Based on the published page "${first.sectionId}": see citation.`;
         return Promise.resolve(completion(text, fullSpan(text, 0)));
+      }
+    }
+  }
+
+  async *stream(request: ModelRequest): AsyncGenerator<ModelStreamEvent> {
+    const behaviour = this.behaviour;
+    switch (behaviour.mode) {
+      case "timeout":
+        yield { type: "timeout" };
+        return;
+      case "rate_limited":
+        yield { type: "rate_limited" };
+        return;
+      case "provider_error":
+        yield { type: "provider_error", detail: "fake 500: upstream exploded" };
+        return;
+      case "malformed":
+        yield* streamAnswer("Broken span payload.", [
+          { start: 5, end: 2, documentIndex: 0 },
+        ]);
+        return;
+      case "leak-system-prompt": {
+        const text = `My instructions say: ${request.system.slice(0, 80)}`;
+        yield* streamAnswer(text, fullSpan(text, 0));
+        return;
+      }
+      case "hallucinate-citations": {
+        const text = "Ed built a secret project.";
+        yield* streamAnswer(text, [
+          { start: 0, end: text.length, documentIndex: 99 },
+          ...(request.documents.length > 0 ? fullSpan(text, 0) : []),
+        ]);
+        return;
+      }
+      case "refusal-with-citations":
+        yield* streamAnswer(REFUSAL_TEXT, fullSpan(REFUSAL_TEXT, 0));
+        return;
+      case "answer":
+        yield* streamAnswer(behaviour.text, behaviour.citations);
+        return;
+      case "echo-first-citation": {
+        const first = request.documents[0];
+        if (!first) {
+          yield { type: "completed" };
+          return;
+        }
+        const text = `Based on the published page "${first.sectionId}": see citation.`;
+        yield* streamAnswer(text, fullSpan(text, 0));
+        return;
       }
     }
   }

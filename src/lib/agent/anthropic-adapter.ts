@@ -18,6 +18,7 @@ import type {
   ModelCitation,
   ModelRequest,
   ModelResult,
+  ModelStreamEvent,
 } from "./adapter.ts";
 
 export type AnthropicAdapterConfig = {
@@ -67,6 +68,66 @@ export class AnthropicAdapter implements ModelAdapter {
     } catch (error) {
       return mapProviderError(error);
     }
+  }
+
+  /**
+   * Streamed counterpart (ADR-0016). Text deltas and citation events emerge as
+   * the API generates them; citation spans are computed against the text seen
+   * so far, mirroring parseCompletion's block-to-span mapping. A terminal event
+   * always closes the sequence — `completed`, or an error mapped through the
+   * same taxonomy as `complete`. The grounding buffer and leak scan that guard
+   * output live in the service, over this event stream.
+   */
+  async *stream(request: ModelRequest): AsyncGenerator<ModelStreamEvent> {
+    let text = "";
+    let blockStart = 0;
+    try {
+      const stream = await this.client.messages.create({
+        model: this.model,
+        max_tokens: MAX_TOKENS,
+        system: request.system,
+        messages: [{ role: "user", content: buildContent(request) }],
+        stream: true,
+      });
+      for await (const event of stream) {
+        if (event.type === "content_block_start") {
+          blockStart = text.length;
+        } else if (event.type === "content_block_delta") {
+          const { delta } = event;
+          if (delta.type === "text_delta") {
+            text += delta.text;
+            if (delta.text) yield { type: "text", delta: delta.text };
+          } else if (
+            delta.type === "citations_delta" &&
+            delta.citation.type === "search_result_location"
+          ) {
+            const span = trimSpan(text, blockStart, text.length);
+            if (span) {
+              yield {
+                type: "citation",
+                citation: {
+                  ...span,
+                  documentIndex: delta.citation.search_result_index,
+                },
+              };
+            }
+          }
+        }
+      }
+    } catch (error) {
+      const mapped = mapProviderError(error);
+      // mapProviderError never returns a completion; the guard satisfies the
+      // type and, defensively, keeps a stray completion out of the error path.
+      yield mapped.type === "completion"
+        ? { type: "provider_error", detail: "unexpected adapter failure" }
+        : mapped;
+      return;
+    }
+    if (text.trim() === "") {
+      yield { type: "provider_error", detail: "empty completion" };
+      return;
+    }
+    yield { type: "completed" };
   }
 }
 
