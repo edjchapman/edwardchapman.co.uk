@@ -121,8 +121,20 @@ i.e. HTTP 200 with a non-empty `sources` array (the invariant
 - **Synthetic monitor** (`uptime-ask.yml`) — runs the same probe on a 6-hourly
   cron (plus `workflow_dispatch`) to catch credential rot **between** deploys,
   which the deploy-time smoke cannot. It hits only the public endpoint, so it
-  needs no secrets; a red run is the alert. Dispatch it manually after rotating
-  the key to confirm production recovered.
+  needs no external secrets. Dispatch it manually after rotating the key to
+  confirm production recovered.
+
+**Alerting.** A red workflow run is not a reliable signal on its own — a red
+post-deploy smoke was ignored for ~a day on 2026-07-14 while the deploy shipped
+regardless (the smoke runs after `wrangler deploy`). So on failure both checks
+call `scripts/report-incident.sh`, which opens a deduped GitHub issue titled
+_"🚨 production /api/ask is not returning a grounded answer"_ (label
+`production`) via the built-in token — no external service. Both checks share
+one issue, so whichever next sees a grounded answer (a later deploy smoke or an
+`uptime-ask` run) auto-closes it. The issue body links the two remedies: a dead
+key (`make rotate-anthropic-key`) versus a code regression (`wrangler rollback`).
+There is deliberately no auto-rollback — the common failure is a dead external
+key, which rollback cannot fix and which would discard a good deploy.
 
 ## Rollback
 

@@ -13,6 +13,10 @@ on:
 concurrency:
   group: deploy-production # queue production deploys; never cancel one mid-flight
 
+permissions:
+  contents: read # checkout
+  issues: write # open/close the production incident issue on smoke failure/recovery
+
 jobs:
   deploy:
     name: deploy production
@@ -70,6 +74,19 @@ jobs:
           echo "last response body (first 300 bytes):"
           head -c 300 ask-smoke.json || true; echo
           exit 1
+      - name: Open incident issue on smoke failure
+        # A red workflow was ignored for ~a day on 2026-07-14; an open, deduped
+        # issue notifies and persists instead. Shares a title with uptime-ask,
+        # so either check closes it on recovery.
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/report-incident.sh fail "deploy smoke"
+      - name: Close incident issue on healthy deploy
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/report-incident.sh ok "deploy smoke"
       - name: Summary
         run: |
           echo "Deployed \`${GITHUB_SHA}\` — verify: \`curl https://edwardchapman.co.uk/api/health\`" >> "$GITHUB_STEP_SUMMARY"
