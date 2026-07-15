@@ -6,11 +6,16 @@
  * never logged (spec §14).
  */
 
-import type { Corpus } from "../../../scripts/build-agent-corpus.ts";
-import type { ModelAdapter, ModelCitation } from "./adapter.ts";
+import type {
+  Corpus,
+  CorpusChunk,
+} from "../../../scripts/build-agent-corpus.ts";
+import type { ModelAdapter, ModelCitation, ModelRequest } from "./adapter.ts";
+import { looksLikePolicyLeak } from "./policy-leak.ts";
 import { buildQuestionText, REFUSAL_TEXT, SYSTEM_POLICY } from "./prompt.ts";
 import { LexicalRetriever, isConfident, type Retriever } from "./retrieval.ts";
 import { modelAnswerSchema } from "./schema.ts";
+import { StreamGuard, type StreamTerminal } from "./stream-guard.ts";
 
 export type AgentEvent = {
   event:
@@ -50,6 +55,24 @@ export type AgentOutcome =
   | {
       kind: "answered";
       answer: string;
+      citations: CitationSpan[];
+      sources: { title: string; url: string }[];
+    }
+  | { kind: "refused"; answer: string; reason: RefusalReason }
+  | { kind: "upstream_error" }
+  | { kind: "upstream_rate_limited" };
+
+/**
+ * One event in a streamed answer (ADR-0016). `answer_delta`s carry validated,
+ * grounded text — never emitted before the first whitelisted citation proves
+ * grounding, never carrying a policy-leak fingerprint. Exactly one terminal
+ * event closes the stream: `answered` carries the final citation spans and
+ * sources for the text already delta'd; the others mirror AgentOutcome.
+ */
+export type AgentStreamEvent =
+  | { kind: "answer_delta"; text: string }
+  | {
+      kind: "answered";
       citations: CitationSpan[];
       sources: { title: string; url: string }[];
     }
@@ -173,6 +196,97 @@ export class AgentService {
       sources: mapped.sources,
     };
   }
+
+  /**
+   * Streamed counterpart of `ask` (ADR-0016). The confidence gate still refuses
+   * pre-model — a low-confidence question never opens a model stream. Otherwise
+   * a StreamGuard enforces the output controls incrementally over the adapter's
+   * events (grounding buffer + leak scan); text arrives as `answer_delta`s and
+   * a single terminal event carries the final citations/sources or a refusal.
+   */
+  async *askStream(
+    question: string,
+    requestId: string,
+  ): AsyncGenerator<AgentStreamEvent> {
+    this.log({ event: "ask.accepted", requestId });
+    const results = this.retriever.search(question, TOP_K);
+    if (!isConfident(results)) {
+      this.log({ event: "ask.refused_low_confidence", requestId });
+      yield { kind: "refused", answer: REFUSAL_TEXT, reason: "low_confidence" };
+      return;
+    }
+
+    const chunks = results.map(({ chunk }) => chunk);
+    const guard = new StreamGuard(chunks.length);
+    const request: ModelRequest = {
+      system: SYSTEM_POLICY,
+      documents: chunks.map((chunk) => ({
+        sectionId: chunk.sectionId,
+        title: chunk.title,
+        url: chunk.url,
+        text: chunk.text,
+      })),
+      question: buildQuestionText(question),
+    };
+
+    let terminal: StreamTerminal | undefined;
+    try {
+      for await (const event of this.adapter.stream(request)) {
+        const { emit, done } = guard.consume(event);
+        for (const text of emit) yield { kind: "answer_delta", text };
+        if (done) {
+          terminal = done;
+          break;
+        }
+      }
+    } catch {
+      this.log({ event: "ask.unhandled_error", requestId });
+      yield { kind: "upstream_error" };
+      return;
+    }
+
+    yield* this.streamTerminal(terminal, guard, chunks, requestId);
+  }
+
+  private *streamTerminal(
+    terminal: StreamTerminal | undefined,
+    guard: StreamGuard,
+    chunks: CorpusChunk[],
+    requestId: string,
+  ): Generator<AgentStreamEvent> {
+    if (!terminal || terminal.type === "error") {
+      this.log({ event: "ask.provider_error", requestId });
+      yield { kind: "upstream_error" };
+      return;
+    }
+    if (terminal.type === "rate_limited") {
+      this.log({ event: "ask.provider_rate_limited", requestId });
+      yield { kind: "upstream_rate_limited" };
+      return;
+    }
+    if (terminal.type === "refused") {
+      this.log({
+        event:
+          terminal.reason === "model_declined"
+            ? "ask.refused_model_declined"
+            : "ask.refused_no_citations",
+        requestId,
+      });
+      yield { kind: "refused", answer: REFUSAL_TEXT, reason: terminal.reason };
+      return;
+    }
+    const mapped = mapCitationsToSources(guard.validCitations, chunks);
+    this.log({
+      event: "ask.answered",
+      requestId,
+      sectionIds: mapped.citedSectionIds,
+    });
+    yield {
+      kind: "answered",
+      citations: mapped.citations,
+      sources: mapped.sources,
+    };
+  }
 }
 
 /**
@@ -212,15 +326,4 @@ export function mapCitationsToSources(
     }
   }
   return { citations: spans, sources, citedSectionIds };
-}
-
-function looksLikePolicyLeak(answer: string): boolean {
-  const fingerprints = [
-    'the "ask" assistant on edwardchapman.co.uk',
-    "Rules, in priority order",
-    "system policy",
-  ];
-  return fingerprints.some((fingerprint) =>
-    answer.toLowerCase().includes(fingerprint.toLowerCase()),
-  );
 }
