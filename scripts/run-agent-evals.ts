@@ -184,6 +184,8 @@ function withFailureNote(
       else box.note = result.type;
       return result;
     },
+    // The live eval scores the buffered path only; streaming passes through.
+    stream: (request) => inner.stream(request),
   };
 }
 

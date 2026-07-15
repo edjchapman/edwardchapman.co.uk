@@ -4,7 +4,10 @@ import {
   AnthropicAdapter,
   type AnthropicAdapterConfig,
 } from "../../src/lib/agent/anthropic-adapter";
-import type { ModelRequest } from "../../src/lib/agent/adapter";
+import type {
+  ModelRequest,
+  ModelStreamEvent,
+} from "../../src/lib/agent/adapter";
 import { REFUSAL_TEXT } from "../../src/lib/agent/prompt";
 
 /**
@@ -60,6 +63,27 @@ function errorResponse(status: number): Response {
       headers: { "content-type": "application/json", "retry-after": "0" },
     },
   );
+}
+
+function sseResponse(events: { event: string; data: unknown }[]): Response {
+  const body = events
+    .map(
+      (entry) =>
+        `event: ${entry.event}\ndata: ${JSON.stringify(entry.data)}\n\n`,
+    )
+    .join("");
+  return new Response(body, {
+    status: 200,
+    headers: { "content-type": "text/event-stream" },
+  });
+}
+
+async function collectStream(
+  stream: AsyncIterable<ModelStreamEvent>,
+): Promise<ModelStreamEvent[]> {
+  const events: ModelStreamEvent[] = [];
+  for await (const event of stream) events.push(event);
+  return events;
 }
 
 function searchCitation(index: number): unknown {
@@ -323,5 +347,119 @@ describe("anthropic adapter error mapping", () => {
       detail: "status 400 api_error",
     });
     expect(calls.length).toBe(1);
+  });
+});
+
+describe("anthropic adapter streaming (ADR-0016)", () => {
+  const HAPPY_PATH = [
+    {
+      event: "message_start",
+      data: {
+        type: "message_start",
+        message: {
+          id: "msg_test",
+          type: "message",
+          role: "assistant",
+          model: "claude-haiku-4-5",
+          content: [],
+          stop_reason: null,
+          stop_sequence: null,
+          usage: { input_tokens: 10, output_tokens: 0 },
+        },
+      },
+    },
+    {
+      event: "content_block_start",
+      data: {
+        type: "content_block_start",
+        index: 0,
+        content_block: { type: "text", text: "" },
+      },
+    },
+    {
+      event: "content_block_delta",
+      data: {
+        type: "content_block_delta",
+        index: 0,
+        delta: {
+          type: "text_delta",
+          text: "Foreman uses a transactional outbox",
+        },
+      },
+    },
+    {
+      event: "content_block_delta",
+      data: {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "citations_delta", citation: searchCitation(0) },
+      },
+    },
+    {
+      event: "content_block_delta",
+      data: {
+        type: "content_block_delta",
+        index: 0,
+        delta: { type: "text_delta", text: " and idempotent workers." },
+      },
+    },
+    {
+      event: "content_block_stop",
+      data: { type: "content_block_stop", index: 0 },
+    },
+    {
+      event: "message_delta",
+      data: {
+        type: "message_delta",
+        delta: { stop_reason: "end_turn", stop_sequence: null },
+        usage: { output_tokens: 50 },
+      },
+    },
+    { event: "message_stop", data: { type: "message_stop" } },
+  ];
+
+  it("yields text deltas, an in-place citation span, then completed", async () => {
+    const { fetch, calls } = stubFetch([sseResponse(HAPPY_PATH)]);
+    const events = await collectStream(makeAdapter(fetch).stream(REQUEST));
+
+    // The request opts into streaming.
+    const body = JSON.parse(String(calls[0]!.init.body)) as Record<
+      string,
+      unknown
+    >;
+    expect(body["stream"]).toBe(true);
+
+    // Citation span covers the block text seen when the citation arrived —
+    // finer-grained than the buffered path, and grounded before the tail text.
+    expect(events).toEqual([
+      { type: "text", delta: "Foreman uses a transactional outbox" },
+      {
+        type: "citation",
+        citation: {
+          start: 0,
+          end: "Foreman uses a transactional outbox".length,
+          documentIndex: 0,
+        },
+      },
+      { type: "text", delta: " and idempotent workers." },
+      { type: "completed" },
+    ]);
+  });
+
+  it("maps a streaming connection failure to a timeout terminal event", async () => {
+    const { fetch } = stubFetch([
+      new Error("network down"),
+      new Error("network down"),
+    ]);
+    const events = await collectStream(makeAdapter(fetch).stream(REQUEST));
+    expect(events).toEqual([{ type: "timeout" }]);
+  });
+
+  it("maps a streaming 500 to a provider_error terminal event", async () => {
+    const { fetch } = stubFetch([errorResponse(500), errorResponse(500)]);
+    const events = await collectStream(makeAdapter(fetch).stream(REQUEST));
+    expect(events).toEqual([
+      { type: "provider_error", detail: "status 500 api_error" },
+    ]);
   });
 });
