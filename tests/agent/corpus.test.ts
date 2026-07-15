@@ -33,7 +33,7 @@ describe("corpus construction (fixture root)", () => {
 
   it("attaches canonical URLs and metadata to every chunk", () => {
     for (const chunk of corpus.chunks) {
-      expect(chunk.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+      expect(chunk.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
       expect(chunk.title.length).toBeGreaterThan(0);
       expect(chunk.text.length).toBeGreaterThan(0);
     }

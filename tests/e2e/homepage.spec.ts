@@ -87,7 +87,7 @@ test.describe("homepage", () => {
     await page.goto("/");
     await expect(
       page.getByRole("link", { name: "Repository" }).first(),
-    ).toHaveAttribute("href", /github\.com\/edjchapman/);
+    ).toHaveAttribute("href", /^https:\/\/github\.com\/edjchapman\//);
     await expect(page.getByRole("link", { name: "Live demo" })).toHaveCount(2);
   });
 

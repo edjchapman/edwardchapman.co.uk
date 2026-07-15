@@ -35,7 +35,7 @@ describe("agent service outcomes", () => {
     if (outcome.kind === "answered") {
       expect(outcome.sources.length).toBeGreaterThan(0);
       for (const source of outcome.sources) {
-        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
       }
       expect(outcome.citations.length).toBeGreaterThan(0);
       for (const citation of outcome.citations) {
@@ -114,7 +114,7 @@ describe("agent service outcomes", () => {
         expect(citation.sourceIndex).toBeLessThan(outcome.sources.length);
       }
       for (const source of outcome.sources) {
-        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk/);
+        expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
       }
     }
   });
