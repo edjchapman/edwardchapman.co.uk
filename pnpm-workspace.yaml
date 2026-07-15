@@ -2,3 +2,11 @@ allowBuilds:
   esbuild: true
   sharp: true
   workerd: true
+
+# Security overrides for dev-only transitive deps reached solely via @lhci/cli
+# (Lighthouse CI); never in the production Worker bundle. Selectors pin only the
+# vulnerable ranges. GHSA-ph9p-34f9-6g65 + GHSA-52f5-9888-hmc6 (tmp),
+# GHSA-w5hq-g745-h8pq (uuid).
+overrides:
+  tmp@<0.2.6: ">=0.2.6"
+  uuid@<11.1.1: ">=11.1.1"
