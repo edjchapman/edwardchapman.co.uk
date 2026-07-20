@@ -50,8 +50,12 @@ test.describe("/ask interface", () => {
     ).toHaveCount(1);
 
     await page.goto("/ask");
-    // SEO.astro only emits a robots meta when noindex is set; released => none.
-    await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+    // SEO.astro emits "noindex, nofollow" when explicitly noindexed, else a
+    // permissive directive; released => the permissive one, never noindex.
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "max-image-preview:large, max-snippet:-1",
+    );
 
     const sitemap = await request.get("/sitemap-0.xml");
     expect(await sitemap.text()).toContain("/ask");

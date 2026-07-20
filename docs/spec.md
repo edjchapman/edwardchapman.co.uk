@@ -481,6 +481,9 @@ Implement:
 - Person schema on the homepage where appropriate.
 - Article schema on notes.
 - Consistent canonical handling of trailing slashes.
+- Notes may declare an explicit canonical URL in frontmatter for the case
+  where this page syndicates an original published elsewhere; when absent,
+  canonical derives from the request path as usual.
 - Redirects from `www` to the apex domain.
 - Redirect from the default Workers domain to the canonical domain where practical.
 - A useful custom 404 page.

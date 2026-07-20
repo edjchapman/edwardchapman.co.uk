@@ -12,8 +12,15 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 const { note } = Astro.props;
-const { title, description, pubDate, updatedDate, tags, relatedProject } =
-  note.data;
+const {
+  title,
+  description,
+  pubDate,
+  updatedDate,
+  tags,
+  relatedProject,
+  canonicalURL,
+} = note.data;
 const { Content } = await render(note);
 
 const related = relatedProject
@@ -45,6 +52,7 @@ const articleLd = {
   description={description}
   image={`/og/notes/${note.id}.png`}
   type="article"
+  canonical={canonicalURL}
 >
   <article>
     <header>
