@@ -11,6 +11,9 @@ test.describe("security headers", () => {
     expect(headers["content-security-policy"]).toContain(
       "frame-ancestors 'none'",
     );
+    // The web manifest needs an explicit source — default-src 'none' would
+    // otherwise block <link rel="manifest"> (see public/_headers).
+    expect(headers["content-security-policy"]).toContain("manifest-src 'self'");
     expect(headers["x-content-type-options"]).toBe("nosniff");
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
     expect(headers["permissions-policy"]).toContain("camera=()");
@@ -30,6 +33,10 @@ test.describe("security headers", () => {
     );
     expect(bodyFont.length).toBeGreaterThan(0);
     expect(errors).toEqual([]);
+    // Note: a normal page load does not fetch the web manifest (browsers do
+    // that lazily for install prompts), so a manifest CSP block would not
+    // surface here — Lighthouse catches it by actively fetching the manifest.
+    // The deterministic guard is the header-level manifest-src assertion above.
   });
 
   test("worker routes set their own hardening headers", async ({ request }) => {

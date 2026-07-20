@@ -7,7 +7,7 @@
 # `eval-agent` and `eval-agent-live` are defined in Phases 3–4 (see
 # docs/evaluation.md); the names are reserved here.
 
-.PHONY: help setup dev preview check check-links check-anchors stack-check corpus og-cards \
+.PHONY: help setup dev preview check check-links check-anchors stack-check corpus og-cards icons \
         format-check lint typecheck test build check-content check-dist-links \
         format lint-fix test-e2e check-perf check-external-links eval-agent eval-agent-live \
         deploy deploy-preview \
@@ -60,13 +60,16 @@ corpus: ## Generate src/generated/corpus.json (the /api/ask route imports it)
 og-cards: ## Generate per-page social cards into public/og/
 	@node scripts/build-og-cards.ts
 
+icons: ## Generate apple-touch-icon.png and manifest icon fallbacks into public/
+	@node scripts/build-icons.ts
+
 typecheck: corpus ## astro check (TypeScript + .astro diagnostics)
 	@pnpm exec astro check
 
 test: ## Vitest unit/integration suites (corpus via vitest globalSetup)
 	@pnpm exec vitest run
 
-build: corpus og-cards ## Production build (dist/)
+build: corpus og-cards icons ## Production build (dist/)
 	@pnpm exec astro build
 
 check-content: ## Content-policy scan over sources and built output
