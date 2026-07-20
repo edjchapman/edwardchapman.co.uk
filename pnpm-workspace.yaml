@@ -3,6 +3,14 @@ allowBuilds:
   sharp: true
   workerd: true
 
+# Supply-chain cooldown: refuse to install any package version published within
+# the last 24h (1440 minutes), so a compromised release is usually yanked before
+# it reaches a build. This equals pnpm v11's default; pinning it keeps the control
+# explicit, auditable, and stable if that default (or the pnpm version) ever
+# changes — otherwise the protection could silently drop to 0 with no diff to
+# review (threat-model.md — Dependency / supply chain).
+minimumReleaseAge: 1440
+
 # Security overrides for dev-only transitive deps reached solely via @lhci/cli
 # (Lighthouse CI); never in the production Worker bundle. Selectors pin only the
 # vulnerable ranges. GHSA-ph9p-34f9-6g65 + GHSA-52f5-9888-hmc6 (tmp),
