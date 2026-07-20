@@ -9,10 +9,13 @@
 # directive loader) — they change on Astro upgrades; the /ask e2e suite fails
 # closed if they drift. Regenerate: build, then hash each inline <script> in
 # dist/client/ask.html (sha256, base64). connect-src 'self' covers the
-# island's /api/ask call.
+# island's /api/ask call. manifest-src 'self' is required for the
+# <link rel="manifest"> in BaseLayout — without it the manifest falls back to
+# default-src 'none' and the browser blocks it (Lighthouse best-practices
+# flags the CSP console error).
 
 /*
-  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-eIXWvAmxkr251LJZkjniEK5LcPF3NkapbJepohwYRIc=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q='; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-eIXWvAmxkr251LJZkjniEK5LcPF3NkapbJepohwYRIc=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q='; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
