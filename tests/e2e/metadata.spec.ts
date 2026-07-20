@@ -29,10 +29,29 @@ test.describe("metadata", () => {
       "content",
       `${ORIGIN}/`,
     );
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute(
+      "content",
+      /.+/,
+    );
+    await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute(
+      "content",
+      "en_GB",
+    );
+    await expect(page.locator('meta[name="author"]')).toHaveAttribute(
+      "content",
+      "Ed Chapman",
+    );
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "max-image-preview:large, max-snippet:-1",
+    );
     await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
       "content",
       "summary_large_image",
     );
+    await expect(
+      page.locator('meta[name="twitter:image:alt"]'),
+    ).toHaveAttribute("content", /.+/);
     await expect(
       page.locator('meta[property="og:description"]'),
     ).toHaveAttribute("content", /.+/);

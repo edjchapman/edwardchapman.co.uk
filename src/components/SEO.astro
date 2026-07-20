@@ -1,5 +1,5 @@
 ---
-import { normalizePath } from "../lib/paths";
+import { normalizePath, resolveCanonical } from "../lib/paths";
 import { SITE } from "../lib/site";
 
 interface Props {
@@ -7,40 +7,70 @@ interface Props {
   description: string;
   /** Root-relative path to a social-card image (defaults to the site card). */
   image?: string | undefined;
+  /** Alt text for the social card (defaults to the page title). */
+  imageAlt?: string | undefined;
   type?: "website" | "article" | undefined;
   /** Keep the page out of search indexes (unreleased or utility surfaces). */
   noindex?: boolean | undefined;
+  /**
+   * Absolute URL of the canonical original, when this page syndicates
+   * content published elsewhere first. Omit for the common case — canonical
+   * then derives from the request path.
+   */
+  canonical?: string | undefined;
 }
 
 const {
   title,
   description,
   image = "/og/default.png",
+  imageAlt = title,
   type = "website",
   noindex = false,
+  canonical: canonicalOverride,
 } = Astro.props;
 
 // Canonical policy: absolute, on the canonical origin, no trailing slash
 // (except the root). Enforced site-wide by scripts/check-internal-links.ts.
-const canonical = new URL(normalizePath(Astro.url.pathname), SITE.origin).href;
+// An explicit override wins (syndication); otherwise it derives from the
+// served path. `og:url` stays bound to this page's own address even when
+// `canonical` points elsewhere — a syndicated copy still has its own share
+// URL.
+const canonical = resolveCanonical(
+  canonicalOverride,
+  Astro.url.pathname,
+  SITE.origin,
+);
+const selfUrl = new URL(normalizePath(Astro.url.pathname), SITE.origin).href;
 const imageURL = new URL(image, SITE.origin).href;
 ---
 
 <title>{title}</title>
 <meta name="description" content={description} />
-{noindex && <meta name="robots" content="noindex, nofollow" />}
+{
+  noindex ? (
+    <meta name="robots" content="noindex, nofollow" />
+  ) : (
+    <meta name="robots" content="max-image-preview:large, max-snippet:-1" />
+  )
+}
 <link rel="canonical" href={canonical} />
 
 <meta property="og:type" content={type} />
 <meta property="og:site_name" content={SITE.name} />
+<meta property="og:locale" content="en_GB" />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:url" content={canonical} />
+<meta property="og:url" content={selfUrl} />
 <meta property="og:image" content={imageURL} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={imageAlt} />
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={imageURL} />
+<meta name="twitter:image:alt" content={imageAlt} />
+
+<meta name="author" content={SITE.name} />

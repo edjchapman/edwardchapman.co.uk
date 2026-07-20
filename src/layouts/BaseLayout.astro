@@ -11,9 +11,11 @@ interface Props {
   image?: string;
   type?: "website" | "article";
   noindex?: boolean;
+  /** Absolute URL of the canonical original, for syndicated notes. */
+  canonical?: string | undefined;
 }
 
-const { title, description, image, type, noindex } = Astro.props;
+const { title, description, image, type, noindex, canonical } = Astro.props;
 ---
 
 <!doctype html>
@@ -37,6 +39,7 @@ const { title, description, image, type, noindex } = Astro.props;
       image={image}
       type={type}
       noindex={noindex}
+      canonical={canonical}
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link

@@ -17,3 +17,18 @@ export function normalizePath(pathname: string): string {
   }
   return path;
 }
+
+/**
+ * Resolve the canonical URL for a page: an explicit override (e.g. a note
+ * that syndicates an external original) wins; otherwise it derives from the
+ * served pathname on the given origin. Kept separate from `og:url`, which
+ * should always describe this page's own address even when the canonical
+ * points elsewhere.
+ */
+export function resolveCanonical(
+  override: string | undefined,
+  pathname: string,
+  origin: string,
+): string {
+  return override ?? new URL(normalizePath(pathname), origin).href;
+}
