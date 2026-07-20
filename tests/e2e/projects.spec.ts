@@ -50,4 +50,21 @@ test.describe("projects", () => {
       "https://edwardchapman.co.uk/projects/foreman",
     );
   });
+
+  test("case study carries SoftwareSourceCode + breadcrumb JSON-LD", async ({
+    page,
+  }) => {
+    await page.goto("/projects/foreman");
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .textContent();
+    const parsed = JSON.parse(raw ?? "{}") as {
+      "@graph": Record<string, unknown>[];
+    };
+    const nodes = parsed["@graph"];
+    const code = nodes.find((n) => n["@type"] === "SoftwareSourceCode");
+    expect(code?.["codeRepository"]).toMatch(/^https:\/\/github\.com\//);
+    expect(code?.["programmingLanguage"]).toBeUndefined();
+    expect(nodes.some((n) => n["@type"] === "BreadcrumbList")).toBe(true);
+  });
 });

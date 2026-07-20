@@ -2,11 +2,12 @@
 import { getCollection, getEntry, render } from "astro:content";
 
 import Hero from "../components/Hero.astro";
-import JsonLdPerson from "../components/JsonLdPerson.astro";
+import JsonLd from "../components/JsonLd.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import Prose from "../components/Prose.astro";
 import Section from "../components/Section.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { personNode, webSiteNode } from "../lib/jsonld";
 import { SITE } from "../lib/site";
 
 const positioning = await getEntry("profile", "positioning");
@@ -25,6 +26,12 @@ const { Content: Contact } = await render(contact);
 const projects = (
   await getCollection("projects", ({ data }) => data.featured && !data.draft)
 ).sort((a, b) => a.data.order - b.data.order);
+
+// knowsAbout draws on every published project's tech, not just the featured
+// ones shown above, so an unfeatured project's stack still counts. personNode
+// dedupes; every entry is already public on that project's own page.
+const allProjects = await getCollection("projects", ({ data }) => !data.draft);
+const knowsAbout = allProjects.flatMap((p) => p.data.tech);
 
 const recentNotes = (await getCollection("notes", ({ data }) => !data.draft))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -81,7 +88,7 @@ const formatDate = (date: Date) =>
     site's published content only.
   </p>
 
-  <JsonLdPerson />
+  <JsonLd nodes={[webSiteNode(), personNode({ knowsAbout })]} />
 </BaseLayout>
 
 <style>

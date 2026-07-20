@@ -2,8 +2,16 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection, render } from "astro:content";
 
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import JsonLd from "../../components/JsonLd.astro";
 import Prose from "../../components/Prose.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  breadcrumbNode,
+  personNode,
+  softwareSourceCodeNode,
+} from "../../lib/jsonld";
+import { SITE } from "../../lib/site";
 
 export const getStaticPaths = (async () => {
   const projects = await getCollection("projects", ({ data }) => !data.draft);
@@ -21,6 +29,28 @@ const relatedNotes = await getCollection(
   "notes",
   ({ data }) => !data.draft && data.relatedProject === project.id,
 );
+
+const projectUrl = `${SITE.origin}/projects/${project.id}`;
+const crumbs = [
+  { name: "Home", url: SITE.origin },
+  { name: "Projects", url: `${SITE.origin}/projects` },
+  { name: title, url: projectUrl },
+];
+
+// personNode() is included (not just referenced by @id) so the project's
+// author resolves to a named entity on this page. Same @id across pages is
+// merged by consumers, not duplicated.
+const jsonLdNodes = [
+  softwareSourceCodeNode({
+    title,
+    description: problem,
+    tech,
+    repo,
+    url: projectUrl,
+  }),
+  personNode(),
+  breadcrumbNode(crumbs),
+];
 ---
 
 <BaseLayout
@@ -29,6 +59,7 @@ const relatedNotes = await getCollection(
   image={`/og/projects/${project.id}.png`}
   type="article"
 >
+  <Breadcrumbs items={crumbs} />
   <article>
     <header>
       <h1>{title}</h1>
@@ -58,6 +89,7 @@ const relatedNotes = await getCollection(
     }
   </article>
   <p class="back"><a href="/projects">← All projects</a></p>
+  <JsonLd nodes={jsonLdNodes} />
 </BaseLayout>
 
 <style>

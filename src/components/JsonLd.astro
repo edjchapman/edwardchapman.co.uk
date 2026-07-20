@@ -1,0 +1,15 @@
+---
+import { graph, type JsonLdNode } from "../lib/jsonld";
+
+interface Props {
+  nodes: JsonLdNode[];
+}
+
+const { nodes } = Astro.props;
+// Escape `<` so a title/description containing `</script>` can never break
+// out of the tag — cheap hardening even though today's sources are trusted
+// frontmatter.
+const json = JSON.stringify(graph(nodes)).replace(/</g, "\\u003c");
+---
+
+<script type="application/ld+json" set:html={json} />

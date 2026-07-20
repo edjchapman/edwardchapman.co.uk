@@ -1,0 +1,73 @@
+---
+import type { BreadcrumbItem } from "../lib/jsonld";
+
+interface Props {
+  /** Ordered Home → … → current. The same array feeds breadcrumbNode()
+   * so the visible trail and the JSON-LD BreadcrumbList never drift. */
+  items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+
+// Absolute URLs (SITE.origin) feed the JSON-LD; the visible links use their
+// path so navigation stays on-origin without a hard-coded host.
+const toPath = (url: string) => new URL(url).pathname || "/";
+---
+
+<nav aria-label="Breadcrumb" class="breadcrumb">
+  <ol>
+    {
+      items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <li>
+            {isLast ? (
+              <span aria-current="page">{item.name}</span>
+            ) : (
+              <a href={toPath(item.url)}>{item.name}</a>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</nav>
+
+<style>
+  .breadcrumb {
+    margin-bottom: var(--space-4);
+  }
+
+  ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  /* Separator between crumbs — decorative, hidden from assistive tech. */
+  li + li::before {
+    content: "/";
+    margin-inline-end: var(--space-2);
+    color: var(--color-rule);
+  }
+
+  a {
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-ink);
+    text-decoration: underline;
+  }
+
+  [aria-current="page"] {
+    color: var(--color-ink);
+  }
+</style>

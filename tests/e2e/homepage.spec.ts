@@ -91,15 +91,21 @@ test.describe("homepage", () => {
     await expect(page.getByRole("link", { name: "Live demo" })).toHaveCount(2);
   });
 
-  test("JSON-LD Person schema is valid", async ({ page }) => {
+  test("JSON-LD @graph carries a valid Person and WebSite", async ({
+    page,
+  }) => {
     await page.goto("/");
     const raw = await page
       .locator('script[type="application/ld+json"]')
       .textContent();
-    const parsed = JSON.parse(raw ?? "{}") as Record<string, unknown>;
-    expect(parsed["@type"]).toBe("Person");
-    expect(parsed["name"]).toBe("Ed Chapman");
-    expect(parsed["sameAs"]).toContain("https://github.com/edjchapman");
+    const parsed = JSON.parse(raw ?? "{}") as {
+      "@graph": Record<string, unknown>[];
+    };
+    const nodes = parsed["@graph"];
+    const person = nodes.find((n) => n["@type"] === "Person");
+    expect(person?.["name"]).toBe("Ed Chapman");
+    expect(person?.["sameAs"]).toContain("https://github.com/edjchapman");
+    expect(nodes.some((n) => n["@type"] === "WebSite")).toBe(true);
   });
 
   test("full scan renders without JavaScript", async ({ browser }) => {
