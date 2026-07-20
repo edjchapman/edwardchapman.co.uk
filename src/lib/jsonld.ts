@@ -55,7 +55,7 @@ export function personNode(opts?: { knowsAbout?: string[] }): JsonLdNode {
       addressLocality: "London",
       addressCountry: "GB",
     },
-    sameAs: [SITE.github, SITE.linkedin],
+    sameAs: [SITE.github, SITE.linkedin, SITE.x],
     ...(knowsAbout.length > 0 && { knowsAbout }),
   };
 }
