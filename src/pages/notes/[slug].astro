@@ -2,8 +2,11 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection, getEntry, render } from "astro:content";
 
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import JsonLd from "../../components/JsonLd.astro";
 import Prose from "../../components/Prose.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { blogPostingNode, breadcrumbNode, personNode } from "../../lib/jsonld";
 import { SITE } from "../../lib/site";
 
 export const getStaticPaths = (async () => {
@@ -27,6 +30,24 @@ const related = relatedProject
   ? await getEntry("projects", relatedProject)
   : undefined;
 
+// Notes sharing at least one tag, newest first, excluding this one — denser
+// internal linking without a separate (and, at this corpus size, thin) tag
+// page. Mirrors the related-project pattern above.
+const relatedNotes =
+  tags.length > 0
+    ? (
+        await getCollection(
+          "notes",
+          ({ id, data }) =>
+            !data.draft &&
+            id !== note.id &&
+            data.tags.some((tag) => tags.includes(tag)),
+        )
+      )
+        .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+        .slice(0, 3)
+    : [];
+
 const iso = (date: Date) => date.toISOString().slice(0, 10);
 const formatDate = (date: Date) =>
   date.toLocaleDateString("en-GB", {
@@ -35,16 +56,32 @@ const formatDate = (date: Date) =>
     day: "numeric",
   });
 
-const articleLd = {
-  "@context": "https://schema.org",
-  "@type": "Article",
-  headline: title,
-  description,
-  datePublished: pubDate.toISOString(),
-  ...(updatedDate && { dateModified: updatedDate.toISOString() }),
-  author: { "@type": "Person", name: SITE.name, url: SITE.origin },
-  url: `${SITE.origin}/notes/${note.id}`,
-};
+const noteUrl = `${SITE.origin}/notes/${note.id}`;
+// One breadcrumb array feeds both the visible trail and the JSON-LD, so they
+// can never disagree.
+const crumbs = [
+  { name: "Home", url: SITE.origin },
+  { name: "Notes", url: `${SITE.origin}/notes` },
+  { name: title, url: noteUrl },
+];
+
+// personNode() is included (not just referenced by @id) so the article's
+// author/publisher resolve to a named entity on this page — Google validates
+// @id references within a page. Same @id across pages is merged, not
+// duplicated; the homepage node additionally carries knowsAbout.
+const jsonLdNodes = [
+  blogPostingNode({
+    title,
+    description,
+    pubDate,
+    updatedDate,
+    tags,
+    url: noteUrl,
+    imageUrl: `${SITE.origin}/og/notes/${note.id}.png`,
+  }),
+  personNode(),
+  breadcrumbNode(crumbs),
+];
 ---
 
 <BaseLayout
@@ -54,6 +91,7 @@ const articleLd = {
   type="article"
   canonical={canonicalURL}
 >
+  <Breadcrumbs items={crumbs} />
   <article>
     <header>
       <h1>{title}</h1>
@@ -89,9 +127,23 @@ const articleLd = {
         </aside>
       )
     }
+    {
+      relatedNotes.length > 0 && (
+        <aside aria-label="Related notes">
+          <p>Related notes:</p>
+          <ul>
+            {relatedNotes.map((other) => (
+              <li>
+                <a href={`/notes/${other.id}`}>{other.data.title}</a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
   </article>
   <p class="back"><a href="/notes">← All notes</a></p>
-  <script type="application/ld+json" set:html={JSON.stringify(articleLd)} />
+  <JsonLd nodes={jsonLdNodes} />
 </BaseLayout>
 
 <style>
@@ -130,8 +182,15 @@ const articleLd = {
     background: var(--color-paper-raised);
   }
 
-  aside p {
+  aside p,
+  aside ul {
     margin: 0;
+  }
+
+  aside ul {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-2);
   }
 
   .back {
