@@ -6,6 +6,9 @@ dist/
 .dev.vars
 src/generated/
 public/og/
+public/apple-touch-icon.png
+public/icon-192.png
+public/icon-512.png
 eval-report.json
 
 # Test artefacts

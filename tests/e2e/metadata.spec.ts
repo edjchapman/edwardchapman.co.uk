@@ -102,6 +102,38 @@ test.describe("metadata", () => {
     expect(body.readUInt32BE(20)).toBe(630);
   });
 
+  test("icon fallbacks and manifest are generated, linked, and valid", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/");
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+      "href",
+      "/apple-touch-icon.png",
+    );
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+      "href",
+      "/site.webmanifest",
+    );
+
+    const icon = await request.get("/apple-touch-icon.png");
+    expect(icon.status()).toBe(200);
+    expect(icon.headers()["content-type"]).toContain("image/png");
+    const iconBody = await icon.body();
+    expect([...iconBody.subarray(0, 8)]).toEqual([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+    expect(iconBody.readUInt32BE(16)).toBe(180);
+    expect(iconBody.readUInt32BE(20)).toBe(180);
+
+    const manifestResponse = await request.get("/site.webmanifest");
+    expect(manifestResponse.status()).toBe(200);
+    const manifest = (await manifestResponse.json()) as {
+      icons: { src: string; sizes: string }[];
+    };
+    expect(manifest.icons.map((i) => i.sizes)).toEqual(["192x192", "512x512"]);
+  });
+
   test("project and note pages carry their own social card, and it resolves", async ({
     page,
     request,
