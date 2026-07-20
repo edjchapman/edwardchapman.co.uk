@@ -31,6 +31,14 @@ make check    # the full gate — green on a fresh clone
 `make check` is exactly what CI runs — if it's green locally, the required
 checks will be green.
 
+Local `/api/ask` requests always use the deterministic fake adapter, including
+`make preview` and `make test-e2e`; ordinary development never calls Anthropic.
+The built-site commands inject `ASK_MODEL_MODE=fake` into `wrangler dev`; that
+binding is deliberately absent from the deploy configuration. Live model
+evaluation is explicit via `make eval-agent-live`. Successful builds remove the
+Cloudflare adapter's generated `dist/server/.dev.vars` and fail if any local
+environment file remains in `dist/` (ADR-0018).
+
 ## Working conventions
 
 Branch → PR → squash-merge; the PR title becomes the permanent commit subject

@@ -23,7 +23,7 @@ The Worker exists only for routes that declare `prerender = false`.
 
 ## Build pipeline
 
-`make build` runs two pre-build generators before `astro build`, in order:
+`make build` runs three pre-build generators before `astro build`, in order:
 
 1. **`scripts/build-agent-corpus.ts`** — the versioned agent corpus
    ([ADR-0005](adr/0005-build-time-corpus-deterministic-retrieval.md)).
@@ -34,6 +34,8 @@ The Worker exists only for routes that declare `prerender = false`.
    `public/og/` directory is gitignored). Rasterisation uses
    `@resvg/resvg-js`, a native module — it must run as a Node pre-build step
    because the Worker bundler can never see it.
+3. **`scripts/build-icons.ts`** — raster fallbacks for the SVG favicon and web
+   manifest, generated from the same source artwork.
 
 Both are deterministic from published content, so CI and local builds emit
 identical assets.
@@ -45,6 +47,11 @@ identical assets.
   Assets. Includes an adapter-managed `_headers` file.
 - `dist/server/` — the Worker bundle plus **`wrangler.json`**, a resolved,
   deploy-ready config derived from the repo's `wrangler.jsonc`.
+
+The Cloudflare Vite plugin emits local variables into
+`dist/server/.dev.vars` for its preview workflow. The final build step removes
+that file and fails if any local environment file remains under `dist/`
+([ADR-0018](adr/0018-fail-closed-model-selection-and-secret-safe-builds.md)).
 
 Deploys therefore run `wrangler deploy --config dist/server/wrangler.json`.
 The repo's `wrangler.jsonc` intentionally has **no `main`** — the adapter
@@ -99,7 +106,12 @@ ingestion) + authored pages. The boundary is enforced mechanically by
    renders them as inline markers.
 
 The fake adapter speaks the same normalised shape, so the whole path runs
-deterministically in CI and local dev without a key.
+deterministically in CI and local dev without a key. Local built Workers are
+started with `ASK_MODEL_MODE=fake` because Wrangler may present their URL as
+canonical; the deploy configuration never contains that binding. Without the
+local flag, the canonical host requires its Anthropic secret and fails closed
+when it is absent
+([ADR-0018](adr/0018-fail-closed-model-selection-and-secret-safe-builds.md)).
 
 ## Quality gate
 

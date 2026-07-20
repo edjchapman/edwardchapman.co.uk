@@ -48,6 +48,7 @@ interface RateLimitBinding {
 
 interface AskEnv {
   ASK_RATE_LIMITER?: RateLimitBinding;
+  ASK_MODEL_MODE?: string;
   ANTHROPIC_MODEL?: string;
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_BASE_URL?: string;
@@ -134,20 +135,23 @@ async function resolveEnv(locals: unknown): Promise<AskEnv> {
 }
 
 /**
- * Adapter selection: the live Anthropic adapter when the Worker secret is
- * present (Phase 4), the deterministic fake otherwise (local dev, CI,
- * previews — which are host-gated off anyway). Model id and base URL are
- * config-driven bindings, never hard-coded (spec §2).
+ * Adapter selection is environment-explicit (ADR-0018): local requests always
+ * use the deterministic fake, while the canonical host requires its Worker
+ * secret. Model id and base URL are config-driven bindings, never hard-coded
+ * (spec §2).
  */
-function selectAdapter(env: AskEnv): ModelAdapter {
-  if (env.ANTHROPIC_API_KEY) {
-    return new AnthropicAdapter({
-      apiKey: env.ANTHROPIC_API_KEY,
-      model: env.ANTHROPIC_MODEL ?? "claude-haiku-4-5",
-      baseURL: env.ANTHROPIC_BASE_URL,
-    });
-  }
-  return new FakeModelAdapter({ mode: "echo-first-citation" });
+function selectAdapter(
+  env: AskEnv,
+  isLocal: boolean,
+): ModelAdapter | undefined {
+  if (isLocal || env.ASK_MODEL_MODE === "fake")
+    return new FakeModelAdapter({ mode: "echo-first-citation" });
+  if (!env.ANTHROPIC_API_KEY) return undefined;
+  return new AnthropicAdapter({
+    apiKey: env.ANTHROPIC_API_KEY,
+    model: env.ANTHROPIC_MODEL ?? "claude-haiku-4-5",
+    baseURL: env.ANTHROPIC_BASE_URL,
+  });
 }
 
 const handleAsk: APIRoute = async (context) => {
@@ -195,9 +199,19 @@ const handleAsk: APIRoute = async (context) => {
     }
   }
 
+  const adapter = selectAdapter(env, isLocal);
+  if (!adapter) {
+    structuredLog({
+      event: "ask.provider_error",
+      requestId,
+      detail: "missing_model_credential",
+    });
+    return errorResponse("upstream_error", requestId);
+  }
+
   const service = new AgentService(
     corpusJson as Corpus,
-    selectAdapter(env),
+    adapter,
     structuredLog,
   );
 

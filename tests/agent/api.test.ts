@@ -8,7 +8,8 @@ import { askResponseSchema } from "../../src/lib/agent/schema";
 import type { AgentStreamEvent } from "../../src/lib/agent/service";
 import { ALL, POST } from "../../src/pages/api/ask";
 
-const ENDPOINT = "https://edwardchapman.co.uk/api/ask";
+const ENDPOINT = "http://localhost/api/ask";
+const PRODUCTION_ENDPOINT = "https://edwardchapman.co.uk/api/ask";
 
 type RouteContext = Parameters<typeof POST>[0];
 
@@ -53,6 +54,44 @@ describe("POST /api/ask contract", () => {
       expect(parsed.data.requestId).toMatch(/[0-9a-f-]{36}/);
     }
     expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("fails closed on the canonical host when the model credential is absent", async () => {
+    const response = await postJson(
+      { question: "How did Foreman handle reliable event processing?" },
+      { url: PRODUCTION_ENDPOINT },
+    );
+    expect(response.status).toBe(502);
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("upstream_error");
+  });
+
+  it("keeps local requests deterministic even when a model credential exists", async () => {
+    const response = await postJson(
+      { question: "How did Foreman handle reliable event processing?" },
+      {
+        env: {
+          ANTHROPIC_API_KEY: "test-only-key",
+          ANTHROPIC_BASE_URL: "http://127.0.0.1:9",
+        },
+      },
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { sources: unknown[] };
+    expect(body.sources.length).toBeGreaterThan(0);
+  });
+
+  it("supports the explicit fake binding used by the local Worker", async () => {
+    const response = await postJson(
+      { question: "How did Foreman handle reliable event processing?" },
+      {
+        url: PRODUCTION_ENDPOINT,
+        env: { ASK_MODEL_MODE: "fake" },
+      },
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { sources: unknown[] };
+    expect(body.sources.length).toBeGreaterThan(0);
   });
 
   it("refuses unsupported questions with the exact refusal form", async () => {

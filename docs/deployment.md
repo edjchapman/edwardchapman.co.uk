@@ -47,13 +47,22 @@ day-to-day deploys use.
 `ANTHROPIC_API_KEY` — a Worker secret the deployed Worker reads at request time
 as `env.ANTHROPIC_API_KEY` to answer `/api/ask` (Phase 4). Stored on the
 Worker, never in the repo. This is a **separate** store from the GitHub secret
-of the same name.
+of the same name. The canonical endpoint fails closed with `upstream_error`
+when it is absent; it never falls back to the fake adapter (ADR-0018).
 
 ### Local (optional)
 
 `ANTHROPIC_API_KEY_EDWARDCHAPMAN` — a shell environment variable used only to
 run `make eval-agent-live` locally. Not needed for CI, deploys, or production.
 Local development of everything else needs no secrets.
+
+Local `/api/ask` requests use the deterministic fake adapter even if a
+developer has a key configured. The local preview and Playwright commands pass
+`ASK_MODEL_MODE=fake` to `wrangler dev`; the deploy configuration never defines
+that binding. Successful builds strip the Cloudflare adapter's generated
+`.dev.vars` from `dist/`, so previews and browser tests do not inherit local
+provider credentials. Live calls remain explicit through the evaluation
+command or protected workflow (ADR-0018).
 
 ## Rotating the Anthropic API key
 
