@@ -49,6 +49,14 @@ test.describe("metadata", () => {
       "content",
       "summary_large_image",
     );
+    await expect(page.locator('meta[name="twitter:site"]')).toHaveAttribute(
+      "content",
+      "@edjchapman",
+    );
+    await expect(page.locator('meta[name="twitter:creator"]')).toHaveAttribute(
+      "content",
+      "@edjchapman",
+    );
     await expect(
       page.locator('meta[name="twitter:image:alt"]'),
     ).toHaveAttribute("content", /.+/);

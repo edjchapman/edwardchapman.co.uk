@@ -105,6 +105,7 @@ test.describe("homepage", () => {
     const person = nodes.find((n) => n["@type"] === "Person");
     expect(person?.["name"]).toBe("Ed Chapman");
     expect(person?.["sameAs"]).toContain("https://github.com/edjchapman");
+    expect(person?.["sameAs"]).toContain("https://x.com/edjchapman");
     expect(nodes.some((n) => n["@type"] === "WebSite")).toBe(true);
   });
 

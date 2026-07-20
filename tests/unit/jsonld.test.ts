@@ -19,7 +19,7 @@ describe("personNode", () => {
     expect(node["@id"]).toBe(PERSON_ID);
     expect(node["name"]).toBe(SITE.name);
     expect(node["alternateName"]).toBe(SITE.fullName);
-    expect(node["sameAs"]).toEqual([SITE.github, SITE.linkedin]);
+    expect(node["sameAs"]).toEqual([SITE.github, SITE.linkedin, SITE.x]);
   });
 
   it("omits knowsAbout when empty and dedupes when present", () => {

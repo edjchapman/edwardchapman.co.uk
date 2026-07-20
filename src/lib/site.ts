@@ -12,6 +12,9 @@ export const SITE = {
   origin: "https://edwardchapman.co.uk",
   github: "https://github.com/edjchapman",
   linkedin: "https://www.linkedin.com/in/edjchapman/",
+  x: "https://x.com/edjchapman",
+  /** X/Twitter @handle for card attribution (twitter:site/creator). */
+  xHandle: "@edjchapman",
   email: "ed@edwardchapman.co.uk",
   repo: "https://github.com/edjchapman/edwardchapman.co.uk",
 } as const;
