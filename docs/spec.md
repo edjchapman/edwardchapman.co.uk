@@ -679,6 +679,11 @@ At request time:
 10. Return only citations whose indices correspond to supplied passages,
     mapped to character spans of the answer.
 
+The canonical production host must fail closed with the stable upstream-error
+contract when its model credential is absent. The deterministic fake adapter is
+restricted to explicit local and test execution; missing production
+configuration must never produce a plausible fake answer (ADR-0018).
+
 _(Steps 7, 8 and 10 amended — see
 [ADR-0012](adr/0012-api-enforced-citations-via-search-results.md).)_
 
@@ -851,6 +856,8 @@ Cover at minimum:
 ## Required mitigations
 
 - Worker secrets.
+- Fail-closed production model selection; fake adapters only in local/tests.
+- Removal and verification of local environment files from build artefacts.
 - Least-privilege deployment credentials.
 - Dependency lockfile.
 - Dependabot.

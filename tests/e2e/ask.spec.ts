@@ -61,6 +61,18 @@ test.describe("/ask interface", () => {
     expect(await sitemap.text()).toContain("/ask");
   });
 
+  test("privacy copy describes the released question-processing path", async ({
+    page,
+  }) => {
+    await page.goto("/privacy");
+    await expect(page.getByRole("main")).toContainText(
+      "your question is sent to Anthropic",
+    );
+    await expect(page.getByRole("main")).toContainText(
+      "does not store questions or answers in a database",
+    );
+  });
+
   test("submits a question and renders the answer with inline citations", async ({
     page,
   }) => {

@@ -14,7 +14,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "pnpm run build && pnpm exec wrangler dev --config dist/server/wrangler.json --port 8788",
+      "pnpm run build && pnpm exec wrangler dev --config dist/server/wrangler.json --var ASK_MODEL_MODE:fake --port 8788",
     url: "http://127.0.0.1:8788",
     reuseExistingServer: !process.env["CI"],
     timeout: 120_000,

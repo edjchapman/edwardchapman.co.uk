@@ -71,6 +71,7 @@ test: ## Vitest unit/integration suites (corpus via vitest globalSetup)
 
 build: corpus og-cards icons ## Production build (dist/)
 	@pnpm exec astro build
+	@node scripts/sanitize-build-output.ts
 
 check-content: ## Content-policy scan over sources and built output
 	@node scripts/check-content-policy.ts
