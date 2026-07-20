@@ -85,6 +85,23 @@ test.describe("metadata", () => {
     }
   });
 
+  test("note URLs carry a content-derived lastmod in the sitemap", async ({
+    request,
+  }) => {
+    const body = await (await request.get("/sitemap-0.xml")).text();
+    // Locate a known note's <url> block by path via string search (not a regex
+    // built from the host — interpolating the dotted hostname into a regex is
+    // an unescaped-dot match hole, flagged by CodeQL) and read its <lastmod>.
+    const start = body.indexOf(
+      "/notes/llm-as-judge-as-a-ci-quality-gate</loc>",
+    );
+    expect(start).toBeGreaterThan(-1);
+    const block = body.slice(start, body.indexOf("</url>", start));
+    const lastmod = /<lastmod>([^<]+)<\/lastmod>/.exec(block)?.[1];
+    expect(lastmod).toBeTruthy();
+    expect(Number.isNaN(Date.parse(lastmod ?? ""))).toBe(false);
+  });
+
   test("default social card is generated as a valid 1200×630 PNG", async ({
     request,
   }) => {
