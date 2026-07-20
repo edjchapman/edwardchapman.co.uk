@@ -89,12 +89,15 @@ test.describe("metadata", () => {
     request,
   }) => {
     const body = await (await request.get("/sitemap-0.xml")).text();
-    // The <url> block for a known note must include a valid <lastmod>.
-    const block = new RegExp(
-      `<url>\\s*<loc>${ORIGIN}/notes/llm-as-judge-as-a-ci-quality-gate</loc>([\\s\\S]*?)</url>`,
-    ).exec(body);
-    expect(block).not.toBeNull();
-    const lastmod = /<lastmod>([^<]+)<\/lastmod>/.exec(block?.[1] ?? "")?.[1];
+    // Locate a known note's <url> block by path via string search (not a regex
+    // built from the host — interpolating the dotted hostname into a regex is
+    // an unescaped-dot match hole, flagged by CodeQL) and read its <lastmod>.
+    const start = body.indexOf(
+      "/notes/llm-as-judge-as-a-ci-quality-gate</loc>",
+    );
+    expect(start).toBeGreaterThan(-1);
+    const block = body.slice(start, body.indexOf("</url>", start));
+    const lastmod = /<lastmod>([^<]+)<\/lastmod>/.exec(block)?.[1];
     expect(lastmod).toBeTruthy();
     expect(Number.isNaN(Date.parse(lastmod ?? ""))).toBe(false);
   });
