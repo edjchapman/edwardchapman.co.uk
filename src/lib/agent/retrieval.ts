@@ -78,8 +78,6 @@ const STOPWORDS = new Set([
   "your",
   "about",
   "tell",
-  "chapman",
-  "chapmans",
 ]);
 
 // Small curated vocabulary (spec §11): maps query variants onto the tokens
@@ -133,6 +131,8 @@ const SYNONYMS: Record<string, string[]> = {
   // reach two matched terms, and leaving a bare employer token non-confident
   // keeps salary/leaving probes below the gate rather than at the model.
   worked: ["role", "employer", "companie"],
+  job: ["role", "engineer"],
+  know: ["work", "engineering"],
   education: ["degree", "university", "msc"],
   educational: ["education", "degree", "university"],
   university: ["birkbeck", "degree", "msc"],
@@ -140,6 +140,18 @@ const SYNONYMS: Record<string, string[]> = {
   study: ["degree", "university"],
   studied: ["degree", "university"],
   msc: ["degree", "birkbeck"],
+  // Leadership and identity phrasings that carry one content word ("Has Ed
+  // managed a team?", "Who is Ed Chapman?", "Where is Ed based?"). "chapman"
+  // is deliberately NOT a stopword so the identity question keeps a token.
+  led: ["lead", "leadership", "mentored"],
+  managed: ["lead", "leadership", "mentored"],
+  manage: ["lead", "leadership", "mentored"],
+  management: ["lead", "leadership", "mentored"],
+  strength: ["leadership", "mentored"],
+  chapman: ["senior", "engineer", "role"],
+  based: ["london", "engineer"],
+  located: ["london", "engineer"],
+  location: ["london", "engineer"],
 };
 
 /** Fold trivial plurals so "events" matches "event" on both sides. */

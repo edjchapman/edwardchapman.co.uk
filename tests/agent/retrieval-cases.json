@@ -197,6 +197,56 @@
       "expectedSectionIds": ["experience#education"]
     },
     {
+      "id": "study-where",
+      "query": "Where did Ed study?",
+      "expectedSectionIds": ["experience#education"]
+    },
+    {
+      "id": "last-job",
+      "query": "What was Ed's last job?",
+      "expectedSectionIds": ["experience#intro", "experience#built-ai"]
+    },
+    {
+      "id": "know-react",
+      "query": "Does Ed know React?",
+      "expectedSectionIds": [
+        "technical-focus#body",
+        "skills-depth#technology-depth",
+        "positioning#body"
+      ]
+    },
+    {
+      "id": "managed-team",
+      "query": "Has Ed managed a team?",
+      "expectedSectionIds": [
+        "skills-depth#strengths-and-leadership",
+        "experience#natoora"
+      ]
+    },
+    {
+      "id": "led-team",
+      "query": "Has Ed led a team?",
+      "expectedSectionIds": [
+        "skills-depth#strengths-and-leadership",
+        "experience#natoora"
+      ]
+    },
+    {
+      "id": "strengths",
+      "query": "What are Ed's strengths?",
+      "expectedSectionIds": ["skills-depth#strengths-and-leadership"]
+    },
+    {
+      "id": "who-is-ed-chapman",
+      "query": "Who is Ed Chapman?",
+      "expectedSectionIds": ["positioning#body"]
+    },
+    {
+      "id": "based-where",
+      "query": "Where is Ed based?",
+      "expectedSectionIds": ["positioning#body"]
+    },
+    {
       "id": "employers-list",
       "query": "Which companies has Ed worked for?",
       "expectedSectionIds": [

@@ -39,5 +39,6 @@ cross-functional product team and mentored engineers.
 
 ## Education
 
-MSc Information Technology (Merit), Birkbeck, University of London. BA
-(Hons) Russian Studies, University of Leeds.
+Ed's degrees: an MSc in Information Technology (Merit) from Birkbeck,
+University of London, and a BA (Hons) in Russian Studies from the
+University of Leeds.
