@@ -353,6 +353,80 @@ async function probeInputBoundary(): Promise<void> {
   await sleep(1500);
 }
 
+/**
+ * Parse robots.txt into user-agent groups (consecutive User-agent lines share
+ * one group; allow/disallow directives attach to it; unknown directives such
+ * as Content-Signal are ignored). Enough structure to assert the contract —
+ * not a full parser.
+ */
+function robotsGroups(body: string): { agents: string[]; rules: string[] }[] {
+  const groups: { agents: string[]; rules: string[] }[] = [];
+  let current: { agents: string[]; rules: string[] } | null = null;
+  let collectingAgents = false;
+  for (const rawLine of body.split("\n")) {
+    const line = rawLine.replace(/#.*$/, "").trim();
+    const separator = line.indexOf(":");
+    if (separator === -1) continue;
+    const field = line.slice(0, separator).trim().toLowerCase();
+    const value = line.slice(separator + 1).trim();
+    if (field === "user-agent") {
+      if (!collectingAgents || current === null) {
+        current = { agents: [], rules: [] };
+        groups.push(current);
+        collectingAgents = true;
+      }
+      current.agents.push(value);
+    } else {
+      collectingAgents = false;
+      if (current && (field === "allow" || field === "disallow")) {
+        current.rules.push(`${field}:${value}`);
+      }
+    }
+  }
+  return groups;
+}
+
+/**
+ * The served robots.txt contract. Cloudflare's managed robots.txt (Content
+ * Signals) rewrites the file at the edge, so the repo copy proves nothing —
+ * these invariants hold under either stance (managed block present or the
+ * repo file served verbatim): the file exists, search engines are never
+ * globally disallowed, and the sitemap stays advertised.
+ */
+async function probeRobotsContract(): Promise<void> {
+  const response = await fetch(`${ORIGIN}/robots.txt`);
+  const body = await response.text();
+  record(
+    "robots.txt is served",
+    response.status === 200,
+    `status=${response.status}`,
+  );
+
+  const sitemapAdvertised = body.includes(
+    `Sitemap: ${ORIGIN}/sitemap-index.xml`,
+  );
+  record(
+    "robots.txt advertises the sitemap index",
+    sitemapAdvertised,
+    sitemapAdvertised ? "Sitemap line present" : "Sitemap line missing",
+  );
+
+  const starGroups = robotsGroups(body).filter((group) =>
+    group.agents.includes("*"),
+  );
+  const globallyDisallowed = starGroups.some((group) =>
+    group.rules.includes("disallow:/"),
+  );
+  const explicitlyAllowed = starGroups.some((group) =>
+    group.rules.includes("allow:/"),
+  );
+  record(
+    "search crawlers stay allowed (no global Disallow under User-agent: *)",
+    starGroups.length > 0 && explicitlyAllowed && !globallyDisallowed,
+    `star groups=${starGroups.length} allow=${explicitlyAllowed} disallow=${globallyDisallowed}`,
+  );
+}
+
 // Runs LAST: it deliberately exhausts the per-IP rate limit for ~60s.
 async function probeRateLimit(): Promise<void> {
   let sawLimited = false;
@@ -388,6 +462,7 @@ async function main(): Promise<void> {
   await probeContactContainment();
   await probeGroundedOnOrigin();
   await probeInputBoundary();
+  await probeRobotsContract();
   await probeRateLimit();
 
   let failures = 0;
