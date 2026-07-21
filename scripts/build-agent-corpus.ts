@@ -48,6 +48,13 @@ export type Corpus = {
 
 const ORIGIN = "https://edwardchapman.co.uk";
 
+/** Profile entries rendered on a dedicated page instead of the homepage. */
+const PROFILE_PAGES: Record<string, string> = {
+  colophon: "/colophon",
+  experience: "/experience",
+  "skills-depth": "/experience",
+};
+
 function parseFrontmatter(raw: string): {
   data: Record<string, unknown>;
   body: string;
@@ -193,8 +200,9 @@ export function buildCorpus(root: string): Corpus {
     const { data, body } = parseFrontmatter(entry.raw);
     const parsed = profileSchema.parse(data);
     if (!parsed.corpus) continue;
-    // Profile prose renders on the homepage (colophon on its own page).
-    const url = entry.id === "colophon" ? `${ORIGIN}/colophon` : `${ORIGIN}/`;
+    // Profile prose renders on the homepage; colophon and the career entries
+    // render on their own pages — citations must resolve where the text is.
+    const url = `${ORIGIN}${PROFILE_PAGES[entry.id] ?? "/"}`;
 
     const sections = splitSections(body);
     sections.forEach((section, index) => {

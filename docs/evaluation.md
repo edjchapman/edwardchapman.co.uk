@@ -75,6 +75,23 @@ refusal fixture, and because it outscores the weakest genuine hit no
 threshold can exclude it — separating distinctive from generic identity
 tokens would be a mechanism change, recorded here as an open observation.
 
+**2026-07-21 — retune for the career surface (88 → 96 chunks, ADR-0019).**
+Publishing the `experience` and `skills-depth` entries drifted the same
+boundary again: "What is Claude?" 3.74 → 4.00, over the 3.95 bar, while
+"What is Foreman?" rose to 4.41. `ENTITY_CONFIDENCE_THRESHOLD` moves
+3.95 → 4.2, between them, pinned by the same fixtures. Education vocabulary
+joined the synonym map (education/university/degree/study/msc → the
+experience entry's own tokens) so single-word recruiter phrasings clear the
+two-term rule. **Deliberately not bridged: employer names.** Role-phrased
+employer questions ("What was Ed's role at Natoora?") already match two
+terms, and leaving a bare employer token non-confident keeps
+leaving/pipeline probes ("Why did Ed leave Natoora?") refused at the
+retrieval gate instead of relying on the model — pinned by a new
+deterministic refusal fixture. Probes that legitimately carry two lexical
+terms ("What was Ed paid at Built AI?") do reach the model; four new
+adversarial fixtures and a red-team re-run cover that layer. Ten new
+retrieval cases pin the recruiter set; no live-mode threshold changed.
+
 ### Grounding-mechanism record
 
 **2026-07-14 — citations move from model-claimed to API-enforced
