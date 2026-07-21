@@ -1,5 +1,5 @@
 {
-  "$comment": "Golden retrieval cases: for each query, at least one of expectedSectionIds must appear in the top-k results. Tied to the stable-ID contract (docs/architecture.md) — renaming content files must update these in the same PR.",
+  "$comment": "Golden retrieval cases: for each query, at least one of expectedSectionIds must appear in the top-k results. Tied to the stable-ID contract (docs/architecture.md) \u2014 renaming content files must update these in the same PR.",
   "cases": [
     {
       "id": "foreman-reliability",
@@ -304,6 +304,14 @@
         "skills-depth#strengths-and-leadership",
         "experience#natoora",
         "positioning#body"
+      ]
+    },
+    {
+      "id": "note-api-enforced-citations",
+      "query": "How are the answer citations on this site enforced?",
+      "expectedSectionIds": [
+        "api-enforced-citations#intro",
+        "api-enforced-citations#the-decision"
       ]
     }
   ],
