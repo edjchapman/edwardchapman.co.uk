@@ -17,6 +17,14 @@ Group — Software Engineer (Feb – Jun 2023); Natoora — Tech Lead
 Nine-plus years across these employers, spanning proptech, energy, and
 supply-chain logistics.
 
+The closest public demonstrations of the same skills are Ed's own projects
+on this site: [Foreman](https://edwardchapman.co.uk/projects/foreman) for
+Django/Celery/PostgreSQL and Terraform platform engineering, the
+[AI Due-Diligence Assistant](https://edwardchapman.co.uk/projects/ai-due-diligence-assistant)
+for TypeScript product work and evaluation-driven AI, and the
+[notes](https://edwardchapman.co.uk/notes) for the engineering judgement
+behind them.
+
 ## Built AI
 
 Senior Backend/Platform Engineer, August 2023 – May 2026. Proptech: a
@@ -34,8 +42,9 @@ Python and Django/DRF.
 Tech Lead (January 2022 – February 2023) and Software Engineer (February
 2017 – January 2022). Supply-chain and logistics for fresh produce:
 Python/Django services, React and React Native product work, and Google
-Cloud infrastructure. As Tech Lead, set technical direction for a
-cross-functional product team and mentored engineers.
+Cloud infrastructure. As Tech Lead — after five years there as a Software
+Engineer — set technical direction for a cross-functional product team,
+mentored engineers, and owned delivery across product and engineering.
 
 ## Education
 
