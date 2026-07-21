@@ -245,6 +245,10 @@ test.describe("/ask interface", () => {
     });
 
     await page.goto("/ask");
+    // The career chip (ADR-0019 surface) must be present and clickable.
+    await expect(
+      page.getByRole("button", { name: "Where has Ed worked, and when?" }),
+    ).toBeVisible();
     await page
       .getByRole("button", {
         name: "How did Foreman handle reliable event processing?",
