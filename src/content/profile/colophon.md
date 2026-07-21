@@ -5,7 +5,11 @@ updatedDate: 2026-07-10
 ---
 
 How this site is built, and why — because for an engineer's personal site,
-the _how_ is part of the point.
+the _how_ is part of the point. In short: the site is built with Astro and
+deployed on Cloudflare Workers; almost every page is static, React is
+confined to a single interactive island, and the "ask" agent is grounded in
+published content and gated by evaluations. The sections below give the
+reasoning.
 
 ## Why Astro
 
