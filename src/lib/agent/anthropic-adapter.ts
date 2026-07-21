@@ -36,6 +36,13 @@ export type AnthropicAdapterConfig = {
 
 const TIMEOUT_MS = 20_000;
 const MAX_TOKENS = 1024;
+/**
+ * Pinned low for a grounded factual assistant: the Citations API constrains
+ * *what* can be claimed, but not run-to-run phrasing variance — and the live
+ * eval judges phrasing (required claims). Not 0: a little headroom keeps
+ * refusal wording and multi-block assembly from degenerating on ties.
+ */
+const TEMPERATURE = 0.2;
 
 export class AnthropicAdapter implements ModelAdapter {
   private readonly client: Anthropic;
@@ -61,6 +68,7 @@ export class AnthropicAdapter implements ModelAdapter {
       const message = await this.client.messages.create({
         model: this.model,
         max_tokens: MAX_TOKENS,
+        temperature: TEMPERATURE,
         system: request.system,
         messages: [{ role: "user", content: buildContent(request) }],
       });
@@ -90,6 +98,7 @@ export class AnthropicAdapter implements ModelAdapter {
       const stream = await this.client.messages.create({
         model: this.model,
         max_tokens: MAX_TOKENS,
+        temperature: TEMPERATURE,
         system: request.system,
         messages: [{ role: "user", content: buildContent(request) }],
         stream: true,
