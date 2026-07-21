@@ -63,6 +63,32 @@ test.describe("experience page", () => {
     );
   });
 
+  test("enriches the Person JSON-LD with alumniOf and occupation", async ({
+    page,
+  }) => {
+    await page.goto("/experience");
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .textContent();
+    const parsed = JSON.parse(raw ?? "{}") as {
+      "@graph": Record<string, unknown>[];
+    };
+    const person = parsed["@graph"].find((node) => node["@type"] === "Person");
+    expect(person).toBeDefined();
+    expect(person?.["alumniOf"]).toEqual([
+      {
+        "@type": "EducationalOrganization",
+        name: "Birkbeck, University of London",
+      },
+      { "@type": "EducationalOrganization", name: "University of Leeds" },
+    ]);
+    expect(person?.["hasOccupation"]).toEqual({
+      "@type": "Occupation",
+      name: "Senior Software Engineer",
+    });
+    expect(person?.["worksFor"]).toBeUndefined();
+  });
+
   test("never carries prohibited vocabulary", async ({ page }) => {
     await page.goto("/experience");
     const body = (await page.locator("body").textContent()) ?? "";

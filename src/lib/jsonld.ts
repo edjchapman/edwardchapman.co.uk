@@ -38,11 +38,20 @@ export interface SoftwareSourceCodeInput {
   url: string;
 }
 
-/** The site's Person entity. `knowsAbout` is only ever the union of tech
- * already publicly listed on published project pages — never invented; it is
- * deduped here so callers can pass a raw union. */
-export function personNode(opts?: { knowsAbout?: string[] }): JsonLdNode {
+/** The site's Person entity. Every optional field traces to published page
+ * content, never invented: `knowsAbout` is the union of tech already listed
+ * on published project pages (deduped here so callers can pass a raw union);
+ * `alumniOf` carries the institutions on /experience; `occupation` names the
+ * published job title. No `worksFor` — the /experience timeline's most
+ * recent role carries an end date, so asserting a current employer would be
+ * false (ADR-0019). */
+export function personNode(opts?: {
+  knowsAbout?: string[];
+  alumniOf?: string[];
+  occupation?: string;
+}): JsonLdNode {
   const knowsAbout = [...new Set(opts?.knowsAbout ?? [])];
+  const alumniOf = opts?.alumniOf ?? [];
   return {
     "@type": "Person",
     "@id": PERSON_ID,
@@ -57,6 +66,15 @@ export function personNode(opts?: { knowsAbout?: string[] }): JsonLdNode {
     },
     sameAs: [SITE.github, SITE.linkedin, SITE.x],
     ...(knowsAbout.length > 0 && { knowsAbout }),
+    ...(alumniOf.length > 0 && {
+      alumniOf: alumniOf.map((name) => ({
+        "@type": "EducationalOrganization",
+        name,
+      })),
+    }),
+    ...(opts?.occupation && {
+      hasOccupation: { "@type": "Occupation", name: opts.occupation },
+    }),
   };
 }
 

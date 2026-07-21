@@ -1,8 +1,10 @@
 ---
 import { getEntry, render } from "astro:content";
 
+import JsonLd from "../components/JsonLd.astro";
 import Prose from "../components/Prose.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { personNode } from "../lib/jsonld";
 
 const experience = await getEntry("profile", "experience");
 const skillsDepth = await getEntry("profile", "skills-depth");
@@ -11,6 +13,12 @@ if (!experience || !skillsDepth) {
 }
 const { Content: Experience } = await render(experience);
 const { Content: SkillsDepth } = await render(skillsDepth);
+
+// Every value below restates content published on this page (ADR-0019).
+const person = personNode({
+  alumniOf: ["Birkbeck, University of London", "University of Leeds"],
+  occupation: "Senior Software Engineer",
+});
 ---
 
 <BaseLayout
@@ -20,4 +28,5 @@ const { Content: SkillsDepth } = await render(skillsDepth);
   <h1>Experience</h1>
   <Prose><Experience /></Prose>
   <Prose><SkillsDepth /></Prose>
+  <JsonLd nodes={[person]} />
 </BaseLayout>
