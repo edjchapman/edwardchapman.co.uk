@@ -10,6 +10,7 @@ const PAGES = [
   "/notes",
   "/notes/llm-as-judge-as-a-ci-quality-gate",
   "/experience",
+  "/now",
   "/colophon",
   "/privacy",
   "/definitely-not-a-page",
