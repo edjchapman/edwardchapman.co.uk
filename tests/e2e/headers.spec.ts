@@ -20,6 +20,43 @@ test.describe("security headers", () => {
     expect(headers["x-frame-options"]).toBe("DENY");
   });
 
+  // The strict CSP is a load-bearing control (it is what blocked Cloudflare's
+  // edge-injected challenge script on 2026-07-21). Lock its posture here so a
+  // code-side weakening fails PR CI, before deploy; the live probe
+  // (scripts/probe-live-security.ts) catches edge-side drift after deploy.
+  test("script-src stays strict — hashes, no unsafe-inline/eval", async ({
+    request,
+  }) => {
+    const csp =
+      (await request.get("/")).headers()["content-security-policy"] ?? "";
+    const scriptSrc = csp
+      .split(";")
+      .map((directive) => directive.trim())
+      .find((directive) => directive.startsWith("script-src"));
+    expect(scriptSrc).toBeDefined();
+    expect(scriptSrc).not.toContain("'unsafe-inline'");
+    expect(scriptSrc).not.toContain("'unsafe-eval'");
+    // At least one pinned hash carries the Astro island bootstrap.
+    expect(scriptSrc).toContain("'sha256-");
+  });
+
+  // Retired ad-tech opt-out tokens (FLoC/Privacy Sandbox) are unrecognised by
+  // current browsers — each logs a console warning and signals a stale policy.
+  test("permissions-policy carries no retired ad-tech tokens", async ({
+    request,
+  }) => {
+    const pp = (await request.get("/")).headers()["permissions-policy"] ?? "";
+    for (const token of [
+      "interest-cohort",
+      "browsing-topics",
+      "run-ad-auction",
+      "attribution-reporting",
+      "private-aggregation",
+    ]) {
+      expect(pp).not.toContain(token);
+    }
+  });
+
   test("the CSP does not break rendering (styles still apply)", async ({
     page,
   }) => {

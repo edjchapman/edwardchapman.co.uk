@@ -16,7 +16,22 @@ set -euo pipefail
 
 STATUS="${1:?usage: report-incident.sh <fail|ok> <source>}"
 SOURCE="${2:-unknown}"
-TITLE="🚨 production /api/ask is not returning a grounded answer"
+# Optional 3rd arg selects the incident kind, so distinct monitors keep distinct
+# (deduped) issues. Default is the /api/ask groundedness outage for the existing
+# callers (deploy.yml, uptime-ask.yml), which pass only two args.
+KIND="${3:-grounded}"
+case "$KIND" in
+  security)
+    TITLE="🚨 production security probe is failing"
+    CONDITION="one or more live security invariants (headers, edge injection, refusal, rate limit) regressed"
+    REMEDY=$'- Cloudflare edge setting re-enabled (Bot Fight Mode / JS Detections re-injecting) \xE2\x86\x92 docs/threat-model.md (API-Enforced Content Security Policy row) and docs/deployment.md.\n- A `public/_headers` regression in the last deploy weakened the CSP \xE2\x86\x92 `pnpm exec wrangler rollback` (docs/deployment.md \xE2\x86\x92 Rollback), then fix on a branch.\n- An agent refusal/leak regression \xE2\x86\x92 reproduce with `make redteam-live` and see docs/red-team.md.'
+    ;;
+  *)
+    TITLE="🚨 production /api/ask is not returning a grounded answer"
+    CONDITION="not returning a grounded answer (a non-empty \`sources\` array on an HTTP 200)"
+    REMEDY=$'- Dead/rotated Anthropic key (502 `upstream_error`) \xE2\x86\x92 `make rotate-anthropic-key` (docs/deployment.md).\n- Code regression in the last deploy \xE2\x86\x92 `pnpm exec wrangler rollback` (docs/deployment.md \xE2\x86\x92 Rollback).\n- Transient upstream/edge blip \xE2\x86\x92 confirm with `pnpm exec wrangler tail --name edwardchapman` (look for `ask.provider_error`).'
+    ;;
+esac
 LABEL="production"
 RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/actions/runs/${GITHUB_RUN_ID:-}"
 
@@ -33,7 +48,7 @@ existing=$(TITLE_ENV="$TITLE" gh issue list --state open --limit 100 \
 if [ "$STATUS" = "ok" ]; then
   if [ -n "$existing" ]; then
     gh issue close "$existing" \
-      --comment "Recovered: \`$SOURCE\` saw a grounded answer again ($RUN_URL). Auto-closing."
+      --comment "Recovered: \`$SOURCE\` passed again ($RUN_URL). Auto-closing."
     echo "closed incident #$existing"
   else
     echo "no open incident to close"
@@ -53,18 +68,15 @@ if [ -n "$existing" ]; then
 fi
 
 read -r -d '' body <<BODY || true
-\`$SOURCE\` found production \`/api/ask\` not returning a grounded answer (a
-non-empty \`sources\` array on an HTTP 200). Production is degraded now.
+\`$SOURCE\` found production $CONDITION. Production is degraded now.
 
 Run: $RUN_URL
 
 **Likely cause → remedy**
 
-- Dead/rotated Anthropic key (502 \`upstream_error\`) → \`make rotate-anthropic-key\` (docs/deployment.md).
-- Code regression in the last deploy → \`pnpm exec wrangler rollback\` (docs/deployment.md → Rollback).
-- Transient upstream/edge blip → confirm with \`pnpm exec wrangler tail --name edwardchapman\` (look for \`ask.provider_error\`).
+$REMEDY
 
-Auto-closes when a later deploy smoke or \`uptime-ask\` run sees a grounded answer.
+Auto-closes when a later run of the same monitor passes again.
 BODY
 
 gh label create "$LABEL" --color B60205 --description "Production incident" 2>/dev/null || true

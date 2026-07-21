@@ -102,6 +102,9 @@ eval-agent: ## Deterministic agent evaluations (also run inside `make check` via
 eval-agent-live: ## Live model evaluation vs thresholds (needs ANTHROPIC_API_KEY)
 	@node scripts/run-agent-evals.ts
 
+redteam-live: ## Live security probe vs a deployed origin (PROBE_ORIGIN=... to override)
+	@node scripts/probe-live-security.ts
+
 deploy: ## Deploy the current build to Cloudflare (CI does this from main)
 	@pnpm exec wrangler deploy --config dist/server/wrangler.json
 
