@@ -84,7 +84,7 @@ test.describe("experience page", () => {
     ]);
     expect(person?.["hasOccupation"]).toEqual({
       "@type": "Occupation",
-      name: "Senior Software Engineer",
+      name: "Senior Software & Platform Engineer",
     });
     expect(person?.["worksFor"]).toBeUndefined();
   });
