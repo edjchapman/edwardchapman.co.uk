@@ -34,13 +34,13 @@ Cloudflare token recipe (create at dash.cloudflare.com → My Profile → API
 Tokens):
 
 - Account → **Workers Scripts : Edit**
-- Zone (edwardchapman.co.uk) → **Workers Routes : Edit**, **DNS : Edit**,
-  **Dynamic URL Redirects : Edit**, **Email Routing Rules : Edit**,
-  **Zone Settings : Edit**
+- Zones (edwardchapman.co.uk **and** edchapman.co.uk) → **Workers Routes :
+  Edit**, **DNS : Edit**, **Dynamic URL Redirects : Edit**, **Email Routing
+  Rules : Edit**, **Zone Settings : Edit**
 
-The zone-scoped permissions exist for the Phase 1 cutover (custom domain,
-stale-record removal, www redirect, email routing); Workers Scripts is what
-day-to-day deploys use.
+The zone-scoped permissions exist for the domain cutovers (custom domain,
+stale-record removal, redirects, email routing — see the cutover sections
+below); Workers Scripts is what day-to-day deploys use.
 
 ### Cloudflare Worker (runtime)
 
@@ -207,11 +207,62 @@ TXT   @ (SPF gandi), _dmarc      (untouched)
 
 ### www-redirect worker
 
-`workers/www-redirect/` is deployed manually (it changes ~never):
+`workers/www-redirect/` 301s every non-canonical hostname — `www` on the
+canonical zone plus the `edchapman.co.uk` alias apex and `www` — to
+`https://edwardchapman.co.uk`, preserving path and query. Deployed manually
+(it changes ~never):
 
 ```sh
 make deploy-www-redirect
 ```
+
+## Alias-domain cutover: edchapman.co.uk — executed 2026-07-21
+
+Both domains moved to Cloudflare Registrar on 2026-07-21 (Nominet IPS-tag
+transfer — registration dates unchanged). `edchapman.co.uk` is an **alias**:
+every web request 301s to the canonical host, and mail to it forwards to the
+same destination as the canonical zone. It must never serve the site
+directly (duplicate content) — the canonical host is `edwardchapman.co.uk`
+everywhere.
+
+Prior state: apex proxied to the dead Gandi origin (`A 217.70.184.38`,
+HTTP 521), `www` on Gandi's defunct redirect CNAME, and a Gandi mail stack
+(MX/SPF/SRV/webmail) still on the zone.
+
+Dashboard steps (Ed): enabled Email Routing (catch-all; Cloudflare-managed
+MX/SPF/DKIM replaced the Gandi records), deleted the Gandi SRV/webmail
+records, replaced the dead web records with proxied placeholders
+(`AAAA @/www → 100::`), and attached the apex to the `edwardchapman` worker
+as a custom domain — which served the site rather than redirecting;
+superseded by the steps below.
+
+Steps executed (this repo + API token):
+
+1. Added `edchapman.co.uk/*` and `www.edchapman.co.uk/*` routes
+   (`zone_name: edchapman.co.uk`) to `workers/www-redirect` and redeployed.
+   A route beats a custom domain on the same hostname, so the apex flipped
+   from serving the site to the 301 the moment the routes attached.
+2. Detached the `edchapman.co.uk` custom domain from the `edwardchapman`
+   worker. **Trap:** detaching a custom domain also deletes the DNS record
+   it adopted — the apex `AAAA → 100::` had to be recreated immediately
+   after (the route kept answering; the gap was ~1s).
+3. Alias zone settings: `always_use_https=on`; `min_tls_version` raised to
+   `1.2` on **both** zones in the same pass.
+4. Deleted the residual null SRV markers (`_imap`/`_pop3 → "."`) from both
+   zones.
+5. Canonical-zone SPF extended with `include:_spf.google.com` (Gmail
+   send-as for the domain's address submits via Google's SMTP).
+6. Verification: https on apex and `www`, with path + query → single-hop
+   `301` to `https://edwardchapman.co.uk/<path>?<query>`; plain http gets
+   the Always-Use-HTTPS same-host upgrade first, then the worker's 301
+   (two hops, matching the canonical zone); canonical site still `200`
+   with `/api/health` reporting the deployed sha; Email Routing
+   `status=ready` on the alias zone; TLS 1.1 handshakes refused on both
+   zones after the `min_tls_version=1.2` change.
+
+Tracked outside the repo (dashboard-only): DNSSEC enablement on both zones,
+registrar auto-renew confirmation, the Gmail send-as mailbox step, and the
+DMARC ratchet (`p=none` → `quarantine`/`reject` once reports run clean).
 
 ## Diagnosing failures
 
