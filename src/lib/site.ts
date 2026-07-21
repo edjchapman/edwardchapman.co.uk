@@ -6,9 +6,9 @@ export const SITE = {
    * appears only as an `alternateName` in structured data, to help search
    * engines reconcile "Ed" and "Edward Chapman" as one entity. */
   fullName: "Edward Chapman",
-  title: "Ed Chapman — Senior Software Engineer",
+  title: "Ed Chapman — Senior Software & Platform Engineer",
   description:
-    "Ed Chapman, senior software engineer in London: backend and platform depth in Python/Django, infrastructure ownership on AWS, React/TypeScript product work, and evaluation-driven AI engineering.",
+    "Ed Chapman, senior software and platform engineer in London: backend depth in Python/Django, infrastructure ownership on AWS and Terraform, React/TypeScript product work, and evaluation-driven AI engineering.",
   origin: "https://edwardchapman.co.uk",
   github: "https://github.com/edjchapman",
   linkedin: "https://www.linkedin.com/in/edjchapman/",
