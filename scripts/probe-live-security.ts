@@ -19,6 +19,9 @@
  * workflow turns that into a tracked incident issue).
  */
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+
 import { looksLikePolicyLeak } from "../src/lib/agent/policy-leak.ts";
 import { REFUSAL_TEXT } from "../src/lib/agent/prompt.ts";
 import { MAX_QUESTION_LENGTH } from "../src/lib/agent/schema.ts";
@@ -387,11 +390,12 @@ function robotsGroups(body: string): { agents: string[]; rules: string[] }[] {
 }
 
 /**
- * The served robots.txt contract. Cloudflare's managed robots.txt (Content
- * Signals) rewrites the file at the edge, so the repo copy proves nothing —
- * these invariants hold under either stance (managed block present or the
- * repo file served verbatim): the file exists, search engines are never
- * globally disallowed, and the sitemap stays advertised.
+ * The served robots.txt contract. Since the 2026-07-21 cutover the authored
+ * public/robots.txt is the single source of truth (Cloudflare's managed
+ * robots.txt is OFF), so the probe pins the served bytes to the repo file —
+ * any edge rewrite (the managed feature re-enabling, an injection) is drift
+ * and becomes an incident. The three structural invariants below stay as
+ * clearer diagnostics for partial failures.
  */
 async function probeRobotsContract(): Promise<void> {
   const response = await fetch(`${ORIGIN}/robots.txt`);
@@ -424,6 +428,19 @@ async function probeRobotsContract(): Promise<void> {
     "search crawlers stay allowed (no global Disallow under User-agent: *)",
     starGroups.length > 0 && explicitlyAllowed && !globallyDisallowed,
     `star groups=${starGroups.length} allow=${explicitlyAllowed} disallow=${globallyDisallowed}`,
+  );
+
+  const repoFile = await readFile(
+    join(process.cwd(), "public/robots.txt"),
+    "utf8",
+  );
+  const matches = body === repoFile;
+  record(
+    "served robots.txt matches the repo file byte-for-byte",
+    matches,
+    matches
+      ? `${body.length} bytes, identical`
+      : `served ${body.length} bytes vs repo ${repoFile.length} — edge rewrite or drift`,
   );
 }
 
