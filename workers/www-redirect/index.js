@@ -1,11 +1,11 @@
 /**
- * Canonical-host redirect: 301s www.edwardchapman.co.uk to the apex,
- * preserving path and query. Deployed as its own tiny Worker on the
- * `www.edwardchapman.co.uk/*` route (see wrangler.jsonc alongside).
+ * Canonical-host redirect: 301s every non-canonical hostname — www on the
+ * canonical zone, plus the edchapman.co.uk alias domain (apex and www) — to
+ * https://edwardchapman.co.uk, preserving path and query. Deployed as its
+ * own tiny Worker on the routes in wrangler.jsonc alongside.
  *
- * Why a worker and not a zone redirect rule: the deploy token deliberately
- * carries Workers scopes only — and this keeps the redirect versioned in the
- * repository with everything else (docs/deployment.md).
+ * Why a worker and not zone redirect rules: the redirect stays versioned in
+ * the repository with everything else (docs/deployment.md).
  */
 
 export default {

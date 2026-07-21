@@ -9,6 +9,14 @@
       "pattern": "www.edwardchapman.co.uk/*",
       "zone_name": "edwardchapman.co.uk",
     },
+    {
+      "pattern": "edchapman.co.uk/*",
+      "zone_name": "edchapman.co.uk",
+    },
+    {
+      "pattern": "www.edchapman.co.uk/*",
+      "zone_name": "edchapman.co.uk",
+    },
   ],
   "observability": { "enabled": true },
 }
