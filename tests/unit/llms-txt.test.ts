@@ -47,6 +47,7 @@ describe("llms.txt generation", () => {
       "/projects",
       "/notes",
       "/experience",
+      "/now",
       "/ask",
       "/colophon",
       "/privacy",
