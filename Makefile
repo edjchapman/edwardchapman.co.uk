@@ -7,7 +7,7 @@
 # `eval-agent` and `eval-agent-live` are defined in Phases 3–4 (see
 # docs/evaluation.md); the names are reserved here.
 
-.PHONY: help setup dev preview check check-links check-anchors stack-check corpus og-cards icons \
+.PHONY: help setup dev preview check check-links check-anchors stack-check corpus og-cards icons llms \
         format-check lint typecheck test build check-content check-dist-links \
         format lint-fix test-e2e check-perf check-external-links eval-agent eval-agent-live \
         deploy deploy-preview \
@@ -63,15 +63,22 @@ og-cards: ## Generate per-page social cards into public/og/
 icons: ## Generate apple-touch-icon.png and manifest icon fallbacks into public/
 	@node scripts/build-icons.ts
 
+llms: ## Generate public/llms.txt from published content
+	@node scripts/build-llms-txt.ts
+
 typecheck: corpus ## astro check (TypeScript + .astro diagnostics)
 	@pnpm exec astro check
 
 test: ## Vitest unit/integration suites (corpus via vitest globalSetup)
 	@pnpm exec vitest run
 
-build: corpus og-cards icons ## Production build (dist/)
-	@pnpm exec astro build
-	@node scripts/sanitize-build-output.ts
+# Delegates to the package.json "build" chain so there is exactly one build
+# entrypoint. A second Makefile-maintained step list silently dropped
+# build-llms-txt from production (2026-07-21): local trees masked it with a
+# leftover gitignored public/llms.txt, and CI e2e passed because Playwright's
+# webServer runs the pnpm chain. One list, or the lists drift.
+build: ## Production build (dist/) via the package.json chain
+	@pnpm run build
 
 check-content: ## Content-policy scan over sources and built output
 	@node scripts/check-content-policy.ts
