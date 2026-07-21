@@ -21,11 +21,11 @@ its live-evaluation, red-team, and rate-limit gates, see
 
 An Astro 7 static-first site served from **Cloudflare Workers Static Assets**:
 prerendered pages are served from the asset layer without invoking any code,
-and a small Worker handles only explicit `prerender = false` routes
-(`/api/health` now; `/api/ask` in Phase 3). Content is typed data in Astro
-content collections, validated by shared zod schemas that the build scripts
-and the future agent-corpus builder reuse. React appears only as interactive
-islands, and none exist before Phase 3. Full picture:
+and a small Worker handles only the explicit `prerender = false` routes
+(`/api/ask` and `/api/health`). Content is typed data in Astro content
+collections, validated by shared zod schemas that the build scripts and the
+agent-corpus builder reuse. React appears only as interactive islands —
+exactly one exists, the `/ask` form. Full picture:
 [docs/architecture.md](docs/architecture.md).
 
 ## Technology choices
@@ -49,21 +49,21 @@ Details and troubleshooting: [docs/development.md](docs/development.md).
 
 ## Commands
 
-|                                            |                                                                                               |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `make check`                               | format, lint, `astro check`, unit tests, build, content-policy scan, built-output link checks |
-| `make test-e2e`                            | Playwright against the built site                                                             |
-| `make check-perf`                          | Lighthouse budgets (non-blocking; CI runs it on every PR)                                     |
-| `make preview`                             | production build via `wrangler dev`                                                           |
-| `make eval-agent` / `make eval-agent-live` | agent evaluations (defined in Phases 3–4; see [docs/evaluation.md](docs/evaluation.md))       |
-| `make help`                                | everything else                                                                               |
+|                                            |                                                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `make check`                               | format, lint, `astro check`, unit tests, build, content-policy scan, built-output link checks        |
+| `make test-e2e`                            | Playwright against the built site                                                                    |
+| `make check-perf`                          | Lighthouse budgets (non-blocking; CI runs it on every PR)                                            |
+| `make preview`                             | production build via `wrangler dev`                                                                  |
+| `make eval-agent` / `make eval-agent-live` | agent evaluations — deterministic gate and live-model run ([docs/evaluation.md](docs/evaluation.md)) |
+| `make help`                                | everything else                                                                                      |
 
 ## Environment variables
 
 None for local development. Deploys use `CLOUDFLARE_API_TOKEN` +
-`CLOUDFLARE_ACCOUNT_ID` (GitHub Actions secrets). The agent (Phases 3–4)
-introduces the `ANTHROPIC_MODEL` binding and the `ANTHROPIC_API_KEY` Worker
-secret — server-side only, never exposed to the browser.
+`CLOUDFLARE_ACCOUNT_ID` (GitHub Actions secrets). The agent uses the
+`ANTHROPIC_MODEL` binding and the `ANTHROPIC_API_KEY` Worker secret —
+server-side only, never exposed to the browser.
 
 ## Deployment
 
@@ -87,7 +87,8 @@ this repository, its build artefacts, prompts, or logs — a fail-closed
 content-policy gate enforces the boundary
 ([ADR-0007](docs/adr/0007-public-content-boundary.md)). The agent answers only
 from published content, refuses rather than improvises, and is gated by
-deterministic + live evaluations and a manual red-team pass
+deterministic + live evaluations and a red-team checklist that re-runs as a
+live probe against production after every deploy
 ([docs/evaluation.md](docs/evaluation.md)). Threat model:
 [docs/threat-model.md](docs/threat-model.md).
 

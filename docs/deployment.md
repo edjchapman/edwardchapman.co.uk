@@ -209,8 +209,11 @@ TXT   @ (SPF gandi), _dmarc      (untouched)
 
 `workers/www-redirect/` 301s every non-canonical hostname — `www` on the
 canonical zone plus the `edchapman.co.uk` alias apex and `www` — to
-`https://edwardchapman.co.uk`, preserving path and query. Deployed manually
-(it changes ~never):
+`https://edwardchapman.co.uk`, preserving path and query. One carve-out: the
+retired "EC Docs" site's sections (`/code_quality`, `/security`,
+`/system_admin`) answer `410 Gone` on the `www` host, so search engines drop
+those still-indexed URLs instead of chasing a 301 into the apex's 404.
+Deployed manually (it changes ~never):
 
 ```sh
 make deploy-www-redirect
