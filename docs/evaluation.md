@@ -100,6 +100,20 @@ education section. Both bridged in the synonym map (`worked`,
 phrasing — the lesson: retrieval fixtures should use the golden questions'
 verbatim wording, not paraphrases.
 
+A 26-question live recruiter battery then surfaced the same failure class
+at scale: common screens that reduce to one content word after stopword
+removal ("last **job**", "does Ed **know** React", "**managed**/**led** a
+team", "Ed's **strengths**", "where is Ed **based**", "where did Ed
+**study**") refused, and "Who is Ed **Chapman**?" tokenized to nothing
+because the surname was a stopword. Fixes, all query-side (no IDF impact):
+bridges for job/know/led/managed/manage/management/strength/based/located/
+location/chapman, `chapman` removed from the stopword list, and the
+education body now names its vocabulary ("Ed's degrees …") after the
+entry-tag removal had silently orphaned the `study → degree` bridge — a
+bridge is only as good as the corpus tokens it points at, and every bridge
+now has a verbatim retrieval fixture. Should-refuse boundaries re-verified
+unchanged (weather/London, salary, leaving, Claude, notice period, visa).
+
 ### Grounding-mechanism record
 
 **2026-07-14 — citations move from model-claimed to API-enforced
