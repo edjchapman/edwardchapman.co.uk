@@ -1,20 +1,20 @@
 ---
 title: "Citations the model can't fake"
 description: "Upgrading this site's ask agent from model-claimed citations to API-enforced citation spans: the decision record, the adapter seam that made it a contained change, and the tests that prove it without a network."
-pubDate: 2026-07-14
+pubDate: 2026-07-21
 tags:
   - ai-engineering
   - grounding
   - citations
   - evaluation
-draft: true
 ---
 
 The ask agent on this site answers questions from a build-time corpus of
-published pages, and every answer must cite its sources. Until this week,
-those citations were **model-claimed**: the model returned a structured JSON
-completion — `{answer, citations: [...sectionIds]}` — and the service
-whitelisted the claimed ids against the passages it had supplied.
+published pages, and every answer must cite its sources. Until mid-July
+2026, those citations were **model-claimed**: the model returned a
+structured JSON completion — `{answer, citations: [...sectionIds]}` — and
+the service whitelisted the claimed ids against the passages it had
+supplied.
 
 That whitelist catches a _fabricated_ citation. It cannot catch a
 _miscredited_ one. Nothing stopped the model from attaching a real, supplied
@@ -31,18 +31,25 @@ being a claim the model makes and becomes a property the API enforces —
 fabricated citation targets are not expressible.
 
 The trade-offs were real enough to record in an ADR rather than a commit
-message:
+message
+([ADR-0012](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/adr/0012-api-enforced-citations-via-search-results.md)):
 
 - **Structured outputs had to go from the answer path.** Citations and JSON
   output constraints are mutually exclusive per request, and of the two,
   enforced grounding is the one this agent exists to demonstrate. (The
   LLM-judge in the evaluation harness keeps structured outputs — separate
   request, unaffected.)
-- **Streaming stayed rejected.** The service validates the complete answer —
-  span structure, citation bounds, policy-leak fingerprints, refusal
-  detection — before a byte reaches the client. Streaming would emit text
-  ahead of validation, and answers are short; the invariant is worth more
-  than the latency.
+- **Streaming was rejected — then un-rejected properly.** At decision time
+  the service validated the complete answer — span structure, citation
+  bounds, policy-leak fingerprints, refusal detection — before a byte
+  reached the client, and streaming would have emitted text ahead of that
+  validation. The rejection lasted a day: streaming shipped once the
+  validation moved into the stream
+  ([ADR-0016](https://github.com/edjchapman/edwardchapman.co.uk/blob/main/docs/adr/0016-streaming-answers-with-incremental-validation.md))
+  — a grounding buffer withholds all text until the first enforced citation
+  proves the answer grounded, and the leak scan holds back a tail so a
+  policy fingerprint can never straddle a chunk boundary. The invariant
+  survived; only its enforcement point moved.
 - **Prompt caching stayed rejected.** The stable prefix is ~350 tokens
   against a 4096-token cache minimum for the configured model, and the
   retrieved blocks vary per question immediately after it. A cache write
