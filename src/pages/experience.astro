@@ -14,10 +14,11 @@ if (!experience || !skillsDepth) {
 const { Content: Experience } = await render(experience);
 const { Content: SkillsDepth } = await render(skillsDepth);
 
-// Every value below restates content published on this page (ADR-0019).
+// Every value below restates published content: alumniOf from this page,
+// occupation from the site's positioning headline (ADR-0019).
 const person = personNode({
   alumniOf: ["Birkbeck, University of London", "University of Leeds"],
-  occupation: "Senior Software Engineer",
+  occupation: "Senior Software & Platform Engineer",
 });
 ---
 
