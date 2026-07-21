@@ -278,12 +278,13 @@ function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
  * that term is a document-identity token AND the score clears a stricter
  * threshold, one term is enough. Body-text collisions ("London", "Python")
  * are not identity tokens and still refuse; weak identity hits ("What is
- * Claude?" ~2.0) sit below the stricter bar. Tuned against
- * tests/agent/retrieval-cases.json — change only with the fixtures.
+ * Claude?" ~3.7) sit below the stricter bar. Tuned against
+ * tests/agent/retrieval-cases.json — change only with the fixtures
+ * (retune history in docs/evaluation.md).
  */
 export const CONFIDENCE_THRESHOLD = 1.5;
 export const MIN_MATCHED_TERMS = 2;
-export const ENTITY_CONFIDENCE_THRESHOLD = 3.7;
+export const ENTITY_CONFIDENCE_THRESHOLD = 3.95;
 
 export function isConfident(results: ScoredChunk[]): boolean {
   const top = results[0];

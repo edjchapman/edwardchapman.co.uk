@@ -131,7 +131,12 @@
     {
       "id": "site-architecture",
       "query": "How is this website built and deployed?",
-      "expectedSectionIds": ["colophon#body"]
+      "expectedSectionIds": [
+        "colophon#intro",
+        "colophon#why-astro",
+        "colophon#why-cloudflare-workers",
+        "colophon#how-it-ships"
+      ]
     },
     {
       "id": "note-vector-db-evidence-bar",
