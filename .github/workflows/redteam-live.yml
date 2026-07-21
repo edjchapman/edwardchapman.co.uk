@@ -1,0 +1,65 @@
+name: redteam-live
+
+# Continuous security regression probe against the live production origin
+# (docs/red-team.md). The manual red-team checklist was a point-in-time gate;
+# this automates its mechanical invariants — security headers, no edge-injected
+# script, forbidden-topic refusals, no policy/PII leak, on-origin citations,
+# input-boundary 400s, and the rate-limit envelope — so a regression is caught
+# without waiting for someone to re-run the list by hand.
+#
+# It runs against the *deployed* endpoint and edge, so it belongs here (a
+# monitor), not in make check (which is network-free and merge-blocking,
+# ADR-0008). The complementary deterministic layer lives in PR CI: the strict
+# CSP posture is asserted by tests/e2e/headers.spec.ts, catching a code-side
+# weakening before deploy; this probe catches edge-side drift after deploy
+# (e.g. a Cloudflare dashboard setting re-injecting a challenge script).
+#
+# Triggers: after every deploy (catch a shipped regression), on a schedule
+# (catch edge drift with no deploy), and on demand. A failure opens a deduped,
+# notifying incident issue via scripts/report-incident.sh; recovery closes it.
+
+on:
+  workflow_run:
+    workflows: ["deploy"]
+    types: [completed]
+  schedule:
+    - cron: "30 */12 * * *" # twice daily, offset from uptime-ask's :00
+  workflow_dispatch:
+
+concurrency:
+  group: redteam-live # never overlap probes (the rate-limit case is stateful)
+  cancel-in-progress: false
+
+permissions:
+  contents: read # checkout
+  issues: write # open/close the security incident issue
+
+jobs:
+  probe:
+    name: probe live security invariants
+    # Skip the post-deploy run if the deploy itself failed — nothing new is live.
+    if: >-
+      ${{ github.event_name != 'workflow_run' ||
+          github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run the live security probe
+        run: make redteam-live
+      - name: Open incident issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/report-incident.sh fail "redteam-live" security
+      - name: Close incident issue on recovery
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/report-incident.sh ok "redteam-live" security
