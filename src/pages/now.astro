@@ -1,0 +1,45 @@
+---
+import { getEntry, render } from "astro:content";
+
+import Prose from "../components/Prose.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const now = await getEntry("profile", "now");
+if (!now) {
+  throw new Error("Now entry is missing from the profile collection");
+}
+const { Content } = await render(now);
+
+const updated = now.data.updatedDate;
+const formatDate = (date: Date) =>
+  date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+---
+
+<BaseLayout
+  title="Now — Ed Chapman"
+  description="What Ed Chapman is working on at the moment: current projects, writing, and focus."
+>
+  <h1>Now</h1>
+  {
+    updated && (
+      <p class="updated">
+        Last updated{" "}
+        <time datetime={updated.toISOString().slice(0, 10)}>
+          {formatDate(updated)}
+        </time>
+      </p>
+    )
+  }
+  <Prose><Content /></Prose>
+</BaseLayout>
+
+<style>
+  .updated {
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+</style>
