@@ -153,6 +153,7 @@ describe("anthropic adapter outbound request", () => {
     expect(body).toEqual({
       model: "claude-haiku-4-5",
       max_tokens: 1024,
+      temperature: 0.2,
       system: "You are the test policy.",
       messages: [
         {
@@ -416,12 +417,14 @@ describe("anthropic adapter streaming (ADR-0016)", () => {
     const { fetch, calls } = stubFetch([sseResponse(HAPPY_PATH)]);
     const events = await collectStream(makeAdapter(fetch).stream(REQUEST));
 
-    // The request opts into streaming.
+    // The request opts into streaming and pins the same sampling temperature
+    // as the buffered path.
     const body = JSON.parse(String(calls[0]!.init.body)) as Record<
       string,
       unknown
     >;
     expect(body["stream"]).toBe(true);
+    expect(body["temperature"]).toBe(0.2);
 
     // The citation arrived with no text yet; its span is resolved to the
     // block's full text range at content_block_stop (mirrors parseCompletion),
