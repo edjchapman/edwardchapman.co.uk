@@ -17,6 +17,13 @@ Content may be drawn from, and only from:
    material previously published on public branches of this repository).
 5. Content written specifically for this site, in this repository, through
    normal review.
+6. Ed's public LinkedIn profile
+   ([linkedin.com/in/edjchapman](https://www.linkedin.com/in/edjchapman/),
+   already published in the site's identity and JSON-LD `sameAs`) — for
+   employment history (employers, titles, date ranges), education, and
+   public-safe role facts. Ed's PR review affirms each published fact appears
+   on the public profile
+   ([ADR-0019](adr/0019-published-career-history-via-linkedin-source.md)).
 
 Private material — including the private `career-portfolio` repository,
 application notes, recruiter correspondence, and interview information — may
@@ -36,6 +43,8 @@ Never published, in any form:
 - Active interview pipeline information or recruiter conversations.
 - Private application notes; private email threads.
 - Non-public client or employer information; confidential architecture or code.
+- Reasons for leaving any role.
+- Team headcounts and coworker names.
 - Personal phone numbers.
 - Home address or precise location (city-level — "London" — is the maximum).
 - Downloadable private CV material.
@@ -63,6 +72,9 @@ line — `content-policy-allow:<rule-id>` — never by weakening a rule.
 - Every PR affirms the no-private-material checkbox in the PR template.
 - New professional claims (positioning copy, case-study metrics) must name
   their public source in the PR description if it isn't obvious from the diff.
+- PRs adding or changing employment or education facts state that Ed has
+  affirmed each fact against the public LinkedIn profile (category 6,
+  [ADR-0019](adr/0019-published-career-history-via-linkedin-source.md)).
 - Changes to `content-policy-rules.json` are policy changes: the PR
   description must say what is being allowed/forbidden and why.
 
