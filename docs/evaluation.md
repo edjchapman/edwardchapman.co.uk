@@ -143,6 +143,14 @@ Runs from `eval-live.yml`: manual dispatch plus a weekly schedule, inside the
 Reports are workflow artifacts; logs contain scores and case ids — never full
 prompts, questions, or secrets.
 
+**2026-07-21 — sampling temperature pinned (0.2).** The answer adapter
+previously left temperature at the provider default; a grounded factual
+assistant wants low run-to-run phrasing variance, both live and in this
+suite's scoring of required claims. Pinned in the adapter for the buffered
+and streaming paths alike — the eval harness drives the same adapter, so
+scoring inherits it. No threshold changed; the next live run verifies
+behaviour under the pinned value.
+
 ## Thresholds
 
 | Dimension                             | Threshold | Baseline | Status |
