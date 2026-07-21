@@ -187,6 +187,16 @@
       "expectedSectionIds": ["experience#intro", "experience#built-ai"]
     },
     {
+      "id": "worked-where-when",
+      "query": "Where has Ed worked, and when?",
+      "expectedSectionIds": ["experience#intro", "experience#built-ai"]
+    },
+    {
+      "id": "educational-background",
+      "query": "What is Ed's educational background?",
+      "expectedSectionIds": ["experience#education"]
+    },
+    {
       "id": "employers-list",
       "query": "Which companies has Ed worked for?",
       "expectedSectionIds": [

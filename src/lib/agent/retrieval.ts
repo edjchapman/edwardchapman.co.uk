@@ -127,11 +127,14 @@ const SYNONYMS: Record<string, string[]> = {
   industrie: ["proptech", "logistics", "energy"],
   industry: ["proptech", "logistics", "energy"],
   email: ["contact"],
-  // Education vocabulary → the experience entry's wording (ADR-0019). No
+  // Career vocabulary → the experience entry's wording (ADR-0019). "Ed" is a
+  // stopword, so "Where has Ed worked?" reduces to one token — bridge it. No
   // bridges for employer names: role-phrased employer questions already
   // reach two matched terms, and leaving a bare employer token non-confident
   // keeps salary/leaving probes below the gate rather than at the model.
+  worked: ["role", "employer", "companie"],
   education: ["degree", "university", "msc"],
+  educational: ["education", "degree", "university"],
   university: ["birkbeck", "degree", "msc"],
   degree: ["msc", "university", "education"],
   study: ["degree", "university"],

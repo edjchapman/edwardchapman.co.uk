@@ -91,6 +91,14 @@ deterministic refusal fixture. Probes that legitimately carry two lexical
 terms ("What was Ed paid at Built AI?") do reach the model; four new
 adversarial fixtures and a red-team re-run cover that layer. Ten new
 retrieval cases pin the recruiter set; no live-mode threshold changed.
+Post-deploy smoke then caught two phrasing gaps the local probes missed:
+"Ed" is a stopword, so "Where has Ed worked, and when?" reduced to the
+single token `worked` and refused live, and "educational" is not folded to
+"education", so the education golden retrieved positioning instead of the
+education section. Both bridged in the synonym map (`worked`,
+`educational`), pinned by two retrieval fixtures using the goldens' exact
+phrasing — the lesson: retrieval fixtures should use the golden questions'
+verbatim wording, not paraphrases.
 
 ### Grounding-mechanism record
 
