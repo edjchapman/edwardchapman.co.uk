@@ -36,8 +36,11 @@ type StreamEvent =
   | { kind: "upstream_error" }
   | { kind: "upstream_rate_limited" };
 
+// Golden-fixture phrasings where one exists (retrieval is pinned to answer
+// them); the career question uses work-history's verbatim wording.
 const EXAMPLE_QUESTIONS = [
   "What kind of engineering roles is Ed best suited to?",
+  "Where has Ed worked, and when?",
   "How did Foreman handle reliable event processing?",
   "What does Ed mean by evaluation-driven AI engineering?",
   "How does Ed approach AI-assisted software delivery?",
