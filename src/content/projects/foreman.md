@@ -9,7 +9,7 @@ tech:
   - Celery
   - PostgreSQL
   - Redis
-  - React
+  - Terraform
   - Docker
 featured: true
 order: 1
