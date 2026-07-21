@@ -67,11 +67,11 @@ from non-draft frontmatter and the site-wide fallback `public/og/default.png`
 from the positioning tagline. The whole `public/og/` directory is gitignored
 — see docs/architecture.md § Build pipeline.
 
-**`public/llms.txt` is maintained by hand**: when pages or featured projects
-change, update it in the same PR (it is a discovery aid, not a security
-boundary — see docs/spec.md §9). The Phase-3 corpus builder is the natural
-point to start generating it instead; until then, hand-maintenance is the
-documented process.
+**`public/llms.txt` is generated, never hand-edited**: `make build` runs
+`scripts/build-llms-txt.ts`, which renders it from the non-draft content
+collections and the SITE constants (a discovery aid, not a security boundary
+— see docs/spec.md §9). Like the social cards, the output is gitignored; the
+fixed page list and its one-line blurbs live in the script.
 
 ## Troubleshooting
 
