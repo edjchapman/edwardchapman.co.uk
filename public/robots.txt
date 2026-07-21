@@ -1,16 +1,19 @@
 # Stance (2026-07-21): search engines and user-triggered AI assistant
-# fetchers may read everything; AI *training* crawlers may not. The
-# Content-Signal line states the same machine-readably
-# (https://contentsignals.org/). This file is served verbatim only while
-# Cloudflare's managed robots.txt is OFF; the live security probe asserts
-# the served contract either way (scripts/probe-live-security.ts).
+# fetchers may read everything; AI *training* crawlers may not — i.e.
+# search=yes, ai-input=yes, ai-train=no in Content Signals terms
+# (https://contentsignals.org/). Expressed only through standard
+# User-agent groups: a literal Content-Signal line is an unknown
+# directive to robots.txt parsers, and this repo's Lighthouse SEO budget
+# (rightly) flags invalid syntax. The Disallow groups below are the
+# enforcement anyway. This file is served verbatim only while
+# Cloudflare's managed robots.txt is OFF; the live security probe
+# asserts the served contract either way (scripts/probe-live-security.ts).
 #
 # Assistant/search fetchers (ChatGPT-User, OAI-SearchBot, Claude-User,
 # Claude-SearchBot, PerplexityBot, meta-externalfetcher, …) fall under
 # the * group: allowed.
 
 User-agent: *
-Content-Signal: search=yes, ai-input=yes, ai-train=no
 Allow: /
 
 # Training crawlers and training-consent tokens: disallowed (mirrors the
