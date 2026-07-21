@@ -404,6 +404,12 @@ The colophon should explain:
 
 Keep the tone explanatory rather than self-congratulatory.
 
+_(An `/experience` page was added after MVP —
+[ADR-0019](adr/0019-published-career-history-via-linkedin-source.md): profile
+entries rendered on their own page, the same pattern as the colophon, covering
+work history, education, and technology depth. The homepage sequence above is
+unchanged.)_
+
 ---
 
 # 7. Design requirements
@@ -1277,6 +1283,12 @@ Do not spend MVP time on:
 - Dark-mode polishing.
 - Rebuilding public project demos.
 - Migrating private career-portfolio content into the public repository.
+
+_(The `/experience` career surface added by
+[ADR-0019](adr/0019-published-career-history-via-linkedin-source.md) crosses
+neither of the last two: it is a rendered page, not a downloadable artefact,
+and its facts are sourced from Ed's public LinkedIn profile, not migrated from
+the private repository.)_
 
 ---
 
