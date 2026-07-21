@@ -51,6 +51,11 @@ const PAGES: ReadonlyArray<{ path: string; label: string; blurb: string }> = [
       "work history and roles with dates, education, technology depth, and leadership",
   },
   {
+    path: "/now",
+    label: "Now",
+    blurb: "a dated snapshot of what Ed is working on at the moment",
+  },
+  {
     path: "/ask",
     label: "Ask",
     blurb:
