@@ -114,6 +114,16 @@ bridge is only as good as the corpus tokens it points at, and every bridge
 now has a verbatim retrieval fixture. Should-refuse boundaries re-verified
 unchanged (weather/London, salary, leaving, Claude, notice period, visa).
 
+**2026-07-21 — authoring lesson: entity mentions dilute entity IDF.**
+Adding public-evidence links to both `experience#intro` and the skills-depth
+bullets put "Foreman" into two more chunks; the token's IDF fell and "What
+is Foreman?" dropped 4.41 → 4.15, under the 4.2 entity bar — caught by the
+pinned fixtures before merge. Fixed by authoring, not thresholds: the
+evidence links live once, in `experience#intro` (4.28 after), and the
+same-page skills bullets do not repeat them. This generalises the
+probe-vocabulary rule: profile prose should name another document's identity
+token only where the mention earns its IDF cost.
+
 ### Grounding-mechanism record
 
 **2026-07-14 — citations move from model-claimed to API-enforced
