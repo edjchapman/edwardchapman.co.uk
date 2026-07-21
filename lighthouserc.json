@@ -7,6 +7,7 @@
         "http://localhost:8788/",
         "http://localhost:8788/projects/foreman",
         "http://localhost:8788/notes/llm-as-judge-as-a-ci-quality-gate",
+        "http://localhost:8788/experience",
         "http://localhost:8788/ask"
       ],
       "numberOfRuns": 3
