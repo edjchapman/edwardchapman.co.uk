@@ -237,6 +237,19 @@ employer-named probes).
 
 No threshold changed in any of the three runs.
 
+### Post-improvement-wave run (2026-07-21)
+
+After the positioning wave (#103–#109: corrected Foreman tech tags, the
+published citations note, the Software & Platform headline and positioning
+body, experience evidence links, /now, the career example chip) and the
+pinned sampling temperature (#108), a dispatched run against corpus
+`edb25d9e…` held every frozen threshold: refusal **1.00**, adversarial
+**1.00**, groundedness **1.00**, completeness **0.97**, forbidden-avoidance
+**1.00** (34 cases; workflow run 29874138550). First live run under
+temperature 0.2. Completeness's first sub-1.00 reading sits far above the
+0.85 floor — recorded as worth watching across the weekly runs, not acting
+on. No threshold changed.
+
 ## Release gate for linking /ask
 
 All of: deterministic mode green in CI ∧ live mode meets thresholds ∧ manual
