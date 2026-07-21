@@ -7,9 +7,10 @@
  * bundle, never served as a public asset.
  *
  * Stable-ID contract: docId = collection entry id (file name without
- * extension); sectionId = docId#heading-slug (or docId#intro / docId#card).
- * Renaming files or restructuring headings is a breaking corpus change —
- * update tests/agent/retrieval-cases.json in the same PR.
+ * extension); sectionId = docId#heading-slug (or docId#intro / docId#card;
+ * heading-less profile prose keeps docId#body). Renaming files or
+ * restructuring headings is a breaking corpus change — update
+ * tests/agent/retrieval-cases.json in the same PR.
  *
  * The content-policy rules run over every emitted chunk as a final tripwire.
  *
@@ -194,18 +195,31 @@ export function buildCorpus(root: string): Corpus {
     if (!parsed.corpus) continue;
     // Profile prose renders on the homepage (colophon on its own page).
     const url = entry.id === "colophon" ? `${ORIGIN}/colophon` : `${ORIGIN}/`;
-    const text = stripMarkdown(
-      parsed.tagline ? `${parsed.tagline}\n${body}` : body,
-    );
 
-    chunks.push({
-      docId: entry.id,
-      sectionId: `${entry.id}#body`,
-      title: parsed.title,
-      url,
-      type: "profile",
-      tags: parsed.tags,
-      text,
+    const sections = splitSections(body);
+    sections.forEach((section, index) => {
+      const text =
+        index === 0 && parsed.tagline
+          ? `${parsed.tagline}\n${section.text}`
+          : section.text;
+      // Heading-less prose keeps the historical #body id; sectioned entries
+      // follow the notes shape: #intro lead text, one chunk per ## heading.
+      const slug = section.heading
+        ? slugifyHeading(section.heading)
+        : sections.length === 1
+          ? "body"
+          : "intro";
+      chunks.push({
+        docId: entry.id,
+        sectionId: `${entry.id}#${slug}`,
+        title: section.heading
+          ? `${parsed.title} — ${section.heading}`
+          : parsed.title,
+        url,
+        type: "profile",
+        tags: parsed.tags,
+        text: stripMarkdown(text),
+      });
     });
   }
 

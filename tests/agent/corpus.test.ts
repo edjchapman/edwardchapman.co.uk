@@ -31,6 +31,17 @@ describe("corpus construction (fixture root)", () => {
     expect(ids).toContain("included#body");
   });
 
+  it("splits sectioned profile entries; heading-less prose keeps #body", () => {
+    expect(ids).toContain("sectioned#intro");
+    expect(ids).toContain("sectioned#first-topic");
+    expect(ids).toContain("sectioned#second-topic");
+    expect(ids).not.toContain("sectioned#body");
+    const first = corpus.chunks.find(
+      (chunk) => chunk.sectionId === "sectioned#first-topic",
+    );
+    expect(first?.title).toBe("Sectioned — First topic");
+  });
+
   it("attaches canonical URLs and metadata to every chunk", () => {
     for (const chunk of corpus.chunks) {
       expect(chunk.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);

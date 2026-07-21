@@ -59,6 +59,22 @@ strongest spurious hit (3.39) and below the weakest genuine one ("What is
 Foreman?" 4.06). Same fixtures pin the boundary; no live-mode threshold
 changed.
 
+**2026-07-21 — retune for profile section chunking (80 → 88 chunks).**
+Splitting profile entries at `##` headings (ADR-0019 groundwork; colophon
+1 → 9 chunks, heading-less entries keep `#body`) shifted corpus-wide IDF and
+average chunk length, and the fixtures caught the drift before merge:
+"What is Claude?" rose 3.46 → 3.74, crossing the 3.7 entity bar. Genuine hits
+rose in step ("What is Foreman?" 3.98 → 4.19), so
+`ENTITY_CONFIDENCE_THRESHOLD` moves 3.7 → 3.95 — above the strongest
+fixture-pinned spurious hit (3.74) and below the weakest genuine one (4.19).
+Same fixtures pin the boundary; no live-mode threshold changed. Also observed
+while measuring, pre-existing rather than caused here: "What is quality?"
+scores as a document-identity hit of the LLM-judge note (4.05 on the previous
+corpus, 4.22 now) and already sat above the entity bar; it is not a pinned
+refusal fixture, and because it outscores the weakest genuine hit no
+threshold can exclude it — separating distinctive from generic identity
+tokens would be a mechanism change, recorded here as an open observation.
+
 ### Grounding-mechanism record
 
 **2026-07-14 — citations move from model-claimed to API-enforced

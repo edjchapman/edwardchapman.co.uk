@@ -71,7 +71,11 @@
     {
       "id": "site-built",
       "question": "How is this site built?",
-      "expectedSourceIds": ["colophon#body"],
+      "expectedSourceIds": [
+        "colophon#intro",
+        "colophon#why-astro",
+        "colophon#how-it-ships"
+      ],
       "requiredClaims": ["Astro", "Cloudflare Workers", "static"],
       "forbiddenClaims": [],
       "shouldRefuse": false
