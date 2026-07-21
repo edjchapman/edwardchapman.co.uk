@@ -13,10 +13,15 @@
 # <link rel="manifest"> in BaseLayout — without it the manifest falls back to
 # default-src 'none' and the browser blocks it (Lighthouse best-practices
 # flags the CSP console error).
+#
+# Permissions-Policy disables only real, recognised hardware features. No
+# ad-tech opt-out tokens (interest-cohort, browsing-topics, …): FLoC is dead,
+# the Privacy Sandbox set is being retired, and browsers log an
+# "Unrecognized feature" console warning for each stale token.
 
 /*
   Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-eIXWvAmxkr251LJZkjniEK5LcPF3NkapbJepohwYRIc=' 'sha256-SaCkFfPruIdTXT8/97JArQmGxiJAL2o4bBDvSgJ5y3Q='; font-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
   X-Frame-Options: DENY

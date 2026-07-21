@@ -230,3 +230,16 @@ make deploy-www-redirect
   key](#rotating-the-anthropic-api-key). Note: questions that don't clear the
   retrieval confidence gate return a 200 refusal regardless, so probe with a
   question known to retrieve (e.g. the smoke question above).
+- **CSP console errors on the live site only ("Executing inline script
+  violates … script-src"), with a hash that changes on every load** — that is
+  not the build. Cloudflare **Bot Fight Mode** injects an inline
+  challenge-platform script (`window.__CF$cv$params` →
+  `/cdn-cgi/challenge-platform/…`) into HTML at the edge; its content embeds a
+  per-request token, so it can never be hash-allowlisted and the strict CSP
+  (correctly) blocks it. The site itself is unaffected — the pinned Astro
+  island hashes still match (verify: hash each inline `<script>` in a fetched
+  live page and compare with `public/_headers`). The same injected iframe
+  produces the "Unrecognized feature" Permissions-Policy warnings. Fix at the
+  zone, not in the CSP: Cloudflare dashboard → Security → Bots → turn Bot
+  Fight Mode off (dashboard-only; the deploy token cannot change it). Do not
+  add `unsafe-inline` to accommodate it.
