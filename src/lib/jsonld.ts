@@ -58,7 +58,7 @@ export function personNode(opts?: {
     name: SITE.name,
     alternateName: SITE.fullName,
     url: SITE.origin,
-    jobTitle: "Senior Software Engineer",
+    jobTitle: "Senior Software & Platform Engineer",
     address: {
       "@type": "PostalAddress",
       addressLocality: "London",

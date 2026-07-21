@@ -46,10 +46,12 @@ describe("personNode", () => {
   });
 
   it("emits hasOccupation from the published title and never worksFor", () => {
-    const node = personNode({ occupation: "Senior Software Engineer" });
+    const node = personNode({
+      occupation: "Senior Software & Platform Engineer",
+    });
     expect(node["hasOccupation"]).toEqual({
       "@type": "Occupation",
-      name: "Senior Software Engineer",
+      name: "Senior Software & Platform Engineer",
     });
     // ADR-0019: the published timeline's most recent role has an end date,
     // so a current-employer assertion would be false.
