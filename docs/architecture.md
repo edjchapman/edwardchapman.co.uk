@@ -62,11 +62,11 @@ injects its server entrypoint.
 Content is typed data, not loose markdown
 ([ADR-0001](adr/0001-astro-and-strict-typescript.md)):
 
-| Collection | Purpose                                                                                 | Schema highlights                                                                                                 |
-| ---------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `projects` | Project cards (Phase 1) + case-study bodies (Phase 2)                                   | card copy fields (`problem`, `built`, `differentiator`), `tech`, `repo`/`demo` URLs, `featured`, `order`, `draft` |
-| `notes`    | Technical writing (Phase 2+)                                                            | `pubDate`/`updatedDate`, `tags`, `draft`, `canonicalURL`, `relatedProject`                                        |
-| `profile`  | Prose the homepage/colophon render — positioning, how-I-work, technical focus, colophon | `order`, `corpus` (agent-ingestion opt-out)                                                                       |
+| Collection | Purpose                                                                                                                                             | Schema highlights                                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `projects` | Project cards (Phase 1) + case-study bodies (Phase 2)                                                                                               | card copy fields (`problem`, `built`, `differentiator`), `tech`, `repo`/`demo` URLs, `featured`, `order`, `draft` |
+| `notes`    | Technical writing (Phase 2+)                                                                                                                        | `pubDate`/`updatedDate`, `tags`, `draft`, `canonicalURL`, `relatedProject`                                        |
+| `profile`  | Prose the homepage and dedicated pages render — positioning, how-I-work, technical focus, colophon, and the `/experience` career entries (ADR-0019) | `order`, `corpus` (agent-ingestion opt-out)                                                                       |
 
 Schemas are **pure zod** in [`src/lib/schemas.ts`](../src/lib/schemas.ts) —
 no `astro:*` imports — so Astro's content layer, the Node check scripts, and

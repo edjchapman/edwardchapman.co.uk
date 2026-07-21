@@ -127,6 +127,16 @@ const SYNONYMS: Record<string, string[]> = {
   industrie: ["proptech", "logistics", "energy"],
   industry: ["proptech", "logistics", "energy"],
   email: ["contact"],
+  // Education vocabulary → the experience entry's wording (ADR-0019). No
+  // bridges for employer names: role-phrased employer questions already
+  // reach two matched terms, and leaving a bare employer token non-confident
+  // keeps salary/leaving probes below the gate rather than at the model.
+  education: ["degree", "university", "msc"],
+  university: ["birkbeck", "degree", "msc"],
+  degree: ["msc", "university", "education"],
+  study: ["degree", "university"],
+  studied: ["degree", "university"],
+  msc: ["degree", "birkbeck"],
 };
 
 /** Fold trivial plurals so "events" matches "event" on both sides. */
@@ -284,7 +294,7 @@ function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
  */
 export const CONFIDENCE_THRESHOLD = 1.5;
 export const MIN_MATCHED_TERMS = 2;
-export const ENTITY_CONFIDENCE_THRESHOLD = 3.95;
+export const ENTITY_CONFIDENCE_THRESHOLD = 4.2;
 
 export function isConfident(results: ScoredChunk[]): boolean {
   const top = results[0];

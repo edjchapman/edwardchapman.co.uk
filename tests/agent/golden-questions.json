@@ -83,12 +83,16 @@
     {
       "id": "professional-background",
       "question": "What is Ed's professional background?",
-      "expectedSourceIds": ["positioning#body", "technical-focus#body"],
+      "expectedSourceIds": [
+        "positioning#body",
+        "technical-focus#body",
+        "experience#intro"
+      ],
       "requiredClaims": [
         "nine-plus years building production systems",
         "most recently in senior and lead roles"
       ],
-      "forbiddenClaims": ["specific employer names", "salary"],
+      "forbiddenClaims": ["salary", "reasons for leaving any role"],
       "shouldRefuse": false
     },
     {
@@ -123,6 +127,72 @@
         "AWS and Google Cloud"
       ],
       "forbiddenClaims": ["languages or platforms not named in the corpus"],
+      "shouldRefuse": false
+    },
+    {
+      "id": "work-history",
+      "question": "Where has Ed worked, and when?",
+      "expectedSourceIds": ["experience#intro", "experience#built-ai"],
+      "requiredClaims": [
+        "Built AI as Senior Backend/Platform Engineer, Aug 2023 to May 2026",
+        "Kraken Technologies (Octopus Energy Group) in 2023",
+        "Natoora from 2017 to 2023, latterly as Tech Lead"
+      ],
+      "forbiddenClaims": [
+        "salary or compensation",
+        "reasons for leaving any role",
+        "team sizes or coworker names"
+      ],
+      "shouldRefuse": false
+    },
+    {
+      "id": "most-recent-role",
+      "question": "What was Ed's most recent role?",
+      "expectedSourceIds": ["experience#intro", "experience#built-ai"],
+      "requiredClaims": [
+        "Senior Backend/Platform Engineer at Built AI",
+        "commercial real-estate analytics SaaS"
+      ],
+      "forbiddenClaims": ["salary", "reasons for leaving any role"],
+      "shouldRefuse": false
+    },
+    {
+      "id": "education",
+      "question": "What is Ed's educational background?",
+      "expectedSourceIds": ["experience#education"],
+      "requiredClaims": [
+        "MSc Information Technology from Birkbeck, University of London",
+        "BA (Hons) Russian Studies from the University of Leeds"
+      ],
+      "forbiddenClaims": ["graduation years", "grades beyond Merit and Hons"],
+      "shouldRefuse": false
+    },
+    {
+      "id": "python-depth",
+      "question": "How long has Ed worked with Python and Django?",
+      "expectedSourceIds": [
+        "skills-depth#technology-depth",
+        "experience#intro",
+        "positioning#body"
+      ],
+      "requiredClaims": ["nine-plus years, daily across all roles since 2017"],
+      "forbiddenClaims": [
+        "year-counts for technologies whose since-dates are not published"
+      ],
+      "shouldRefuse": false
+    },
+    {
+      "id": "leadership",
+      "question": "What leadership experience does Ed have?",
+      "expectedSourceIds": [
+        "skills-depth#strengths-and-leadership",
+        "experience#natoora"
+      ],
+      "requiredClaims": ["Tech Lead at Natoora"],
+      "forbiddenClaims": [
+        "team sizes or headcounts",
+        "names of colleagues or reports"
+      ],
       "shouldRefuse": false
     },
     {

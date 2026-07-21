@@ -26,6 +26,8 @@ repository) until the site's build generates it from published content.
   [Exactly-once is an effect, not a delivery](https://edwardchapman.co.uk/notes/exactly-once-is-an-effect-not-a-delivery),
   [Ports and adapters, without the ceremony](https://edwardchapman.co.uk/notes/ports-and-adapters-without-the-ceremony),
   [Variation as data, not code](https://edwardchapman.co.uk/notes/variation-as-data-not-code)
+- [Experience](https://edwardchapman.co.uk/experience): work history and
+  roles with dates, education, technology depth, and leadership
 - [Ask](https://edwardchapman.co.uk/ask): ask questions about Ed's published
   work and get grounded, cited answers — refuses when the site doesn't cover it
 - [Colophon](https://edwardchapman.co.uk/colophon): how this site is built —

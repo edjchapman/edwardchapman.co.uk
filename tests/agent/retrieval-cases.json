@@ -180,6 +180,71 @@
         "anatomy-of-an-llm-evaluation-suite#evaluation-dimensions",
         "anatomy-of-an-llm-evaluation-suite#intro"
       ]
+    },
+    {
+      "id": "work-history",
+      "query": "What is Ed's work history?",
+      "expectedSectionIds": ["experience#intro", "experience#built-ai"]
+    },
+    {
+      "id": "employers-list",
+      "query": "Which companies has Ed worked for?",
+      "expectedSectionIds": [
+        "experience#intro",
+        "experience#kraken-technologies-octopus-energy-group",
+        "experience#education"
+      ]
+    },
+    {
+      "id": "built-ai-role",
+      "query": "What did Ed do at Built AI?",
+      "expectedSectionIds": ["experience#built-ai", "experience#intro"]
+    },
+    {
+      "id": "kraken-role",
+      "query": "What did Ed do at Kraken Technologies?",
+      "expectedSectionIds": [
+        "experience#kraken-technologies-octopus-energy-group",
+        "experience#intro"
+      ]
+    },
+    {
+      "id": "natoora-role",
+      "query": "What was Ed's role at Natoora?",
+      "expectedSectionIds": ["experience#natoora", "experience#intro"]
+    },
+    {
+      "id": "most-recent-role",
+      "query": "What was Ed's most recent role?",
+      "expectedSectionIds": ["experience#intro", "experience#built-ai"]
+    },
+    {
+      "id": "education",
+      "query": "What is Ed's education?",
+      "expectedSectionIds": ["experience#education"]
+    },
+    {
+      "id": "university",
+      "query": "Where did Ed go to university?",
+      "expectedSectionIds": ["experience#education"]
+    },
+    {
+      "id": "python-years",
+      "query": "How many years of Python experience does Ed have?",
+      "expectedSectionIds": [
+        "skills-depth#technology-depth",
+        "experience#intro",
+        "positioning#body"
+      ]
+    },
+    {
+      "id": "leadership",
+      "query": "Does Ed have leadership experience?",
+      "expectedSectionIds": [
+        "skills-depth#strengths-and-leadership",
+        "experience#natoora",
+        "positioning#body"
+      ]
     }
   ],
   "refusals": [
@@ -210,6 +275,18 @@
     {
       "id": "weak-entity-hit",
       "query": "What is Claude?"
+    },
+    {
+      "id": "notice-period",
+      "query": "What is Ed's notice period?"
+    },
+    {
+      "id": "visa-status",
+      "query": "What is Ed's visa status?"
+    },
+    {
+      "id": "leaving-reason",
+      "query": "Why did Ed leave Natoora?"
     }
   ]
 }

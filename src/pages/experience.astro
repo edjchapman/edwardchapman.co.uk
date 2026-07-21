@@ -1,0 +1,23 @@
+---
+import { getEntry, render } from "astro:content";
+
+import Prose from "../components/Prose.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const experience = await getEntry("profile", "experience");
+const skillsDepth = await getEntry("profile", "skills-depth");
+if (!experience || !skillsDepth) {
+  throw new Error("Experience entries are missing from the profile collection");
+}
+const { Content: Experience } = await render(experience);
+const { Content: SkillsDepth } = await render(skillsDepth);
+---
+
+<BaseLayout
+  title="Experience — Ed Chapman"
+  description="Ed Chapman's work history, education, and technology depth: senior backend and platform roles across proptech, energy, and supply-chain logistics."
+>
+  <h1>Experience</h1>
+  <Prose><Experience /></Prose>
+  <Prose><SkillsDepth /></Prose>
+</BaseLayout>
