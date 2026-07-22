@@ -18,3 +18,8 @@ minimumReleaseAge: 1440
 overrides:
   tmp@<0.2.6: ">=0.2.6"
   uuid@<11.1.1: ">=11.1.1"
+  # sharp: dev-only via miniflare/wrangler (local dev server emulation); the
+  # production Worker bundle never includes it, and this repo feeds it no
+  # untrusted images. Dependabot alert 7 (libvips CVE-2026-33327/33328/
+  # 35590/35591); miniflare's own range lags the patched minor.
+  sharp@<0.35.0: ">=0.35.0"
