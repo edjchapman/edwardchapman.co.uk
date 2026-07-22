@@ -15,7 +15,7 @@ featured: true
 order: 2
 draft: false
 repo: "https://github.com/edjchapman/AI-Due-Diligence-Assistant"
-demo: "https://app-production-e60e.up.railway.app"
+demo: "https://dda.edwardchapman.co.uk"
 ---
 
 ## Context
@@ -134,4 +134,4 @@ filings; add per-check confidence calibration against judge scores.
   including the full
   [case study](https://github.com/edjchapman/AI-Due-Diligence-Assistant/blob/main/docs/case-study.md)
   and ADRs this page summarises
-- [Live demo](https://app-production-e60e.up.railway.app)
+- [Live demo](https://dda.edwardchapman.co.uk)
