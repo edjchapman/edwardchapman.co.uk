@@ -8,11 +8,13 @@ import { personNode } from "../lib/jsonld";
 
 const experience = await getEntry("profile", "experience");
 const skillsDepth = await getEntry("profile", "skills-depth");
-if (!experience || !skillsDepth) {
+const availability = await getEntry("profile", "availability");
+if (!experience || !skillsDepth || !availability) {
   throw new Error("Experience entries are missing from the profile collection");
 }
 const { Content: Experience } = await render(experience);
 const { Content: SkillsDepth } = await render(skillsDepth);
+const { Content: Availability } = await render(availability);
 
 // Every value below restates published content: alumniOf from this page,
 // occupation from the site's positioning headline (ADR-0019).
@@ -31,13 +33,22 @@ const person = personNode({
   <div class="skills">
     <Prose><SkillsDepth /></Prose>
   </div>
+  {
+    /* The entry body is heading-less (single availability#body chunk); the
+    page supplies the visible heading so the chunk id stays stable. */
+  }
+  <div class="availability">
+    <h2>Availability</h2>
+    <Prose><Availability /></Prose>
+  </div>
   <JsonLd nodes={[person]} />
 </BaseLayout>
 
 <style>
   /* skills-depth is a separate document stacked onto this page; the rule
    * stops its intro reading as part of the Education section above. */
-  .skills {
+  .skills,
+  .availability {
     border-top: var(--rule);
     margin-top: var(--space-5);
     padding-top: var(--space-4);

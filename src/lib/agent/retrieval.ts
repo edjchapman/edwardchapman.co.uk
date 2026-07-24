@@ -132,6 +132,10 @@ const SYNONYMS: Record<string, string[]> = {
   // keeps salary/leaving probes below the gate rather than at the model.
   worked: ["role", "employer", "companie"],
   job: ["role", "engineer"],
+  // "last/latest job" means the most recent role; "recent" is the intro
+  // chunk's own wording ("most recent first"), so the bridge lands there.
+  last: ["recent", "role"],
+  latest: ["recent", "role"],
   know: ["work", "engineering"],
   education: ["degree", "university", "msc"],
   educational: ["education", "degree", "university"],
@@ -152,6 +156,26 @@ const SYNONYMS: Record<string, string[]> = {
   based: ["london", "engineer"],
   located: ["london", "engineer"],
   location: ["london", "engineer"],
+  // Availability vocabulary → the availability entry's own tokens
+  // (ADR-0022). Deliberately NOT bridged: "notice", "visa", and "open"
+  // ("open source" queries would pollute), and — as above — employer names.
+  available: ["availability"],
+  contract: ["availability"],
+  contracting: ["availability", "contract"],
+  freelance: ["availability", "contract"],
+  permanent: ["availability"],
+  perm: ["permanent", "availability"],
+  remote: ["availability"],
+  remotely: ["remote", "availability"],
+  hybrid: ["availability"],
+  relocate: ["relocation", "availability"],
+  relocating: ["relocation", "availability"],
+  relocation: ["availability"],
+  hire: ["availability", "contact"],
+  hiring: ["availability", "contact"],
+  opportunity: ["availability", "role"],
+  opportunitie: ["availability", "role"],
+  looking: ["availability", "role"],
 };
 
 /** Fold trivial plurals so "events" matches "event" on both sides. */
@@ -303,13 +327,13 @@ function capPerDocument(ranked: ScoredChunk[], k: number): ScoredChunk[] {
  * that term is a document-identity token AND the score clears a stricter
  * threshold, one term is enough. Body-text collisions ("London", "Python")
  * are not identity tokens and still refuse; weak identity hits ("What is
- * Claude?" ~3.7) sit below the stricter bar. Tuned against
+ * Claude?" ~4.2) sit below the stricter bar. Tuned against
  * tests/agent/retrieval-cases.json — change only with the fixtures
  * (retune history in docs/evaluation.md).
  */
 export const CONFIDENCE_THRESHOLD = 1.5;
 export const MIN_MATCHED_TERMS = 2;
-export const ENTITY_CONFIDENCE_THRESHOLD = 4.2;
+export const ENTITY_CONFIDENCE_THRESHOLD = 4.35;
 
 export function isConfident(results: ScoredChunk[]): boolean {
   const top = results[0];

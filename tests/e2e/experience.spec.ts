@@ -15,6 +15,7 @@ test.describe("experience page", () => {
       "Education",
       "Technology depth",
       "Strengths and leadership",
+      "Availability",
     ]) {
       await expect(
         page.getByRole("heading", { level: 2, name: heading }),
