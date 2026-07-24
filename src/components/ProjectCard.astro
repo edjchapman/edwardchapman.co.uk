@@ -3,15 +3,20 @@ import type { CollectionEntry } from "astro:content";
 
 interface Props {
   project: CollectionEntry<"projects">;
+  /** Heading level for the card title: 2 directly under a page h1
+   * (/projects), 3 under a Section h2 (homepage). Visual size is pinned
+   * by the .title class either way. */
+  headingLevel?: 2 | 3;
 }
 
-const { project } = Astro.props;
+const { project, headingLevel = 3 } = Astro.props;
+const Heading = `h${headingLevel}` as "h2" | "h3";
 const { title, problem, built, differentiator, tech, repo, demo } =
   project.data;
 ---
 
 <article>
-  <h3>{title}</h3>
+  <Heading class="title">{title}</Heading>
   <p>{problem}</p>
   <p>{built}</p>
   <p>{differentiator}</p>
@@ -34,7 +39,8 @@ const { title, problem, built, differentiator, tech, repo, demo } =
     margin-bottom: var(--space-4);
   }
 
-  h3 {
+  .title {
+    font-size: var(--text-lg);
     margin-bottom: var(--space-2);
   }
 

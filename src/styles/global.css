@@ -73,6 +73,12 @@ code {
   border-radius: var(--radius);
 }
 
+/* Anchor targets (skip link's #main, the ask sources' #ask-source-N) land
+ * with breathing room instead of flush against the viewport edge. */
+[id] {
+  scroll-margin-top: var(--space-5);
+}
+
 ::selection {
   background: var(--color-accent);
   color: var(--color-paper);
