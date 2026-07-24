@@ -12,9 +12,9 @@ const { title, problem, built, differentiator, tech, repo, demo } =
 
 <article>
   <h3>{title}</h3>
-  <p class="problem">{problem}</p>
+  <p>{problem}</p>
   <p>{built}</p>
-  <p><span class="label">Differentiator:</span> {differentiator}</p>
+  <p>{differentiator}</p>
   <ul class="tech" aria-label="Technologies">
     {tech.map((tag) => <li>{tag}</li>)}
   </ul>
@@ -36,15 +36,6 @@ const { title, problem, built, differentiator, tech, repo, demo } =
 
   h3 {
     margin-bottom: var(--space-2);
-  }
-
-  .problem {
-    color: var(--color-muted);
-    font-style: italic;
-  }
-
-  .label {
-    font-weight: 600;
   }
 
   .tech {

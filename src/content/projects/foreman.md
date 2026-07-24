@@ -1,8 +1,8 @@
 ---
 title: "Foreman"
-problem: "Background job systems routinely lose or duplicate work at the crash boundary between committing to the database and publishing to a queue."
-built: "A Django/DRF + Celery pipeline on PostgreSQL and Redis: jobs and outbox events commit atomically, workers process exactly-once via idempotency keys, failures retry with capped backoff into a redrivable dead-letter queue, and progress streams live over WebSockets."
-differentiator: "Reliability is measured, not asserted — Locust load tests with Prometheus metrics; moving dispatch to Postgres LISTEN/NOTIFY cut queue-wait p95 from 1.84s to 0.34s."
+problem: "A production-style background job system designed around one of distributed computing's most common failure modes: work being lost or duplicated between a database commit and queue publication."
+built: "Built with Django, Django REST Framework, Celery, PostgreSQL, and Redis, Foreman uses the transactional outbox pattern to commit jobs and dispatch events atomically. Workers process jobs safely using idempotency keys, failed tasks retry with capped exponential backoff, and exhausted jobs move to a redrivable dead-letter queue. Live progress updates are streamed to clients over WebSockets."
+differentiator: "Reliability is demonstrated rather than assumed. Locust load tests and Prometheus metrics expose throughput, latency, retries, and failure behaviour. Replacing polling-based dispatch with PostgreSQL LISTEN/NOTIFY reduced p95 queue wait time from 1.84 seconds to 0.34 seconds."
 tech:
   - Python
   - Django
