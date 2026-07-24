@@ -200,9 +200,21 @@
       "question": "Is Ed open to contract or permanent roles?",
       "expectedSourceIds": ["availability#body"],
       "requiredClaims": [
-        "actively looking for his next role",
         "open to permanent roles and to contract or freelance engagements"
       ],
+      "forbiddenClaims": [
+        "salary, day-rate, or compensation figures",
+        "notice period",
+        "visa or right-to-work details",
+        "companies Ed is interviewing with"
+      ],
+      "shouldRefuse": false
+    },
+    {
+      "id": "availability-status",
+      "question": "What is Ed's availability?",
+      "expectedSourceIds": ["availability#body"],
+      "requiredClaims": ["actively looking for his next role"],
       "forbiddenClaims": [
         "salary, day-rate, or compensation figures",
         "notice period",

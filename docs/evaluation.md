@@ -327,6 +327,25 @@ land with this change; his PR approval remains the go-live decision per
 ADR-0022. The golden's first live scoring happens on the post-merge
 dispatched run. No live-mode threshold changed.
 
+**First live scoring (2026-07-24, run 30126649317, post-#133 merge):**
+every frozen threshold held — refusal 1.000, adversarial 1.000,
+groundedness 1.000, completeness **0.971**, forbidden-avoidance 1.000 —
+and the post-deploy security probe stayed at 32/32 with the availability
+content live. The one completeness miss was the new availability golden
+itself: `claims=ny` — the answer carried "open to permanent roles and to
+contract or freelance engagements" (exactly what "Is Ed open to contract
+or permanent roles?" asks) but not "actively looking for his next role",
+which that question does not ask. A correct, concise answer was marked
+incomplete because the fixture demanded a claim outside the question's
+scope. Fixed as a fixture correction, not a bar change: the
+contract-or-permanent golden now requires only its directly-responsive
+claim, and a second golden (`availability-status`, "What is Ed's
+availability?" — the deterministic suite's existing verbatim phrasing)
+carries the "actively looking" claim, raising the golden set to 20. The
+lesson generalises the verbatim-phrasing rule: a golden's required
+claims must be scoped to what its question actually asks, or every
+correct concise answer scores as incomplete.
+
 ### Post-improvement-wave run (2026-07-21)
 
 After the positioning wave (#103–#109: corrected Foreman tech tags, the
