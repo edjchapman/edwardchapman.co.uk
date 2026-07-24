@@ -11,6 +11,13 @@ tech:
   - Redis
   - Terraform
   - Docker
+# Both figures are published in this file's own prose (differentiator and
+# the "Measure, then act" decision) — the strip surfaces them, adds nothing.
+metrics:
+  - value: "1.84s → 0.34s"
+    label: "p95 queue wait, after push dispatch"
+  - value: "733ms → 41ms"
+    label: "p50 queue wait"
 featured: true
 order: 1
 draft: false

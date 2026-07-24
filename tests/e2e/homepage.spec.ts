@@ -91,6 +91,32 @@ test.describe("homepage", () => {
     await expect(page.getByRole("link", { name: "Live demo" })).toHaveCount(2);
   });
 
+  test("promotes the ask assistant between the summary and the projects", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const callout = page.getByRole("complementary", {
+      name: "Ask about Ed's work",
+    });
+    await expect(callout).toBeVisible();
+    await expect(
+      callout.getByRole("link", { name: /Ask about Ed's work/ }),
+    ).toHaveAttribute("href", "/ask");
+    const calloutBox = await callout.boundingBox();
+    const projectsBox = await page
+      .getByRole("heading", { name: "Selected projects" })
+      .boundingBox();
+    expect(calloutBox?.y ?? Infinity).toBeLessThan(projectsBox?.y ?? 0);
+  });
+
+  test("surfaces Foreman's published metrics on its card", async ({ page }) => {
+    await page.goto("/");
+    const card = page.locator("article", { hasText: "Foreman" });
+    const metrics = card.getByRole("term");
+    await expect(metrics).toHaveCount(2);
+    await expect(card.locator(".metrics")).toContainText("1.84s → 0.34s");
+  });
+
   test("JSON-LD @graph carries a valid Person, WebSite, and ProfilePage", async ({
     page,
   }) => {

@@ -1,7 +1,7 @@
 ---
 title: "Experience"
 order: 6
-updatedDate: 2026-07-21
+updatedDate: 2026-07-24
 tags:
   - work history and employers
   - companies worked for and dates
@@ -9,13 +9,17 @@ tags:
   - roles held and job titles
 ---
 
-The companies Ed has worked for, and his roles, most recent first: Built
-AI — Senior Backend/Platform Engineer on a commercial real-estate analytics
-SaaS (Aug 2023 – May 2026); Kraken Technologies, part of the Octopus Energy
-Group — Software Engineer (Feb – Jun 2023); Natoora — Tech Lead
-(Jan 2022 – Feb 2023) and Software Engineer (Feb 2017 – Jan 2022).
-Nine-plus years across these employers, spanning proptech, energy, and
-supply-chain logistics.
+The companies Ed has worked for and his roles, most recent first:
+
+- **Built AI** — Senior Backend/Platform Engineer on a commercial
+  real-estate analytics SaaS (Aug 2023 – May 2026).
+- **Kraken Technologies**, part of the Octopus Energy Group — Software
+  Engineer (Feb – Jun 2023).
+- **Natoora** — Tech Lead (Jan 2022 – Feb 2023), Software Engineer
+  (Feb 2017 – Jan 2022).
+
+He has worked nine-plus years across these employers, spanning proptech,
+energy, and supply-chain logistics.
 
 The closest public demonstrations of the same skills are Ed's own projects
 on this site: [Foreman](https://edwardchapman.co.uk/projects/foreman) for

@@ -1,0 +1,36 @@
+---
+/**
+ * Restrained homepage teaser for the ask assistant (spec §10 sanctions one
+ * now the release gates have passed). Static HTML only — the React island
+ * stays on /ask (ADR-0004).
+ */
+---
+
+<aside class="ask-callout" aria-label="Ask about Ed's work">
+  <p class="lead">
+    <strong>Have a specific question?</strong> This site has a built-in assistant,
+    grounded in the published pages only — it cites its sources and refuses to guess.
+    Try “Where has Ed worked, and when?” or “How did Foreman handle reliable event
+    processing?”
+  </p>
+  <p class="cta"><a href="/ask">Ask about Ed's work →</a></p>
+</aside>
+
+<style>
+  .ask-callout {
+    margin-block: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-accent-subtle);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius);
+  }
+
+  .lead {
+    margin: 0 0 var(--space-2);
+  }
+
+  .cta {
+    margin: 0;
+    font-weight: 600;
+  }
+</style>

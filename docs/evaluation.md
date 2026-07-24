@@ -237,6 +237,30 @@ employer-named probes).
 
 No threshold changed in any of the three runs.
 
+### Copy-tightening retune (2026-07-24)
+
+The design-review copy pass rewrote `positioning#body` (tagline + intro,
+same claims in fewer words) and reformatted `experience#intro` from a
+run-on enumeration into a scannable list. The deterministic suite caught a
+real regression on the first attempt: `worked-where-when` lost
+`experience#intro` from its top-5 because the rewrite dropped the body's
+"companies" / "worked" / "employers" occurrences — the exact tokens the
+`worked→role,employer,companie` bridges land on. With every experience
+chunk sharing the doc-level tags, the bridge terms match all five siblings
+equally, and BM25's length normalisation then favours the shortest ones
+(`#education`, 20.90; `#kraken…`, 20.78) over a thinned intro (19.54) —
+which the per-doc cap of two then discards entirely.
+
+Authoring lesson reinforced, not a bar change: summary chunks must carry
+the query vocabulary in their own body text, not rely on shared tags. The
+final wording restores "companies … worked … roles … worked … employers"
+in the list's lead-in and wrap line; `experience#intro` ranks first again
+(22.06). Entity-gate margins are byte-identical to the previous record —
+"What is Claude?" 4.17 vs the 4.2 bar, "What is quality?" 4.20, weakest
+genuine "What is Foreman?" 4.45 — so the entity bar is untouched. All 149
+deterministic cases pass; corpus version moves with the wording. A live
+run is to be dispatched after the wave's corpus PRs merge.
+
 ### Post-improvement-wave run (2026-07-21)
 
 After the positioning wave (#103–#109: corrected Foreman tech tags, the
