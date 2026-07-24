@@ -22,6 +22,17 @@ test.describe("experience page", () => {
     }
   });
 
+  test("separates the skills document from the experience timeline", async ({
+    page,
+  }) => {
+    await page.goto("/experience");
+    const skills = page.locator("div.skills");
+    await expect(skills).toBeVisible();
+    await expect(
+      skills.getByRole("heading", { level: 2, name: "Technology depth" }),
+    ).toBeVisible();
+  });
+
   test("is linked from the site nav with aria-current set", async ({
     page,
   }) => {

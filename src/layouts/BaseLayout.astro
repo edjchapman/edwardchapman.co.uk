@@ -54,7 +54,7 @@ const { title, description, image, type, noindex, canonical } = Astro.props;
   <body>
     <SkipLink />
     <Header />
-    <main id="main">
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <Footer />
@@ -66,5 +66,11 @@ const { title, description, image, type, noindex, canonical } = Astro.props;
     max-width: calc(var(--measure) + 2 * var(--space-4));
     margin-inline: auto;
     padding: var(--space-5) var(--space-4);
+  }
+
+  /* Programmatic focus target for the skip link; the moved focus needs no
+   * visible outline of its own — the next Tab lands inside main regardless. */
+  main:focus {
+    outline: none;
   }
 </style>

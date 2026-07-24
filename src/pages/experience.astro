@@ -28,6 +28,18 @@ const person = personNode({
 >
   <h1>Experience</h1>
   <Prose><Experience /></Prose>
-  <Prose><SkillsDepth /></Prose>
+  <div class="skills">
+    <Prose><SkillsDepth /></Prose>
+  </div>
   <JsonLd nodes={[person]} />
 </BaseLayout>
+
+<style>
+  /* skills-depth is a separate document stacked onto this page; the rule
+   * stops its intro reading as part of the Education section above. */
+  .skills {
+    border-top: var(--rule);
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+  }
+</style>

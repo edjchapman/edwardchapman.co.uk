@@ -11,6 +11,16 @@ test.describe("projects", () => {
     ).toHaveAttribute("href", "/projects/foreman");
   });
 
+  test("index card titles are level-2 headings under the page h1", async ({
+    page,
+  }) => {
+    await page.goto("/projects");
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Foreman" }),
+    ).toBeVisible();
+    expect(await page.getByRole("heading", { level: 3 }).count()).toBe(0);
+  });
+
   test("navigation reaches a case study from the homepage", async ({
     page,
   }) => {

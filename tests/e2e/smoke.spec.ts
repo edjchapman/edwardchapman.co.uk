@@ -51,13 +51,45 @@ test.describe("smoke", () => {
     expect(typeof body["version"]).toBe("string");
   });
 
-  test("skip link is the first focusable element and targets #main", async ({
+  test("skip link is the first focusable element and moves focus to #main", async ({
     page,
   }) => {
     await page.goto("/");
     await page.keyboard.press("Tab");
     const focused = page.locator(":focus");
     await expect(focused).toHaveAttribute("href", "#main");
+    await page.keyboard.press("Enter");
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.id))
+      .toBe("main");
+  });
+
+  test("mobile viewport keeps every nav item visible and usable", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Site" });
+    for (const label of [
+      "Projects",
+      "Notes",
+      "Experience",
+      "Now",
+      "Ask",
+      "Colophon",
+    ]) {
+      await expect(nav.getByRole("link", { name: label })).toBeInViewport();
+    }
+    const scrollWidth = await page.evaluate(
+      () => document.documentElement.scrollWidth,
+    );
+    expect(scrollWidth).toBeLessThanOrEqual(390);
+    await nav.getByRole("link", { name: "Colophon" }).click();
+    await expect(page).toHaveURL(/\/colophon$/);
+    await context.close();
   });
 
   test("robots.txt and favicon are served from assets", async ({ request }) => {
