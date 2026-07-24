@@ -332,6 +332,13 @@ Recommended positioning direction:
 
 Do not describe Ed as a generic "full-stack developer who loves building things."
 
+_(The positioning title dropped "Senior" at Ed's direction on 2026-07-25 —
+"Software & platform engineer" across the tagline, page titles, and schema
+jobTitle. Seniority stays evidenced rather than claimed: the published
+roles timeline (Senior Backend/Platform Engineer at Built AI; Tech Lead at
+Natoora) and the "senior and lead roles" summary are unchanged. The
+recommended-direction list above remains the spec's original.)_
+
 ## Selected projects
 
 Initial featured projects:
