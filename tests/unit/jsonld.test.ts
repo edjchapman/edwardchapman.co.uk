@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   blogPostingNode,
   breadcrumbNode,
+  collectionPageNode,
   graph,
   personNode,
+  profilePageNode,
   softwareSourceCodeNode,
   webSiteNode,
 } from "../../src/lib/jsonld";
@@ -140,6 +142,55 @@ describe("softwareSourceCodeNode", () => {
     expect(node["keywords"]).toEqual(["Python", "Django", "AWS"]);
     expect(node["programmingLanguage"]).toBeUndefined();
     expect(node["author"]).toEqual({ "@id": PERSON_ID });
+  });
+});
+
+describe("profilePageNode", () => {
+  it("marks the page's main entity as the person @id", () => {
+    const node = profilePageNode();
+    expect(node["@type"]).toBe("ProfilePage");
+    expect(node["@id"]).toBe(`${SITE.origin}/#profilepage`);
+    expect(node["mainEntity"]).toEqual({ "@id": PERSON_ID });
+  });
+
+  it("includes dateModified only when a content date is supplied", () => {
+    expect(profilePageNode()["dateModified"]).toBeUndefined();
+    expect(
+      profilePageNode({ dateModified: new Date("2026-07-24T00:00:00Z") })[
+        "dateModified"
+      ],
+    ).toBe("2026-07-24T00:00:00.000Z");
+  });
+});
+
+describe("collectionPageNode", () => {
+  const input = {
+    name: "Projects",
+    description: "Selected projects.",
+    url: "https://edwardchapman.co.uk/projects",
+    items: [
+      { name: "Foreman", url: "https://edwardchapman.co.uk/projects/foreman" },
+      { name: "AI-DDA", url: "https://edwardchapman.co.uk/projects/ai-dda" },
+    ],
+  };
+
+  it("wraps the entries in an ordered ItemList main entity", () => {
+    const node = collectionPageNode(input);
+    expect(node["@type"]).toBe("CollectionPage");
+    expect(node["url"]).toBe(input.url);
+    const list = node["mainEntity"] as Record<string, unknown>;
+    expect(list["@type"]).toBe("ItemList");
+    const items = list["itemListElement"] as Record<string, unknown>[];
+    expect(items.map((i) => i["position"])).toEqual([1, 2]);
+    expect(items[0]?.["name"]).toBe("Foreman");
+    expect(items[1]?.["url"]).toBe(
+      "https://edwardchapman.co.uk/projects/ai-dda",
+    );
+  });
+
+  it("carries no breadcrumb structure (ADR-0017: indexes get neither)", () => {
+    const node = collectionPageNode(input);
+    expect(JSON.stringify(node)).not.toContain("BreadcrumbList");
   });
 });
 

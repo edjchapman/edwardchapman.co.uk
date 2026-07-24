@@ -177,6 +177,10 @@ test.describe("/ask interface", () => {
     const status = page.getByRole("status");
     await expect(status).toContainText("could not find enough published");
     await expect(status.locator("ol.sources")).toHaveCount(0);
+    // The refusal is not a dead end: a static pointer routes technology
+    // questions to the published stack-depth content.
+    const pointer = status.getByRole("link", { name: "experience page" });
+    await expect(pointer).toHaveAttribute("href", "/experience");
   });
 
   test("shows the loading state while a request is in flight", async ({
@@ -248,6 +252,12 @@ test.describe("/ask interface", () => {
     // The career chip (ADR-0019 surface) must be present and clickable.
     await expect(
       page.getByRole("button", { name: "Where has Ed worked, and when?" }),
+    ).toBeVisible();
+    // The education chip uses its golden's verbatim phrasing.
+    await expect(
+      page.getByRole("button", {
+        name: "What is Ed's educational background?",
+      }),
     ).toBeVisible();
     await page
       .getByRole("button", {

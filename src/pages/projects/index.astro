@@ -1,18 +1,31 @@
 ---
 import { getCollection } from "astro:content";
 
+import JsonLd from "../../components/JsonLd.astro";
 import ProjectCard from "../../components/ProjectCard.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { collectionPageNode } from "../../lib/jsonld";
+import { SITE } from "../../lib/site";
 
 const projects = (
   await getCollection("projects", ({ data }) => !data.draft)
 ).sort((a, b) => a.data.order - b.data.order);
+
+const description =
+  "Selected projects with full case studies: architecture, engineering decisions, trade-offs, limitations, and what comes next.";
+
+const collectionPage = collectionPageNode({
+  name: "Projects",
+  description,
+  url: `${SITE.origin}/projects`,
+  items: projects.map((project) => ({
+    name: project.data.title,
+    url: `${SITE.origin}/projects/${project.id}`,
+  })),
+});
 ---
 
-<BaseLayout
-  title="Projects — Ed Chapman"
-  description="Selected projects with full case studies: architecture, engineering decisions, trade-offs, limitations, and what comes next."
->
+<BaseLayout title="Projects — Ed Chapman" description={description}>
   <h1>Projects</h1>
   <p class="lede">
     Each project links to a case study covering the architecture, the decisions
@@ -23,6 +36,7 @@ const projects = (
       <ProjectCard project={project} headingLevel={2} />
     ))
   }
+  <JsonLd nodes={[collectionPage]} />
 </BaseLayout>
 
 <style>
