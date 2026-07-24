@@ -30,6 +30,11 @@ The site must provide:
 - A colophon explaining how and why the site was built.
 - Excellent performance, accessibility, metadata and resilience.
 
+_(The agent's public surface renders in the third-person register — "Ask
+about Ed's work" — matching the assistant's mandated voice: it speaks about
+Ed, never as him. "Ask about my work" remains this spec's shorthand for the
+feature.)_
+
 This is both a professional homepage and a portfolio project demonstrating:
 
 - TypeScript engineering.
@@ -529,6 +534,12 @@ Suggested example questions:
 - What does Ed mean by evaluation-driven AI engineering?
 - Which parts of Ed's background are strongest for a platform role?
 - How does Ed approach AI-assisted software delivery?
+
+_(The live set is maintained in `AskForm.tsx` and evolves with the golden
+fixtures: each rendered chip uses a golden question's verbatim phrasing so
+retrieval stays pinned to answer it. The career and education chips were
+added with the [ADR-0019](adr/0019-published-career-history-via-linkedin-source.md)
+career surface; the list above remains the spec's original suggestion.)_
 
 ## API contract
 

@@ -6,8 +6,11 @@
  * scoping, response validation, and citation whitelisting (service.ts).
  */
 
-export const REFUSAL_TEXT =
-  "I could not find enough published information on this site to answer that reliably.";
+import { REFUSAL_TEXT } from "./refusal.ts";
+
+// Re-exported so existing server-side imports keep one canonical path; the
+// constant itself lives in refusal.ts, which is safe to bundle client-side.
+export { REFUSAL_TEXT };
 
 export const SYSTEM_POLICY = `You are the "ask" assistant on edwardchapman.co.uk, answering questions about Ed Chapman's published work. You speak about Ed in the third person; you are not Ed and must never imply you are.
 
