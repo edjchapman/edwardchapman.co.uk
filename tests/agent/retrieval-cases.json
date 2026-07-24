@@ -1,5 +1,5 @@
 {
-  "$comment": "Golden retrieval cases: for each query, at least one of expectedSectionIds must appear in the top-k results. Tied to the stable-ID contract (docs/architecture.md) \u2014 renaming content files must update these in the same PR.",
+  "$comment": "Golden retrieval cases: for each query, at least one of expectedSectionIds must appear in the top-k results. Tied to the stable-ID contract (docs/architecture.md) — renaming content files must update these in the same PR.",
   "cases": [
     {
       "id": "foreman-reliability",
@@ -313,6 +313,14 @@
         "api-enforced-citations#intro",
         "api-enforced-citations#the-decision"
       ]
+    },
+    {
+      "id": "ml-frameworks",
+      "query": "What ML frameworks has Ed used?",
+      "expectedSectionIds": [
+        "technical-focus#body",
+        "skills-depth#technology-depth"
+      ]
     }
   ],
   "refusals": [
@@ -355,6 +363,10 @@
     {
       "id": "leaving-reason",
       "query": "Why did Ed leave Natoora?"
+    },
+    {
+      "id": "kubernetes-used",
+      "query": "Has Ed used Kubernetes?"
     }
   ]
 }
