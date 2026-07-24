@@ -18,7 +18,11 @@ const projects = (
     Each project links to a case study covering the architecture, the decisions
     that carried weight, honest limitations, and what I'd do next.
   </p>
-  {projects.map((project) => <ProjectCard project={project} />)}
+  {
+    projects.map((project) => (
+      <ProjectCard project={project} headingLevel={2} />
+    ))
+  }
 </BaseLayout>
 
 <style>
