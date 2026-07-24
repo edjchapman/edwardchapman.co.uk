@@ -1,6 +1,7 @@
 ---
 import { getCollection, getEntry, render } from "astro:content";
 
+import AskCallout from "../components/AskCallout.astro";
 import Hero from "../components/Hero.astro";
 import JsonLd from "../components/JsonLd.astro";
 import ProjectCard from "../components/ProjectCard.astro";
@@ -48,6 +49,7 @@ const formatDate = (date: Date) =>
 <BaseLayout title={SITE.title} description={SITE.description}>
   <Hero tagline={positioning.data.tagline ?? SITE.description} />
   <Prose><Positioning /></Prose>
+  <AskCallout />
 
   <Section id="projects" heading="Selected projects">
     {projects.map((project) => <ProjectCard project={project} />)}

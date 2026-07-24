@@ -48,6 +48,31 @@ describe("projectSchema", () => {
     const result = projectSchema.safeParse({ ...validProject, order: -1 });
     expect(result.success).toBe(false);
   });
+
+  it("defaults metrics to empty and accepts value/label pairs", () => {
+    expect(projectSchema.parse(validProject).metrics).toEqual([]);
+    const parsed = projectSchema.parse({
+      ...validProject,
+      metrics: [{ value: "1.84s → 0.34s", label: "p95 queue wait" }],
+    });
+    expect(parsed.metrics).toHaveLength(1);
+  });
+
+  it("rejects empty metric strings and more than three metrics", () => {
+    expect(
+      projectSchema.safeParse({
+        ...validProject,
+        metrics: [{ value: "", label: "p95" }],
+      }).success,
+    ).toBe(false);
+    const four = Array.from({ length: 4 }, (_, i) => ({
+      value: `${i}`,
+      label: `metric ${i}`,
+    }));
+    expect(
+      projectSchema.safeParse({ ...validProject, metrics: four }).success,
+    ).toBe(false);
+  });
 });
 
 describe("noteSchema", () => {

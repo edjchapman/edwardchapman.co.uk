@@ -15,6 +15,13 @@ export const projectSchema = z.object({
   /** The technically differentiating feature (project card). */
   differentiator: z.string().min(1),
   tech: z.array(z.string().min(1)).min(1),
+  /** Headline measurements for the card's metric strip. Content boundary:
+   * every value must already be published in this project's own prose —
+   * the strip surfaces evidence, it never introduces it. */
+  metrics: z
+    .array(z.object({ value: z.string().min(1), label: z.string().min(1) }))
+    .max(3)
+    .default([]),
   repo: z.url(),
   demo: z.url().optional(),
   featured: z.boolean().default(false),
