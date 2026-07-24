@@ -13,6 +13,7 @@ const PAGES = [
   "/now",
   "/colophon",
   "/privacy",
+  "/ask",
   "/definitely-not-a-page",
 ];
 
@@ -41,6 +42,33 @@ test.describe("accessibility", () => {
       () => getComputedStyle(document.body).backgroundColor,
     );
     expect(background).toBe("rgb(23, 22, 20)"); // --color-paper #171614
+  });
+
+  test("dark scheme separates raised surfaces from the page", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/projects");
+    const background = await page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector("article") as Element)
+          .backgroundColor,
+    );
+    // --color-paper-raised #262420: the figure/ground step that 1px rules
+    // alone could not carry in the dark scheme.
+    expect(background).toBe("rgb(38, 36, 32)");
+  });
+
+  test("reduced motion disables the transition vocabulary", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    const duration = await page.evaluate(() => {
+      const pill = document.querySelector(".actions a") as Element;
+      return getComputedStyle(pill).transitionDuration;
+    });
+    expect(duration).toBe("0s");
   });
 
   test("light scheme keeps the light paper background", async ({ page }) => {

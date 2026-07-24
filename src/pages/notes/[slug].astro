@@ -156,10 +156,11 @@ const jsonLdNodes = [
     font-size: var(--text-sm);
   }
 
+  /* Labels, not controls — plain mono text with dot separators. */
   .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+    align-items: baseline;
     list-style: none;
     margin: var(--space-2) 0 0;
     padding: 0;
@@ -169,17 +170,21 @@ const jsonLdNodes = [
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-muted);
-    border: var(--rule);
-    border-radius: var(--radius);
-    padding: 0 var(--space-2);
+  }
+
+  .tags li + li::before {
+    content: "·";
+    margin-inline: var(--space-2);
+    color: var(--color-rule);
   }
 
   aside {
     margin-top: var(--space-5);
     padding: var(--space-3);
-    border: var(--rule);
+    border: 1px solid var(--color-rule-strong);
     border-radius: var(--radius);
     background: var(--color-paper-raised);
+    box-shadow: var(--shadow-1);
   }
 
   aside p,

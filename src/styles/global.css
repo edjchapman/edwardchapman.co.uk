@@ -56,6 +56,7 @@ a {
   color: var(--color-accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
+  transition: color var(--duration-quick) var(--ease-out);
 }
 
 a:hover {
@@ -103,7 +104,11 @@ code {
     --color-muted: #333;
     --color-accent: #000;
     --color-rule: #ccc;
+    --color-rule-strong: #aaa;
     --color-paper-raised: #fff;
+    --color-accent-subtle: #fff;
+    --shadow-1: none;
+    --shadow-2: none;
   }
 
   html {
