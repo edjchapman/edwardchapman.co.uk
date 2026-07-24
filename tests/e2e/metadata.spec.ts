@@ -141,6 +141,22 @@ test.describe("metadata", () => {
     );
   });
 
+  test("the display serif is self-hosted, preloaded once, and served", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/");
+    // Only the 600 weight preloads (site name + headings paint with it);
+    // more preloads would push other resources out of the critical path.
+    const preloads = page.locator('link[rel="preload"][as="font"]');
+    await expect(preloads).toHaveCount(1);
+    const href = await preloads.getAttribute("href");
+    expect(href).toMatch(/^\/_astro\/.+\.woff2$/);
+    const served = await request.get(href ?? "");
+    expect(served.status()).toBe(200);
+    expect(served.headers()["content-type"]).toContain("font");
+  });
+
   test("default social card is generated as a valid 1200×630 PNG", async ({
     request,
   }) => {

@@ -33,3 +33,7 @@ beyond design principles. All three landed during Phase 2–4 delivery (PRs
   of one non-required CI job (~3 min).
 - Spec §18's Phase-5 list is annotated rather than rewritten; remaining
   items there still require the spec's measure-first justification.
+
+_(Amended 2026-07-24 by [ADR-0021](0021-self-hosted-display-serif.md): the
+social cards and icon rasters now render their titles in Source Serif 4 —
+the site's own display face — rather than the Inter stand-in.)_

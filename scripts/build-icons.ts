@@ -4,19 +4,15 @@
  * rasterizer (@resvg/resvg-js) is a native module the Worker bundler must
  * never see. Icons land in public/ (gitignored) and ship as static assets.
  *
- * favicon.svg sets font-family to a system stack (Georgia/Times New
- * Roman/serif — see --font-serif in src/styles/tokens.css, deliberately
- * unbundled to keep the site's serif accent at zero byte cost). Real
- * browsers always resolve that stack; a headless rasterizer in CI has none
- * of those fonts installed and silently drops the glyphs, leaving a blank
- * icon — confirmed empirically, not a theoretical concern. To keep this
- * build step deterministic across machines, the source SVG's font-family is
- * swapped for Inter (already bundled for OG cards) and embedded explicitly
- * with system font loading disabled. A small, honest trade-off — sans
- * instead of serif — for a fallback asset few visitors ever see, in
- * exchange for a build that never silently ships a blank icon. The primary
- * favicon (public/favicon.svg, linked directly) is untouched and keeps its
- * serif rendering in every real browser.
+ * favicon.svg sets font-family to a serif stack that real browsers resolve;
+ * a headless rasterizer in CI has none of those fonts installed and
+ * silently drops the glyphs, leaving a blank icon — confirmed empirically,
+ * not a theoretical concern. To keep this build step deterministic across
+ * machines, the source SVG's font-family is swapped for the bundled Source
+ * Serif 4 (the site's own display face since ADR-0021) and embedded
+ * explicitly with system font loading disabled — so the raster fallbacks
+ * now match the serif identity instead of the old Inter stand-in. The
+ * primary favicon (public/favicon.svg, linked directly) is untouched.
  *
  * Sizing deliberately does not use resvg's `fitTo` option: verified
  * empirically (installed @resvg/resvg-js 2.6.2) that `fitTo` has no effect
@@ -57,14 +53,17 @@ const SIZES: { file: string; width: number }[] = [
 ];
 
 async function rasterize(root: string): Promise<number> {
-  const interBold = await readFile(
-    require.resolve("@fontsource/inter/files/inter-latin-700-normal.woff"),
+  const serif = await readFile(
+    require.resolve("@fontsource/source-serif-4/files/source-serif-4-latin-600-normal.woff"),
   );
   const source = await readFile(join(root, "public/favicon.svg"), "utf-8");
-  const svg = source.replace(/font-family="[^"]*"/, 'font-family="Inter"');
+  const svg = source.replace(
+    /font-family="[^"]*"/,
+    'font-family="Source Serif 4"',
+  );
   const font: FontOptionsWithBuffers = {
     loadSystemFonts: false,
-    fontBuffers: [interBold],
+    fontBuffers: [serif],
   };
 
   for (const { file, width } of SIZES) {
