@@ -19,8 +19,10 @@ const { tagline } = Astro.props;
 </div>
 
 <style>
+  /* Bottom margin matches the page's 24px block rhythm — the old --space-2
+   * predates the single-paragraph intro and left it glued to the pills. */
   .hero {
-    margin-block: var(--space-4) var(--space-2);
+    margin-block: var(--space-4);
   }
 
   .tagline {
