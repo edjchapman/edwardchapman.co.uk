@@ -20,7 +20,8 @@ const TOKENS = PALETTE.light;
 
 const require = createRequire(import.meta.url);
 
-async function fontFile(pkg: string, file: string): Promise<Buffer> {
+/** Shared by the OG-card and logo generators (scripts/build-logo.ts). */
+export async function fontFile(pkg: string, file: string): Promise<Buffer> {
   return readFile(require.resolve(`@fontsource/${pkg}/files/${file}`));
 }
 

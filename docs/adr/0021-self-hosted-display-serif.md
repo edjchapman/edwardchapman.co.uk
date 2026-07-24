@@ -70,3 +70,8 @@ resolved from the local `@fontsource/source-serif-4` package:
 - The tokens.css contract is unchanged — components still consume
   `--font-serif` and never name the family directly, so a future family
   change stays a one-line config edit.
+
+_(Amended 2026-07-24: the favicon joined the generated-asset pipeline as the
+"accent-tick" mark — `scripts/build-logo.ts` renders the OG cards' accent
+bar above a path-converted Source Serif 4 "EC" on the ink tile, which also
+let `build-icons.ts` retire its font-embedding workaround.)_

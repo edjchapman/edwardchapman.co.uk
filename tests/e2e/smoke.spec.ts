@@ -99,5 +99,11 @@ test.describe("smoke", () => {
 
     const favicon = await request.get("/favicon.svg");
     expect(favicon.status()).toBe(200);
+    // The accent-tick mark is path-true (ADR-0021): glyphs as vector paths,
+    // never live <text> whose rendering depends on the viewer's fonts.
+    const svg = await favicon.text();
+    expect(svg).toContain("<path");
+    expect(svg).not.toContain("<text");
+    expect(svg).toContain("#7fb0ef"); // the accent tick, from the palette
   });
 });
