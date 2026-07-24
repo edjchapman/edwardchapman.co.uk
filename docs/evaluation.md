@@ -427,6 +427,11 @@ dimensions at 1.00 (above thresholds); red-team 15/15
 only redacted structured events (ids and event names, never question or answer
 text). `/ask` is now linked in the nav, indexed, and in the sitemap.
 
+_(The log-redaction condition above described the launch posture.
+[ADR-0023](adr/0023-record-questions-for-abuse-monitoring.md) deliberately
+superseded it on 2026-07-25: the accepted event now carries the question
+text for abuse monitoring, disclosed on /privacy; answers remain unlogged.)_
+
 ## Limitations (recorded honestly)
 
 - LLM-as-judge scoring inherits judge bias; adversarial grading is spot-

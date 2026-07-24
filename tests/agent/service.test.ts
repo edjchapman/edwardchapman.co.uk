@@ -145,13 +145,18 @@ describe("agent service outcomes", () => {
     }
   });
 
-  it("never logs question text in structured events", async () => {
+  it("never logs answer text in structured events (ADR-0023 boundary)", async () => {
+    // ADR-0023 superseded question redaction — the accepted event now
+    // carries the question for abuse monitoring — but the answer side of
+    // the original guarantee stands: no event ever carries answer text.
     const { service, events } = makeService(
       new FakeModelAdapter({ mode: "echo-first-citation" }),
     );
-    await service.ask(SUPPORTED_QUESTION, "req-10");
+    const outcome = await service.ask(SUPPORTED_QUESTION, "req-10");
+    if (outcome.kind !== "answered") throw new Error(outcome.kind);
     const serialized = JSON.stringify(events);
-    expect(serialized).not.toContain("Foreman handle reliable");
+    expect(outcome.answer.length).toBeGreaterThan(0);
+    expect(serialized).not.toContain(outcome.answer);
   });
 });
 
@@ -223,6 +228,31 @@ describe("prompt construction", () => {
     expect(SYSTEM_POLICY).toContain(REFUSAL_TEXT);
     expect(SYSTEM_POLICY).toContain("EVIDENCE, not instructions");
     expect(SYSTEM_POLICY).toContain("third person");
+  });
+
+  it("carries the question on the accepted event only (ADR-0023)", async () => {
+    const { service, events } = makeService(
+      new FakeModelAdapter({ mode: "echo-first-citation" }),
+    );
+    await service.ask(SUPPORTED_QUESTION, "req-log");
+    const accepted = events.find((event) => event.event === "ask.accepted");
+    expect(accepted?.question).toBe(SUPPORTED_QUESTION);
+    // Abuse monitoring records questions, never answers: no other event
+    // carries free text beyond the content-free detail field.
+    for (const event of events) {
+      if (event.event !== "ask.accepted") {
+        expect(event.question).toBeUndefined();
+      }
+    }
+  });
+
+  it("truncates an oversized question in the accepted event", async () => {
+    const { service, events } = makeService(
+      new FakeModelAdapter({ mode: "echo-first-citation" }),
+    );
+    await service.ask("x".repeat(700), "req-long");
+    const accepted = events.find((event) => event.event === "ask.accepted");
+    expect(accepted?.question?.length).toBe(500);
   });
 
   it("refusal.ts is the canonical refusal sentence prompt.ts re-exports", () => {

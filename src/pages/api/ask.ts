@@ -71,7 +71,9 @@ function errorResponse(code: ErrorCode, requestId: string): Response {
 }
 
 const structuredLog: AgentLogger = (event) => {
-  // Structured, redacted events only — never question or answer text.
+  // Structured events. Per ADR-0023 the accepted event carries the question
+  // text for abuse monitoring (disclosed on /privacy, expiring with the
+  // platform's log retention); answers are never logged.
   console.log(JSON.stringify(event));
 };
 
