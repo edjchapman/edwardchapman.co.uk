@@ -20,8 +20,8 @@ const TOKENS = PALETTE.light;
 
 const require = createRequire(import.meta.url);
 
-async function interFont(file: string): Promise<Buffer> {
-  return readFile(require.resolve(`@fontsource/inter/files/${file}`));
+async function fontFile(pkg: string, file: string): Promise<Buffer> {
+  return readFile(require.resolve(`@fontsource/${pkg}/files/${file}`));
 }
 
 /** Long titles step down so they never clip the 1200×630 canvas. */
@@ -35,9 +35,12 @@ export async function renderOgCard(
   title: string,
   kicker: string,
 ): Promise<Uint8Array> {
-  const [regular, bold] = await Promise.all([
-    interFont("inter-latin-400-normal.woff"),
-    interFont("inter-latin-700-normal.woff"),
+  // Mirrors the live page's split: display serif for the title and site
+  // name (ADR-0021 — the same family the site loads), sans for supporting
+  // text.
+  const [sans, serif] = await Promise.all([
+    fontFile("inter", "inter-latin-400-normal.woff"),
+    fontFile("source-serif-4", "source-serif-4-latin-600-normal.woff"),
   ]);
 
   // Satori's signature says ReactNode, but it documents plain element
@@ -92,8 +95,9 @@ export async function renderOgCard(
                 type: "div",
                 props: {
                   style: {
+                    fontFamily: "Source Serif 4",
                     fontSize: titleSize(title),
-                    fontWeight: 700,
+                    fontWeight: 600,
                     lineHeight: 1.12,
                     maxWidth: 1000,
                   },
@@ -118,7 +122,7 @@ export async function renderOgCard(
               {
                 type: "div",
                 props: {
-                  style: { fontWeight: 700 },
+                  style: { fontFamily: "Source Serif 4", fontWeight: 600 },
                   children: SITE.name,
                 },
               },
@@ -140,8 +144,8 @@ export async function renderOgCard(
     width: 1200,
     height: 630,
     fonts: [
-      { name: "Inter", data: regular, weight: 400, style: "normal" },
-      { name: "Inter", data: bold, weight: 700, style: "normal" },
+      { name: "Inter", data: sans, weight: 400, style: "normal" },
+      { name: "Source Serif 4", data: serif, weight: 600, style: "normal" },
     ],
   });
 

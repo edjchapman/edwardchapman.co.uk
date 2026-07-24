@@ -37,7 +37,15 @@
   /* type */
   --font-sans:
     system-ui, -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
-  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  /* Display serif routes through the fonts-API variable (ADR-0021); if the
+   * config block is removed, the var() fallback restores the system stack. */
+  --font-serif: var(
+    --font-display,
+    ui-serif,
+    Georgia,
+    "Times New Roman",
+    serif
+  );
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* scale: 1.25 ratio on a 17px base */

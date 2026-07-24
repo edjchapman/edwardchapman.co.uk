@@ -1,4 +1,6 @@
 ---
+import { Font } from "astro:assets";
+
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import SEO from "../components/SEO.astro";
@@ -33,6 +35,14 @@ const { title, description, image, type, noindex, canonical } = Astro.props;
       name="theme-color"
       media="(prefers-color-scheme: dark)"
       content={PALETTE.dark.paper}
+    />
+    {
+      /* Preload only the 600 weight — it paints the site name and every
+      heading above the fold; 400 (tagline, note titles) loads lazily. */
+    }
+    <Font
+      cssVariable="--font-display"
+      preload={[{ weight: 600, subset: "latin" }]}
     />
     <SEO
       title={title}
