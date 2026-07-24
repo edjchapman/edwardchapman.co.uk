@@ -1,7 +1,7 @@
 ---
 title: "Positioning"
 order: 1
-tagline: "Senior software & platform engineer. Backend depth in Python and Django, infrastructure ownership on AWS and Terraform, React and TypeScript product work, and evaluation-driven AI engineering."
+tagline: "Software & platform engineer. Backend depth in Python and Django, infrastructure ownership on AWS and Terraform, React and TypeScript product work, and evaluation-driven AI engineering."
 updatedDate: 2026-07-24
 tags:
   - professional background and experience

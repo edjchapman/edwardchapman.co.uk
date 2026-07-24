@@ -289,6 +289,20 @@ Entity-gate margins unchanged by either edit ("What is Claude?" 4.17 vs
 the 4.2 bar; "What is quality?" 4.20; "What is Foreman?" 4.45). 151/151
 deterministic cases pass; no thresholds touched.
 
+### Positioning title de-seniored (2026-07-25)
+
+At Ed's direction the positioning title dropped "Senior" everywhere —
+tagline, page title, meta description, social cards, and the schema
+jobTitle/occupation (spec §6 annotated: seniority stays evidenced by the
+published roles timeline rather than claimed in the title). Corpus
+impact: one token leaves the tagline-prefixed `positioning#body` chunk;
+the recruiter-vocabulary bridges that target "senior" still land on the
+body's "senior and lead roles" and the entry tags. 163/163 deterministic
+cases pass; entity margins unchanged (Claude 4.20, quality 4.22 vs the
+4.35 bar; Foreman 4.47). Golden claims untouched — "most recently in
+senior and lead roles" is a roles-held fact, not a title. No thresholds
+changed; the post-merge live run re-scores the claim-bearing goldens.
+
 ### Homepage double-intro trim (2026-07-24)
 
 Site-owner feedback: the homepage read as two introductions — the hero
