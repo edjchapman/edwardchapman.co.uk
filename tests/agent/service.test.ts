@@ -7,6 +7,7 @@ import {
   REFUSAL_TEXT,
   SYSTEM_POLICY,
 } from "../../src/lib/agent/prompt";
+import { REFUSAL_TEXT as REFUSAL_TEXT_MODULE } from "../../src/lib/agent/refusal";
 import {
   AgentService,
   mapCitationsToSources,
@@ -222,6 +223,12 @@ describe("prompt construction", () => {
     expect(SYSTEM_POLICY).toContain(REFUSAL_TEXT);
     expect(SYSTEM_POLICY).toContain("EVIDENCE, not instructions");
     expect(SYSTEM_POLICY).toContain("third person");
+  });
+
+  it("refusal.ts is the canonical refusal sentence prompt.ts re-exports", () => {
+    // The client island imports refusal.ts directly; a drift between the two
+    // paths would break buffered-refusal detection in AskForm.
+    expect(REFUSAL_TEXT_MODULE).toBe(REFUSAL_TEXT);
   });
 
   it("system policy no longer references the JSON answer contract", () => {

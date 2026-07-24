@@ -1,5 +1,6 @@
 import { Fragment, useRef, useState, type FormEvent } from "react";
 
+import { REFUSAL_TEXT } from "../lib/agent/refusal.ts";
 import { segmentAnswer, type CitationSpan } from "./ask-citations.ts";
 
 /**
@@ -25,6 +26,7 @@ type AskState =
       answer: string;
       citations: CitationSpan[];
       sources: Source[];
+      refused: boolean;
     }
   | { phase: "error"; message: string };
 
@@ -37,13 +39,14 @@ type StreamEvent =
   | { kind: "upstream_rate_limited" };
 
 // Golden-fixture phrasings where one exists (retrieval is pinned to answer
-// them); the career question uses work-history's verbatim wording.
+// them); the career and education questions use their goldens' verbatim
+// wording.
 const EXAMPLE_QUESTIONS = [
   "What kind of engineering roles is Ed best suited to?",
   "Where has Ed worked, and when?",
+  "What is Ed's educational background?",
   "How did Foreman handle reliable event processing?",
   "What does Ed mean by evaluation-driven AI engineering?",
-  "How does Ed approach AI-assisted software delivery?",
 ];
 
 // Mirror the server's user-facing copy for the terminal error events, which
@@ -109,6 +112,7 @@ export default function AskForm() {
               answer,
               citations: event.citations ?? [],
               sources: event.sources ?? [],
+              refused: false,
             });
             return;
           case "refused":
@@ -117,6 +121,7 @@ export default function AskForm() {
               answer: event.answer,
               citations: [],
               sources: [],
+              refused: true,
             });
             return;
           case "upstream_rate_limited":
@@ -168,6 +173,7 @@ export default function AskForm() {
         answer: body.answer,
         citations: body.citations ?? [],
         sources: body.sources ?? [],
+        refused: body.answer === REFUSAL_TEXT,
       });
     } catch {
       setState({
@@ -273,6 +279,13 @@ export default function AskForm() {
                   ))}
                 </ol>
               </>
+            )}
+            {state.refused && (
+              <p className="pointer">
+                Nothing published on this site covers that. For technology
+                questions, the <a href="/experience">experience page</a> lists
+                what Ed has published about his stack and how long he's used it.
+              </p>
             )}
             <p className="disclosure">
               Generated from published site content — it may be imperfect, and
