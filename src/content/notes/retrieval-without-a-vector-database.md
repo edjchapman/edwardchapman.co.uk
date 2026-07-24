@@ -33,7 +33,7 @@ At request time the retriever:
 1. **Tokenises** the question by lowercasing, removing punctuation and
    stopwords, and folding simple plurals.
 2. **Expands known terms** through a small, curated synonym map. The map
-   handles vocabulary used by this corpus, such as `k8s` → `kubernetes`; it is
+   handles vocabulary used by this corpus, such as `postgres` → `postgresql`; it is
    not a general semantic model.
 3. **Scores sections** with a BM25-style calculation: inverse document
    frequency, term-frequency saturation, length normalisation, and a boost for

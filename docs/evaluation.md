@@ -261,6 +261,34 @@ genuine "What is Foreman?" 4.45 — so the entity bar is untouched. All 149
 deterministic cases pass; corpus version moves with the wording. A live
 run is to be dispatched after the wave's corpus PRs merge.
 
+### ML-scoping and Kubernetes-token retune (2026-07-24)
+
+Two related fixes to how technology questions the corpus half-covers are
+answered:
+
+- **"What ML frameworks has Ed used?"** previously routed (via the `ml→ai`
+  bridge) to chunks that could only support LLM-application claims — a
+  misleadingly thin answer for a recruiter screening classic ML skills. The
+  technical-focus AI bullet now states the scope in its own text ("applied
+  LLM-application engineering, not ML model training or data science"), so
+  the retrieved chunk answers the question accurately. The chunk's score
+  for that query rose 5.75 → 8.68 with the new vocabulary; a new retrieval
+  case (`ml-frameworks`) pins the routing.
+- **"Has Ed used Kubernetes?"** reached the model at all only because the
+  retrieval note's own synonym example sentence contained the word
+  "kubernetes" — the sole occurrence in the corpus (5.66, two terms,
+  confident, then a model decline). The example now uses a mapping whose
+  target genuinely exists (`postgres` → `postgresql`); both Kubernetes
+  phrasings gate-refuse deterministically (top hit 3.64, below confidence)
+  and the /ask refusal pointer handles the human path. This applies the
+  documented authoring guideline — corpus text must not embed probe
+  vocabulary — to the note that describes the retriever itself. A new
+  refusal fixture (`kubernetes-used`) pins the boundary.
+
+Entity-gate margins unchanged by either edit ("What is Claude?" 4.17 vs
+the 4.2 bar; "What is quality?" 4.20; "What is Foreman?" 4.45). 151/151
+deterministic cases pass; no thresholds touched.
+
 ### Post-improvement-wave run (2026-07-21)
 
 After the positioning wave (#103–#109: corrected Foreman tech tags, the

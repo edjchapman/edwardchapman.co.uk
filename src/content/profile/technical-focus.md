@@ -1,7 +1,7 @@
 ---
 title: "Technical focus"
 order: 3
-updatedDate: 2026-07-15
+updatedDate: 2026-07-24
 tags:
   - technologies and languages
   - technical skills and stack
@@ -16,6 +16,7 @@ tags:
   Kotlin with Compose Desktop for native tooling.
 - **Infrastructure** — AWS and Google Cloud (GCP), Terraform, Docker, GitHub
   Actions, Cloudflare Workers.
-- **AI engineering** — retrieval-grounded generation with citations,
+- **AI engineering** — applied LLM-application engineering, not ML model
+  training or data science: retrieval-grounded generation with citations,
   prompt-injection boundaries, LLM-as-judge evaluation in CI, and agentic
   development tooling.
