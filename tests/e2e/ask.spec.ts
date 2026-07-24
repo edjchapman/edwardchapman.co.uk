@@ -253,6 +253,12 @@ test.describe("/ask interface", () => {
     await expect(
       page.getByRole("button", { name: "Where has Ed worked, and when?" }),
     ).toBeVisible();
+    // The availability chip uses its golden's verbatim phrasing (ADR-0022).
+    await expect(
+      page.getByRole("button", {
+        name: "Is Ed open to contract or permanent roles?",
+      }),
+    ).toBeVisible();
     // The education chip uses its golden's verbatim phrasing.
     await expect(
       page.getByRole("button", {

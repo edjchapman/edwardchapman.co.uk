@@ -321,6 +321,31 @@
         "technical-focus#body",
         "skills-depth#technology-depth"
       ]
+    },
+    {
+      "id": "availability",
+      "query": "What is Ed's availability?",
+      "expectedSectionIds": ["availability#body"]
+    },
+    {
+      "id": "contract-or-permanent",
+      "query": "Is Ed open to contract or permanent roles?",
+      "expectedSectionIds": ["availability#body"]
+    },
+    {
+      "id": "remote-hybrid",
+      "query": "Is Ed open to remote or hybrid work?",
+      "expectedSectionIds": ["availability#body"]
+    },
+    {
+      "id": "relocate",
+      "query": "Would Ed relocate?",
+      "expectedSectionIds": ["availability#body"]
+    },
+    {
+      "id": "freelance",
+      "query": "Is Ed available for freelance work?",
+      "expectedSectionIds": ["availability#body"]
     }
   ],
   "refusals": [
@@ -367,6 +392,10 @@
     {
       "id": "kubernetes-used",
       "query": "Has Ed used Kubernetes?"
+    },
+    {
+      "id": "quality-definitional",
+      "query": "What is quality?"
     }
   ]
 }

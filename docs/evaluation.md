@@ -289,6 +289,44 @@ Entity-gate margins unchanged by either edit ("What is Claude?" 4.17 vs
 the 4.2 bar; "What is quality?" 4.20; "What is Foreman?" 4.45). 151/151
 deterministic cases pass; no thresholds touched.
 
+### Availability surface and entity-bar retune (2026-07-24, ADR-0022)
+
+Publishing the availability entry (101 → 102 chunks) closed the most
+common unanswerable recruiter question and, as predicted when the margins
+were measured at the start of the wave, consumed the entity gate's
+remaining headroom:
+
+- **"What is Claude?" reached 4.198 against the 4.2 bar** — a 0.002
+  margin. The bar moves 4.2 → 4.35: above the strongest spurious hits
+  ("What is quality?" 4.228, "What is Claude?" 4.198) and below the
+  weakest genuine one ("What is Foreman?" 4.480), the same
+  fixture-pinned discipline as every prior retune (3.0 → 3.7 → 3.95 →
+  4.2 → 4.35).
+- **The "What is quality?" open observation is now closed.** Earlier
+  records noted it outscored the weakest genuine hit, so no threshold
+  could exclude it. Corpus growth has since lifted the genuine hits
+  faster: at 4.228 vs Foreman's 4.480, the new bar excludes it — and a
+  new refusal fixture (`quality-definitional`) pins what was previously
+  only an observation.
+- **New availability bridges** (available/contract/contracting/freelance/
+  permanent/perm/remote/remotely/hybrid/relocate/relocating/relocation/
+  hire/hiring/opportunity/looking → anchored on "availability") with five
+  verbatim retrieval cases; "notice", "visa", and "open" deliberately
+  unbridged, employer names still unbridged. One knife-edge case surfaced
+  by the IDF shift: "What was Ed's last job?" lost `experience#intro` to
+  shorter tag-matched siblings; fixed query-side with `last/latest →
+recent, role` ("most recent first" is the intro's own wording), no IDF
+  impact.
+- **Adjacency re-verified**: the salary, notice-period, and visa-status
+  probes still refuse; the availability body's authoring rule (never
+  contain those probes' vocabulary) is recorded in ADR-0022.
+
+157/157 deterministic cases pass. The availability stance facts and the
+golden's required claims were dictated by Ed directly (2026-07-24) and
+land with this change; his PR approval remains the go-live decision per
+ADR-0022. The golden's first live scoring happens on the post-merge
+dispatched run. No live-mode threshold changed.
+
 ### Post-improvement-wave run (2026-07-21)
 
 After the positioning wave (#103–#109: corrected Foreman tech tags, the

@@ -42,6 +42,7 @@ type StreamEvent =
 const EXAMPLE_QUESTIONS = [
   "What kind of engineering roles is Ed best suited to?",
   "Where has Ed worked, and when?",
+  "Is Ed open to contract or permanent roles?",
   "What is Ed's educational background?",
   "How did Foreman handle reliable event processing?",
   "What does Ed mean by evaluation-driven AI engineering?",

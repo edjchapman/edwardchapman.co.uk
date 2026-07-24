@@ -27,6 +27,7 @@ marked here and in their own status line.
 | [0017](0017-structured-data-jsonld-graph.md)                       | Structured data via a single JSON-LD `@graph`                                | Accepted 2026-07-20          |
 | [0018](0018-fail-closed-model-selection-and-secret-safe-builds.md) | Fail closed on missing model credentials and strip local secrets from builds | Accepted 2026-07-20          |
 | [0019](0019-published-career-history-via-linkedin-source.md)       | Published career history, sourced from the public LinkedIn profile           | Accepted 2026-07-21          |
+| [0022](0022-published-availability-surface.md)                     | A published availability surface, corpus-included and Ed-affirmed            | Accepted 2026-07-24          |
 | [0020](0020-motion-elevation-and-css-view-transitions.md)          | Motion and elevation vocabulary, CSS-only view transitions                   | Accepted 2026-07-24          |
 | [0021](0021-self-hosted-display-serif.md)                          | One self-hosted display serif via the fonts API                              | Accepted 2026-07-24          |
 

@@ -53,6 +53,7 @@ const PROFILE_PAGES: Record<string, string> = {
   colophon: "/colophon",
   experience: "/experience",
   "skills-depth": "/experience",
+  availability: "/experience",
 };
 
 function parseFrontmatter(raw: string): {
