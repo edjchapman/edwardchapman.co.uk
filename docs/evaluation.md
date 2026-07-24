@@ -289,6 +289,22 @@ Entity-gate margins unchanged by either edit ("What is Claude?" 4.17 vs
 the 4.2 bar; "What is quality?" 4.20; "What is Foreman?" 4.45). 151/151
 deterministic cases pass; no thresholds touched.
 
+### Homepage double-intro trim (2026-07-24)
+
+Site-owner feedback: the homepage read as two introductions — the hero
+tagline and the first positioning paragraph both carried the role + stack
+enumeration. The positioning body collapses to one paragraph adding only
+what the tagline doesn't say. Because the tagline is prepended into
+`positioning#body`, the chunk keeps every tagline token; the body-only
+judge-checked claims survive verbatim ("nine-plus years building
+production systems", "most recently in senior and lead roles", "Based in
+London", the industries). All 161 deterministic cases passed on the first
+run — including `cloud-infrastructure`, whose body "cloud" token was
+dropped but whose ranking holds on tagline tokens and bridges. Entity
+margins effectively unchanged: "What is Claude?" 4.20 and "What is
+quality?" 4.22 vs the 4.35 bar; "What is Foreman?" 4.47. No thresholds
+touched; a post-merge live run re-scores the claim-bearing goldens.
+
 ### Availability surface and entity-bar retune (2026-07-24, ADR-0022)
 
 Publishing the availability entry (101 → 102 chunks) closed the most
