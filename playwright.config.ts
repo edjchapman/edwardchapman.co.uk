@@ -11,6 +11,12 @@ export default defineConfig({
   reporter: process.env["CI"] ? "github" : "list",
   use: {
     baseURL: "http://127.0.0.1:8788",
+    // Cross-document view transitions (ADR-0020) never settle in headless
+    // Chromium, hanging Playwright's actionability checks after the first
+    // navigation. Reduce-motion disables them via the site's own media
+    // query — the suite exercises exactly what a reduce-preference visitor
+    // gets; the transition itself is verified manually per the ADR.
+    contextOptions: { reducedMotion: "reduce" },
   },
   webServer: {
     command:

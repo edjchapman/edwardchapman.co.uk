@@ -11,16 +11,12 @@ import { readFile } from "node:fs/promises";
 import { Resvg } from "@resvg/resvg-js";
 import satori from "satori";
 
+import { PALETTE } from "./palette.ts";
 import { SITE } from "./site.ts";
 
-// Mirrors src/styles/tokens.css — satori can't read CSS custom properties.
-const TOKENS = {
-  paper: "#faf9f6",
-  ink: "#1a1a18",
-  muted: "#5c5a54",
-  accent: "#1a5fb4",
-  rule: "#e5e2da",
-};
+// Cards render in the light scheme — satori can't read CSS custom
+// properties, so the palette module is the drift-guarded bridge.
+const TOKENS = PALETTE.light;
 
 const require = createRequire(import.meta.url);
 

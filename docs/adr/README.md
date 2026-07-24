@@ -27,6 +27,7 @@ marked here and in their own status line.
 | [0017](0017-structured-data-jsonld-graph.md)                       | Structured data via a single JSON-LD `@graph`                                | Accepted 2026-07-20          |
 | [0018](0018-fail-closed-model-selection-and-secret-safe-builds.md) | Fail closed on missing model credentials and strip local secrets from builds | Accepted 2026-07-20          |
 | [0019](0019-published-career-history-via-linkedin-source.md)       | Published career history, sourced from the public LinkedIn profile           | Accepted 2026-07-21          |
+| [0020](0020-motion-elevation-and-css-view-transitions.md)          | Motion and elevation vocabulary, CSS-only view transitions                   | Accepted 2026-07-24          |
 
 Reading order for newcomers: 0001–0003 set the platform shape, 0005–0008 define
 the agent's grounding and evaluation model, 0007/0011/0019 govern what content

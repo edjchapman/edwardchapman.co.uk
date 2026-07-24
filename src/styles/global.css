@@ -95,6 +95,29 @@ code {
   }
 }
 
+/* Cross-document view transitions: pure CSS, zero JS (the ClientRouter
+ * alternative ships a router runtime on every page — rejected, ADR-0020).
+ * Chrome/Edge 126+ and Safari 18.2+ animate navigation; other browsers keep
+ * today's instant loads. Wrapped in no-preference because the universal
+ * reset above cannot reach the ::view-transition-* pseudo-elements. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  /* The transition overlay must not swallow clicks made during the
+   * animation — without this, a fast second click (human or test) lands on
+   * the snapshot and dies. */
+  ::view-transition {
+    pointer-events: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--duration-gentle);
+  }
+}
+
 /* Print — force ink-on-white regardless of the OS theme (a dark-scheme visitor
  * would otherwise print a dark page), and drop site chrome from the page. */
 @media print {
