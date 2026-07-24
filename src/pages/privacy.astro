@@ -14,9 +14,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   </p>
   <p>
     When you use <a href="/ask">Ask about Ed's work</a>, your question is sent
-    to Anthropic to generate an answer. This site does not store questions or
-    answers in a database, and its structured Worker logs exclude their text. Do
-    not include personal or sensitive information in a question.
+    to Anthropic to generate an answer, and is recorded in the site's
+    operational logs so abuse of the assistant can be detected. Those logs
+    expire automatically after a short period; answers are never stored, and
+    there is no database or account system behind this site. Do not include
+    personal or sensitive information in a question.
   </p>
   <p>
     Questions about any of this:

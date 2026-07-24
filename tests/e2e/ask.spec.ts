@@ -68,8 +68,13 @@ test.describe("/ask interface", () => {
     await expect(page.getByRole("main")).toContainText(
       "your question is sent to Anthropic",
     );
+    // ADR-0023: questions are recorded for abuse monitoring and the page
+    // must say so; answers stay unstored.
     await expect(page.getByRole("main")).toContainText(
-      "does not store questions or answers in a database",
+      "recorded in the site's operational logs",
+    );
+    await expect(page.getByRole("main")).toContainText(
+      "answers are never stored",
     );
   });
 

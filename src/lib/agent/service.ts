@@ -35,7 +35,15 @@ export type AgentEvent = {
   durationMs?: number;
   sectionIds?: string[];
   detail?: string;
+  /** The visitor's question, carried on `ask.accepted` only (ADR-0023):
+   * recorded for abuse monitoring, bounded by the 500-char validation and
+   * defensively truncated here; answers are never logged. */
+  question?: string;
 };
+
+/** Matches MAX_QUESTION_LENGTH upstream; a defensive bound for callers that
+ * bypass route validation (tests, probes). */
+const LOGGED_QUESTION_LIMIT = 500;
 
 export type AgentLogger = (event: AgentEvent) => void;
 
@@ -95,7 +103,11 @@ export class AgentService {
 
   async ask(question: string, requestId: string): Promise<AgentOutcome> {
     const started = Date.now();
-    this.log({ event: "ask.accepted", requestId });
+    this.log({
+      event: "ask.accepted",
+      requestId,
+      question: question.slice(0, LOGGED_QUESTION_LIMIT),
+    });
 
     const results = this.retriever.search(question, TOP_K);
     if (!isConfident(results)) {
@@ -208,7 +220,11 @@ export class AgentService {
     question: string,
     requestId: string,
   ): AsyncGenerator<AgentStreamEvent> {
-    this.log({ event: "ask.accepted", requestId });
+    this.log({
+      event: "ask.accepted",
+      requestId,
+      question: question.slice(0, LOGGED_QUESTION_LIMIT),
+    });
     const results = this.retriever.search(question, TOP_K);
     if (!isConfident(results)) {
       this.log({ event: "ask.refused_low_confidence", requestId });
