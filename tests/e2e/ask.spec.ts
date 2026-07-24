@@ -106,10 +106,10 @@ test.describe("/ask interface", () => {
     const marker = status.getByRole("link", {
       name: "Source 1: Foreman — Architecture",
     });
-    await expect(marker).toHaveAttribute("href", "#ask-source-1");
+    await expect(marker).toHaveAttribute("href", "#ask-source-0-1");
     // …and the numbered source links out to the canonical page.
     await expect(
-      status.locator("#ask-source-1").getByRole("link", {
+      status.locator("#ask-source-0-1").getByRole("link", {
         name: "Foreman — Architecture",
       }),
     ).toHaveAttribute("href", "https://edwardchapman.co.uk/projects/foreman");
@@ -153,9 +153,9 @@ test.describe("/ask interface", () => {
     // …and the terminal event finalises the inline marker + numbered source.
     await expect(
       status.getByRole("link", { name: "Source 1: Foreman — Architecture" }),
-    ).toHaveAttribute("href", "#ask-source-1");
+    ).toHaveAttribute("href", "#ask-source-0-1");
     await expect(
-      status.locator("#ask-source-1").getByRole("link"),
+      status.locator("#ask-source-0-1").getByRole("link"),
     ).toHaveAttribute("href", "https://edwardchapman.co.uk/projects/foreman");
   });
 
@@ -283,6 +283,99 @@ test.describe("/ask interface", () => {
     const page = await context.newPage();
     await page.goto("/ask");
     await expect(page.locator("noscript")).toHaveCount(1);
+    // The client:only fallback slot renders the same-geometry skeleton, so
+    // the pre-hydration page (and no-JS page) is never a blank hole.
+    await expect(page.locator(".ask-fallback")).toHaveCount(1);
     await context.close();
+  });
+
+  test("a stream that ends without a terminal event finalises as stopped", async ({
+    page,
+  }) => {
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: [
+          `data: ${JSON.stringify({ kind: "answer_delta", text: "Partial " })}\n\n`,
+          `data: ${JSON.stringify({ kind: "answer_delta", text: "answer" })}\n\n`,
+        ].join(""),
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    const status = page.getByRole("status");
+    await expect(status).toContainText("Partial answer");
+    await expect(status).toContainText("Stopped early");
+    // The form recovers: input re-enabled, ready for the next question.
+    await expect(page.getByLabel("Your question")).toBeEnabled();
+  });
+
+  test("stop before any answer arrives returns quietly to the form", async ({
+    page,
+  }) => {
+    await page.route("**/api/ask", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await route.abort();
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+    await page.getByRole("button", { name: "Stop" }).click();
+
+    await expect(page.getByLabel("Your question")).toBeEnabled();
+    await expect(page.getByRole("status")).not.toContainText("didn't complete");
+  });
+
+  test("two questions build a transcript with distinct source anchors", async ({
+    page,
+  }) => {
+    let call = 0;
+    await page.route("**/api/ask", async (route) => {
+      call += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          answer: `Answer ${call}.`,
+          citations: [{ start: 0, end: 9, sourceIndex: 0 }],
+          sources: [
+            {
+              title: `Source ${call}`,
+              url: `https://edwardchapman.co.uk/projects/foreman`,
+            },
+          ],
+          requestId: "t",
+        }),
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("First question?");
+    await page.getByRole("button", { name: "Ask" }).click();
+    await expect(page.locator("#ask-source-0-1")).toBeVisible();
+
+    await page.getByLabel("Your question").fill("Second question?");
+    await page.getByRole("button", { name: "Ask" }).click();
+    // The first exchange moves to the transcript, keeping its anchor; the
+    // new answer gets the next namespace and echoes its question.
+    await expect(page.locator("#ask-source-0-1")).toBeVisible();
+    await expect(page.locator("#ask-source-1-1")).toBeVisible();
+    const transcript = page.locator(".ask .transcript");
+    await expect(transcript).toContainText("Answer 1.");
+    await expect(page.getByRole("status")).toContainText("Second question?");
+  });
+
+  test("a character counter appears near the input limit", async ({ page }) => {
+    await page.goto("/ask");
+    const input = page.getByLabel("Your question");
+    await input.fill("x".repeat(450));
+    await expect(page.locator(".ask .counter")).toHaveText("450/500");
+    await input.fill("short");
+    await expect(page.locator(".ask .counter")).toHaveCount(0);
   });
 });
