@@ -295,22 +295,21 @@ describe("anthropic adapter response parsing", () => {
     expect(result.answer.text).toBe("Kept.");
   });
 
-  it("treats an empty or whitespace-only completion as a provider error", async () => {
+  it("maps an empty completion to the canonical refusal, never an error", async () => {
+    // An empty response is the provider's refusal classifier declining
+    // (observed live on impersonation probes) — a refusal, not an outage.
     const empty = await makeAdapter(
       stubFetch([messageResponse([])]).fetch,
     ).complete(REQUEST);
-    expect(empty).toEqual({
-      type: "provider_error",
-      detail: "empty completion",
-    });
+    if (empty.type !== "completion") throw new Error(empty.type);
+    expect(empty.answer.text).toBe(REFUSAL_TEXT);
+    expect(empty.answer.citations).toEqual([]);
 
     const blank = await makeAdapter(
       stubFetch([messageResponse([textBlock("   ")])]).fetch,
     ).complete(REQUEST);
-    expect(blank).toEqual({
-      type: "provider_error",
-      detail: "empty completion",
-    });
+    if (blank.type !== "completion") throw new Error(blank.type);
+    expect(blank.answer.text).toBe(REFUSAL_TEXT);
   });
 });
 
@@ -412,6 +411,18 @@ describe("anthropic adapter streaming (ADR-0016)", () => {
     },
     { event: "message_stop", data: { type: "message_stop" } },
   ];
+
+  it("maps an empty stream to the canonical refusal, never an error", async () => {
+    // Provider-level refusal on the streaming path: message opens and
+    // closes with no text content. Same semantics as the buffered case.
+    const emptyStream = [HAPPY_PATH[0]!, HAPPY_PATH[5]!, HAPPY_PATH[6]!];
+    const { fetch } = stubFetch([sseResponse(emptyStream)]);
+    const events = await collectStream(makeAdapter(fetch).stream(REQUEST));
+    expect(events).toEqual([
+      { type: "text", delta: REFUSAL_TEXT },
+      { type: "completed" },
+    ]);
+  });
 
   it("resolves a citation announced before its text to the block span at stop", async () => {
     const { fetch, calls } = stubFetch([sseResponse(HAPPY_PATH)]);
