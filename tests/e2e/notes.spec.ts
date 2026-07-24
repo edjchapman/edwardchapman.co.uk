@@ -14,6 +14,28 @@ test.describe("notes", () => {
     await expect(page.locator("time").first()).toBeVisible();
   });
 
+  test("index carries CollectionPage JSON-LD listing the published notes", async ({
+    page,
+  }) => {
+    await page.goto("/notes");
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .textContent();
+    const parsed = JSON.parse(raw ?? "{}") as {
+      "@graph": Record<string, unknown>[];
+    };
+    const collection = parsed["@graph"].find(
+      (n) => n["@type"] === "CollectionPage",
+    );
+    const list = collection?.["mainEntity"] as Record<string, unknown>;
+    expect(list["@type"]).toBe("ItemList");
+    const items = list["itemListElement"] as Record<string, unknown>[];
+    expect(items.length).toBeGreaterThanOrEqual(7);
+    expect(
+      items.some((i) => i["url"] === `https://edwardchapman.co.uk${NOTE}`),
+    ).toBe(true);
+  });
+
   test("note renders with BlogPosting + breadcrumb JSON-LD and a related project link", async ({
     page,
   }) => {

@@ -1,11 +1,27 @@
 ---
 import { getCollection } from "astro:content";
 
+import JsonLd from "../../components/JsonLd.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { collectionPageNode } from "../../lib/jsonld";
+import { SITE } from "../../lib/site";
 
 const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+const description =
+  "Technical writing: AI engineering, evaluation, reliability, and the practice of building with guardrails.";
+
+const collectionPage = collectionPageNode({
+  name: "Notes",
+  description,
+  url: `${SITE.origin}/notes`,
+  items: notes.map((note) => ({
+    name: note.data.title,
+    url: `${SITE.origin}/notes/${note.id}`,
+  })),
+});
 
 const formatDate = (date: Date) =>
   date.toLocaleDateString("en-GB", {
@@ -15,10 +31,7 @@ const formatDate = (date: Date) =>
   });
 ---
 
-<BaseLayout
-  title="Notes — Ed Chapman"
-  description="Technical writing: AI engineering, evaluation, reliability, and the practice of building with guardrails."
->
+<BaseLayout title="Notes — Ed Chapman" description={description}>
   <h1>Notes</h1>
   <p class="lede">
     Occasional technical writing — mostly the engineering around AI systems:
@@ -37,6 +50,7 @@ const formatDate = (date: Date) =>
       ))
     }
   </ul>
+  <JsonLd nodes={[collectionPage]} />
 </BaseLayout>
 
 <style>

@@ -2,9 +2,14 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
+{
+  /* noindex belt-and-braces: the 404 HTTP status is the primary signal, but a
+  crawler that reaches this markup another way must not index it. */
+}
 <BaseLayout
   title="Page not found — Ed Chapman"
   description="This page does not exist."
+  noindex
 >
   <h1>Page not found</h1>
   <p>There's nothing at this address.</p>
