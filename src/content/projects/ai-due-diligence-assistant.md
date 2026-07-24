@@ -1,8 +1,8 @@
 ---
 title: "AI Due-Diligence Assistant"
-problem: "LLM summaries of a target company's filings aren't trustworthy in due diligence unless every finding can be traced to a verifiable source."
-built: "A Fastify/TypeScript service in which a stateful LangGraph.js agent runs structured due-diligence checks over ingested filings, retrieving from PostgreSQL/pgvector and producing an audit-grade report where each finding cites its source chunk."
-differentiator: "The evaluation harness is part of the product: a golden set scored by LLM-as-judge runs in CI on every push, and a keyless demo mode makes the full system reproducible from a fresh clone with just Docker."
+problem: "An evidence-first due-diligence system built to solve a fundamental problem with LLM-generated analysis: a finding is only useful when it can be traced back to a verifiable source."
+built: "Built with Fastify and TypeScript, the service uses a stateful LangGraph.js agent to run structured checks across ingested company filings. Relevant evidence is retrieved from PostgreSQL with pgvector, and each finding in the final report includes a citation to the exact source chunk that supports it."
+differentiator: "Evaluation is treated as part of the product, not an afterthought. A golden dataset is scored by an LLM-as-judge pipeline in CI on every push, helping detect regressions in retrieval quality, reasoning, and citation accuracy. A keyless demo mode also makes the complete system reproducible from a fresh clone using only Docker."
 tech:
   - TypeScript
   - Node.js
