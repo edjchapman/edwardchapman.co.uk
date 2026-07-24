@@ -13,8 +13,26 @@
   --color-muted: #5c5a54;
   --color-accent: #1a5fb4;
   --color-rule: #e5e2da;
+  /* rule-strong: borders that carry a surface (cards, controls, asides) —
+   * decorative under WCAG 1.4.11, since no control is identified by border
+   * alone. */
+  --color-rule-strong: #d9d5cb;
   --color-paper-raised: #ffffff;
+  /* accent-subtle: quiet accent-tinted fill (callout panels). Ink and accent
+   * on this surface hold ≥ 4.5:1 in both schemes. */
+  --color-accent-subtle: #edf2f9;
   --color-error: #8a2b1d;
+
+  /* elevation — ink-derived, two steps only: resting surfaces and the one
+   * emphasised surface (the ask answer). */
+  --shadow-1: 0 1px 2px rgb(26 26 24 / 0.05);
+  --shadow-2: 0 2px 8px rgb(26 26 24 / 0.07), 0 1px 2px rgb(26 26 24 / 0.05);
+
+  /* motion — state communication only (spec §7). The global
+   * prefers-reduced-motion reset in global.css disables all of it wholesale. */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --duration-quick: 120ms;
+  --duration-gentle: 200ms;
 
   /* type */
   --font-sans:
@@ -60,7 +78,17 @@
     --color-muted: #a29d92;
     --color-accent: #7fb0ef;
     --color-rule: #302e2a;
-    --color-paper-raised: #201e1b;
+    --color-rule-strong: #3a3833;
+    /* Raised a step from the old #201e1b: 1px rules alone can't carry
+     * figure/ground in the dark scheme, so surface + border + shadow work
+     * together. Text pairs on this surface stay ≥ 4.5:1 (muted 5.73,
+     * accent 6.90, ink 12.88). */
+    --color-paper-raised: #262420;
+    --color-accent-subtle: #1f2734;
     --color-error: #f0a99b;
+
+    /* Ink-alpha shadows disappear on a dark page; use true black. */
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-2: 0 2px 8px rgb(0 0 0 / 0.5), 0 1px 2px rgb(0 0 0 / 0.4);
   }
 }

@@ -33,9 +33,10 @@ const { title, problem, built, differentiator, tech, repo, demo } =
 <style>
   article {
     padding: var(--space-4);
-    border: var(--rule);
+    border: 1px solid var(--color-rule-strong);
     border-radius: var(--radius);
     background: var(--color-paper-raised);
+    box-shadow: var(--shadow-1);
     margin-bottom: var(--space-4);
   }
 
@@ -44,10 +45,12 @@ const { title, problem, built, differentiator, tech, repo, demo } =
     margin-bottom: var(--space-2);
   }
 
+  /* Plain mono text with dot separators — bordered boxes read as tappable
+   * controls, and these are labels. */
   .tech {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2);
+    align-items: baseline;
     list-style: none;
     margin: 0 0 var(--space-3);
     padding: 0;
@@ -57,9 +60,12 @@ const { title, problem, built, differentiator, tech, repo, demo } =
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-muted);
-    border: var(--rule);
-    border-radius: var(--radius);
-    padding: 0 var(--space-2);
+  }
+
+  .tech li + li::before {
+    content: "·";
+    margin-inline: var(--space-2);
+    color: var(--color-rule);
   }
 
   .links {
