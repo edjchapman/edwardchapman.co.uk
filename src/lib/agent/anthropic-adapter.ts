@@ -13,6 +13,8 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 
+import { REFUSAL_TEXT } from "./refusal.ts";
+
 import type {
   ModelAdapter,
   ModelCitation,
@@ -137,7 +139,11 @@ export class AnthropicAdapter implements ModelAdapter {
       return;
     }
     if (text.trim() === "") {
-      yield { type: "provider_error", detail: "empty completion" };
+      // Same semantics as parseCompletion's empty case: an API-level
+      // refusal. Emit the canonical sentence so the stream guard and
+      // service route it as model_declined rather than a 502.
+      yield { type: "text", delta: REFUSAL_TEXT };
+      yield { type: "completed" };
       return;
     }
     yield { type: "completed" };
@@ -187,9 +193,23 @@ function parseCompletion(message: Anthropic.Message): ModelResult {
     }
   }
   if (text.trim() === "") {
-    return { type: "provider_error", detail: "empty completion" };
+    return declinedCompletion();
   }
   return { type: "completion", answer: { text, citations } };
+}
+
+/**
+ * An empty completion is the API declining to answer (the provider-level
+ * refusal classifier returns no content — observed live on impersonation
+ * probes). That is a refusal, not an outage: surface the canonical
+ * sentence so the service routes it through its model_declined path and
+ * the visitor gets the graceful refusal envelope, never a 502.
+ */
+function declinedCompletion(): ModelResult {
+  return {
+    type: "completion",
+    answer: { text: REFUSAL_TEXT, citations: [] },
+  };
 }
 
 /** Shrink a span past leading/trailing whitespace; null when nothing remains. */
