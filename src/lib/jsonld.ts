@@ -146,6 +146,52 @@ export function softwareSourceCodeNode(
   };
 }
 
+/** ProfilePage marks the homepage as the page whose main entity is the
+ * site's Person node (Google's profile-page guidance nests the person under
+ * mainEntity). dateModified is the positioning entry's content date — never
+ * the build time, consistent with content-dates.ts. */
+export function profilePageNode(opts?: {
+  dateModified?: Date | undefined;
+}): JsonLdNode {
+  return {
+    "@type": "ProfilePage",
+    "@id": `${SITE.origin}/#profilepage`,
+    mainEntity: { "@id": PERSON_ID },
+    ...(opts?.dateModified && {
+      dateModified: opts.dateModified.toISOString(),
+    }),
+  };
+}
+
+export interface CollectionPageInput {
+  name: string;
+  description: string;
+  url: string;
+  items: { name: string; url: string }[];
+}
+
+/** CollectionPage for the /projects and /notes indexes: mainEntity is an
+ * ItemList of the published entries in rendered order. Index pages carry no
+ * BreadcrumbList (ADR-0017: detail pages get breadcrumbs, indexes get
+ * neither). */
+export function collectionPageNode(input: CollectionPageInput): JsonLdNode {
+  return {
+    "@type": "CollectionPage",
+    name: input.name,
+    description: input.description,
+    url: input.url,
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: input.items.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        url: item.url,
+      })),
+    },
+  };
+}
+
 export function graph(nodes: JsonLdNode[]): JsonLdNode {
   return {
     "@context": "https://schema.org",

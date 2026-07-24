@@ -91,7 +91,7 @@ test.describe("homepage", () => {
     await expect(page.getByRole("link", { name: "Live demo" })).toHaveCount(2);
   });
 
-  test("JSON-LD @graph carries a valid Person and WebSite", async ({
+  test("JSON-LD @graph carries a valid Person, WebSite, and ProfilePage", async ({
     page,
   }) => {
     await page.goto("/");
@@ -107,6 +107,8 @@ test.describe("homepage", () => {
     expect(person?.["sameAs"]).toContain("https://github.com/edjchapman");
     expect(person?.["sameAs"]).toContain("https://x.com/edjchapman");
     expect(nodes.some((n) => n["@type"] === "WebSite")).toBe(true);
+    const profilePage = nodes.find((n) => n["@type"] === "ProfilePage");
+    expect(profilePage?.["mainEntity"]).toEqual({ "@id": person?.["@id"] });
   });
 
   test("full scan renders without JavaScript", async ({ browser }) => {

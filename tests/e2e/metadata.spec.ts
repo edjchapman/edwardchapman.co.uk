@@ -110,6 +110,37 @@ test.describe("metadata", () => {
     expect(Number.isNaN(Date.parse(lastmod ?? ""))).toBe(false);
   });
 
+  test("/now carries a content-derived lastmod in the sitemap", async ({
+    request,
+  }) => {
+    const body = await (await request.get("/sitemap-0.xml")).text();
+    const start = body.indexOf("/now</loc>");
+    expect(start).toBeGreaterThan(-1);
+    const block = body.slice(start, body.indexOf("</url>", start));
+    const lastmod = /<lastmod>([^<]+)<\/lastmod>/.exec(block)?.[1];
+    expect(lastmod).toBeTruthy();
+    expect(Number.isNaN(Date.parse(lastmod ?? ""))).toBe(false);
+  });
+
+  test("titles follow the pinned patterns: home prefix-form, subpages suffix-form", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    expect(await page.title()).toMatch(/^Ed Chapman — /);
+    await page.goto("/colophon");
+    expect(await page.title()).toMatch(/ — Ed Chapman$/);
+  });
+
+  test("the 404 page is noindexed as well as status-coded", async ({
+    page,
+  }) => {
+    await page.goto("/definitely-not-a-page");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "noindex, nofollow",
+    );
+  });
+
   test("default social card is generated as a valid 1200×630 PNG", async ({
     request,
   }) => {

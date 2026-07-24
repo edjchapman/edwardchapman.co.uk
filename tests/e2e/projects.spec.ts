@@ -21,6 +21,32 @@ test.describe("projects", () => {
     expect(await page.getByRole("heading", { level: 3 }).count()).toBe(0);
   });
 
+  test("index carries CollectionPage JSON-LD listing the published projects", async ({
+    page,
+  }) => {
+    await page.goto("/projects");
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .textContent();
+    const parsed = JSON.parse(raw ?? "{}") as {
+      "@graph": Record<string, unknown>[];
+    };
+    const collection = parsed["@graph"].find(
+      (n) => n["@type"] === "CollectionPage",
+    );
+    const list = collection?.["mainEntity"] as Record<string, unknown>;
+    expect(list["@type"]).toBe("ItemList");
+    const items = list["itemListElement"] as Record<string, unknown>[];
+    expect(items).toHaveLength(3);
+    expect(items[0]?.["url"]).toBe(
+      "https://edwardchapman.co.uk/projects/foreman",
+    );
+    // ADR-0017: index pages carry no breadcrumb structure.
+    expect(parsed["@graph"].some((n) => n["@type"] === "BreadcrumbList")).toBe(
+      false,
+    );
+  });
+
   test("navigation reaches a case study from the homepage", async ({
     page,
   }) => {
