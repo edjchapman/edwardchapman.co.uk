@@ -17,7 +17,7 @@ import { join } from "node:path";
 
 import { parse as parseYaml } from "yaml";
 
-import { noteSchema } from "./schemas";
+import { noteSchema, profileSchema } from "./schemas";
 
 function frontmatter(raw: string): Record<string, unknown> {
   const match = /^---\n([\s\S]*?)\n---\n?/.exec(raw);
@@ -46,5 +46,24 @@ export async function noteLastmods(
     lastmods.set(`/notes/${id}`, date.toISOString());
   }
 
+  return lastmods;
+}
+
+/**
+ * All content-derived lastmods: every published note, plus `/now` — the one
+ * profile-backed page whose currency is the point, dated by its own
+ * `updatedDate` frontmatter. Other static pages stay undated by design (see
+ * the module comment above).
+ */
+export async function contentLastmods(
+  root: string = process.cwd(),
+): Promise<Map<string, string>> {
+  const lastmods = await noteLastmods(root);
+  const now = profileSchema.parse(
+    frontmatter(
+      await readFile(join(root, "src/content/profile/now.md"), "utf8"),
+    ),
+  );
+  if (now.updatedDate) lastmods.set("/now", now.updatedDate.toISOString());
   return lastmods;
 }

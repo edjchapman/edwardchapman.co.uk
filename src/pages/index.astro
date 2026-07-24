@@ -7,7 +7,7 @@ import ProjectCard from "../components/ProjectCard.astro";
 import Prose from "../components/Prose.astro";
 import Section from "../components/Section.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { personNode, webSiteNode } from "../lib/jsonld";
+import { personNode, profilePageNode, webSiteNode } from "../lib/jsonld";
 import { SITE } from "../lib/site";
 
 const positioning = await getEntry("profile", "positioning");
@@ -88,7 +88,13 @@ const formatDate = (date: Date) =>
     site's published content only.
   </p>
 
-  <JsonLd nodes={[webSiteNode(), personNode({ knowsAbout })]} />
+  <JsonLd
+    nodes={[
+      webSiteNode(),
+      profilePageNode({ dateModified: positioning.data.updatedDate }),
+      personNode({ knowsAbout }),
+    ]}
+  />
 </BaseLayout>
 
 <style>
