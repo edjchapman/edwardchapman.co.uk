@@ -3,6 +3,7 @@ import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import SEO from "../components/SEO.astro";
 import SkipLink from "../components/SkipLink.astro";
+import { PALETTE } from "../lib/palette";
 import "../styles/global.css";
 
 interface Props {
@@ -26,12 +27,12 @@ const { title, description, image, type, noindex, canonical } = Astro.props;
     <meta
       name="theme-color"
       media="(prefers-color-scheme: light)"
-      content="#faf9f6"
+      content={PALETTE.light.paper}
     />
     <meta
       name="theme-color"
       media="(prefers-color-scheme: dark)"
-      content="#171614"
+      content={PALETTE.dark.paper}
     />
     <SEO
       title={title}

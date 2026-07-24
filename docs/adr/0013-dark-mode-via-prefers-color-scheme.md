@@ -64,3 +64,8 @@ The measure-first record §18 requires:
 - Spec §18's Phase-5 list is annotated, not rewritten (as ADR-0010 did for RSS);
   the §19 "dark-mode _polishing_" non-goal stands — this is intentionally not
   that.
+
+_(Amended 2026-07-24 by [ADR-0020](0020-motion-elevation-and-css-view-transitions.md):
+the token set gained elevation/motion values and the dark raised surface was
+retuned to `#262420` with verified ratios. The contract here — token-only
+theming, system-driven, no toggle — is unchanged.)_
