@@ -1,7 +1,7 @@
 import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
-import { defineConfig, sessionDrivers } from "astro/config";
+import { defineConfig, fontProviders, sessionDrivers } from "astro/config";
 
 import { contentLastmods } from "./src/lib/content-dates";
 
@@ -14,6 +14,22 @@ export default defineConfig({
   trailingSlash: "never",
   build: { format: "file" },
   adapter: cloudflare({ imageService: "compile" }),
+  // One self-hosted display serif (ADR-0021): resolved from the local
+  // @fontsource package at build time (no network, OFL-licensed), subsetted
+  // woff2 under /_astro/ with immutable caching. tokens.css routes
+  // --font-serif through the injected --font-display variable, so removing
+  // this block reverts the whole site to the system stack.
+  fonts: [
+    {
+      provider: fontProviders.fontsource(),
+      name: "Source Serif 4",
+      cssVariable: "--font-display",
+      weights: [400, 600],
+      styles: ["normal"],
+      subsets: ["latin"],
+      fallbacks: ["Georgia", "Times New Roman", "serif"],
+    },
+  ],
   integrations: [
     react(),
     sitemap({
