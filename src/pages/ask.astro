@@ -20,9 +20,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   {
     /* client:only — the form is meaningless without JS (noscript covers that
-      case), and skipping SSR removes the pre-hydration dead-click window. */
+      case), and skipping SSR removes the pre-hydration dead-click window.
+      The fallback slot renders a same-geometry skeleton until hydration, so
+      the island's arrival causes no layout jump. */
   }
-  <AskForm client:only="react" />
+  <AskForm client:only="react">
+    <div slot="fallback" class="ask ask-fallback" aria-hidden="true">
+      <p class="fallback-label">Your question</p>
+      <div class="row">
+        <div class="fallback-input"></div>
+        <div class="fallback-button"></div>
+      </div>
+    </div>
+  </AskForm>
 
   <noscript>
     <p>
@@ -102,6 +112,23 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     cursor: default;
   }
 
+  /* Stop is secondary: same geometry as Ask, quiet colours. */
+  .ask button.stop {
+    background: var(--color-paper-raised);
+    color: var(--color-ink);
+  }
+
+  .ask button.stop:hover {
+    border-color: var(--color-error);
+    color: var(--color-error);
+  }
+
+  .ask .counter {
+    margin: var(--space-1) 0 0;
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+  }
+
   .ask .examples-label {
     margin-top: var(--space-4);
     color: var(--color-muted);
@@ -135,6 +162,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   .ask .status {
     margin-top: var(--space-4);
+  }
+
+  /* Earlier exchanges stack oldest-first above the live answer. */
+  .ask .transcript {
+    margin-top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .ask .asked {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
   }
 
   .ask .error {
@@ -185,5 +226,30 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     margin: 0;
     color: var(--color-muted);
     font-size: var(--text-sm);
+  }
+
+  /* Pre-hydration skeleton: mirrors the form's geometry, paints nothing
+   * interactive. Removed when the island mounts. */
+  .ask-fallback .fallback-label {
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+  }
+
+  .ask-fallback .fallback-input {
+    flex: 1;
+    min-width: 16rem;
+    height: calc(1.6em + 2 * var(--space-2) + 2px);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius);
+    background: var(--color-paper-raised);
+  }
+
+  .ask-fallback .fallback-button {
+    width: 5rem;
+    height: calc(1.6em + 2 * var(--space-2) + 2px);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius);
+    background: var(--color-ink);
+    opacity: 0.85;
   }
 </style>

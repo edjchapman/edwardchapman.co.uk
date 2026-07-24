@@ -1,7 +1,8 @@
-import { Fragment, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 
 import { REFUSAL_TEXT } from "../lib/agent/refusal.ts";
-import { segmentAnswer, type CitationSpan } from "./ask-citations.ts";
+import AskExchange, { type Exchange, type Source } from "./AskExchange.tsx";
+import { type CitationSpan } from "./ask-citations.ts";
 
 /**
  * The site's one React island (ADR-0004): the ask form's state machine —
@@ -13,21 +14,18 @@ import { segmentAnswer, type CitationSpan } from "./ask-citations.ts";
  * inline citations + sources on the terminal event. It stays dual-mode — a
  * plain JSON response (an error envelope, or a non-streaming backend) is
  * handled by the buffered path — so no-JS, tests, and probes are unaffected.
+ *
+ * Completed exchanges accumulate as a transcript (oldest first) above the
+ * live region; the live region holds only the in-flight or most recent
+ * state, so each finished answer is announced exactly once. A visitor can
+ * stop an in-flight stream; the partial text is kept as a stopped exchange.
  */
-
-type Source = { title: string; url: string };
 
 type AskState =
   | { phase: "idle" }
   | { phase: "loading" }
   | { phase: "streaming"; answer: string }
-  | {
-      phase: "answered";
-      answer: string;
-      citations: CitationSpan[];
-      sources: Source[];
-      refused: boolean;
-    }
+  | { phase: "answered"; exchange: Exchange }
   | { phase: "error"; message: string };
 
 /** The wire events the streaming route emits (ADR-0016). */
@@ -56,6 +54,9 @@ const RATE_LIMITED_MESSAGE =
 const UPSTREAM_ERROR_MESSAGE =
   "The answer service had a problem. Nothing you did — try again shortly.";
 
+const MAX_QUESTION_LENGTH = 500;
+const COUNTER_FROM = 400;
+
 function parseStreamEvent(block: string): StreamEvent | null {
   const line = block.split("\n").find((entry) => entry.startsWith("data:"));
   if (!line) return null;
@@ -77,68 +78,129 @@ async function errorMessage(response: Response): Promise<string> {
   return "Something went wrong — please try again shortly.";
 }
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+/** Map a terminal stream event to its finished state; null for deltas. */
+function terminalState(
+  event: StreamEvent,
+  answer: string,
+  asked: string,
+): AskState | null {
+  switch (event.kind) {
+    case "answer_delta":
+      return null;
+    case "answered":
+      return {
+        phase: "answered",
+        exchange: {
+          question: asked,
+          answer,
+          citations: event.citations ?? [],
+          sources: event.sources ?? [],
+          refused: false,
+          stopped: false,
+        },
+      };
+    case "refused":
+      return {
+        phase: "answered",
+        exchange: {
+          question: asked,
+          answer: event.answer,
+          citations: [],
+          sources: [],
+          refused: true,
+          stopped: false,
+        },
+      };
+    case "upstream_rate_limited":
+      return { phase: "error", message: RATE_LIMITED_MESSAGE };
+    case "upstream_error":
+      return { phase: "error", message: UPSTREAM_ERROR_MESSAGE };
+  }
+}
+
 export default function AskForm() {
   const [question, setQuestion] = useState("");
   const [state, setState] = useState<AskState>({ phase: "idle" });
+  const [history, setHistory] = useState<Exchange[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const busy = state.phase === "loading" || state.phase === "streaming";
 
-  async function consumeStream(body: ReadableStream<Uint8Array>) {
+  function finishWith(next: AskState) {
+    setState(next);
+    inputRef.current?.focus();
+  }
+
+  /** Archive the visible answer before the next question replaces it. */
+  function archiveCurrent() {
+    if (state.phase === "answered") {
+      const current = state.exchange;
+      setHistory((entries) => [...entries, current]);
+    }
+  }
+
+  async function consumeStream(
+    body: ReadableStream<Uint8Array>,
+    asked: string,
+  ) {
     const reader = body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
     let answer = "";
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+    const stoppedExchange = (): Exchange => ({
+      question: asked,
+      answer,
+      citations: [],
+      sources: [],
+      refused: false,
+      stopped: true,
+    });
 
-      let separator = buffer.indexOf("\n\n");
-      while (separator !== -1) {
-        const event = parseStreamEvent(buffer.slice(0, separator));
-        buffer = buffer.slice(separator + 2);
-        separator = buffer.indexOf("\n\n");
-        if (!event) continue;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
 
-        switch (event.kind) {
-          case "answer_delta":
+        let separator = buffer.indexOf("\n\n");
+        while (separator !== -1) {
+          const event = parseStreamEvent(buffer.slice(0, separator));
+          buffer = buffer.slice(separator + 2);
+          separator = buffer.indexOf("\n\n");
+          if (!event) continue;
+
+          if (event.kind === "answer_delta") {
             answer += event.text;
             setState({ phase: "streaming", answer });
-            break;
-          case "answered":
-            setState({
-              phase: "answered",
-              answer,
-              citations: event.citations ?? [],
-              sources: event.sources ?? [],
-              refused: false,
-            });
-            return;
-          case "refused":
-            setState({
-              phase: "answered",
-              answer: event.answer,
-              citations: [],
-              sources: [],
-              refused: true,
-            });
-            return;
-          case "upstream_rate_limited":
-            setState({ phase: "error", message: RATE_LIMITED_MESSAGE });
-            return;
-          case "upstream_error":
-            setState({ phase: "error", message: UPSTREAM_ERROR_MESSAGE });
-            return;
+            continue;
+          }
+          finishWith(terminalState(event, answer, asked) ?? { phase: "idle" });
+          return;
         }
       }
+    } catch (error) {
+      // The visitor pressed Stop mid-stream: keep the partial text.
+      if (!isAbortError(error)) throw error;
+      finishWith({ phase: "answered", exchange: stoppedExchange() });
+      return;
     }
+    // The stream ended without a terminal event (stopped, or the connection
+    // died): finalise rather than staying busy forever.
+    finishWith({ phase: "answered", exchange: stoppedExchange() });
   }
 
   async function submit(text: string) {
     const trimmed = text.replace(/\s+/g, " ").trim();
     if (trimmed.length === 0 || busy) return;
+    archiveCurrent();
     setState({ phase: "loading" });
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       const response = await fetch("/api/ask", {
@@ -148,16 +210,17 @@ export default function AskForm() {
           accept: "text/event-stream",
         },
         body: JSON.stringify({ question: trimmed }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
-        setState({ phase: "error", message: await errorMessage(response) });
+        finishWith({ phase: "error", message: await errorMessage(response) });
         return;
       }
 
       const contentType = response.headers.get("content-type") ?? "";
       if (response.body && contentType.includes("text/event-stream")) {
-        await consumeStream(response.body);
+        await consumeStream(response.body, trimmed);
         return;
       }
 
@@ -168,15 +231,24 @@ export default function AskForm() {
         citations?: CitationSpan[];
         sources?: Source[];
       };
-      setState({
+      finishWith({
         phase: "answered",
-        answer: body.answer,
-        citations: body.citations ?? [],
-        sources: body.sources ?? [],
-        refused: body.answer === REFUSAL_TEXT,
+        exchange: {
+          question: trimmed,
+          answer: body.answer,
+          citations: body.citations ?? [],
+          sources: body.sources ?? [],
+          refused: body.answer === REFUSAL_TEXT,
+          stopped: false,
+        },
       });
-    } catch {
-      setState({
+    } catch (error) {
+      // Stopped before any answer arrived: return quietly to the form.
+      if (isAbortError(error)) {
+        finishWith({ phase: "idle" });
+        return;
+      }
+      finishWith({
         phase: "error",
         message: "The request didn't complete — please try again.",
       });
@@ -204,7 +276,7 @@ export default function AskForm() {
             ref={inputRef}
             type="text"
             name="question"
-            maxLength={500}
+            maxLength={MAX_QUESTION_LENGTH}
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             placeholder="e.g. How did Foreman handle reliable event processing?"
@@ -213,7 +285,21 @@ export default function AskForm() {
           <button type="submit" disabled={busy}>
             {busy ? "Asking…" : "Ask"}
           </button>
+          {busy && (
+            <button
+              type="button"
+              className="stop"
+              onClick={() => abortRef.current?.abort()}
+            >
+              Stop
+            </button>
+          )}
         </div>
+        {question.length >= COUNTER_FROM && (
+          <p className="counter" aria-live="polite">
+            {question.length}/{MAX_QUESTION_LENGTH}
+          </p>
+        )}
       </form>
 
       <p className="examples-label" id="ask-examples-label">
@@ -233,6 +319,19 @@ export default function AskForm() {
         ))}
       </ul>
 
+      {history.length > 0 && (
+        <div className="transcript" aria-label="Earlier answers">
+          {history.map((exchange, index) => (
+            <AskExchange
+              key={index}
+              exchange={exchange}
+              index={index}
+              showQuestion
+            />
+          ))}
+        </div>
+      )}
+
       {/* aria-busy holds the screen-reader announcement until streaming ends,
           so the finished answer is read once, not per token. */}
       <div className="status" role="status" aria-live="polite" aria-busy={busy}>
@@ -246,52 +345,11 @@ export default function AskForm() {
           </div>
         )}
         {state.phase === "answered" && (
-          <div className="answer">
-            <p>
-              {segmentAnswer(
-                state.answer,
-                state.citations,
-                state.sources.length,
-              ).map((segment, index) => (
-                <Fragment key={index}>
-                  {segment.text}
-                  {segment.markers.map((marker) => (
-                    <sup key={marker} className="citation">
-                      <a
-                        href={`#ask-source-${marker}`}
-                        aria-label={`Source ${marker}: ${state.sources[marker - 1]?.title ?? ""}`}
-                      >
-                        [{marker}]
-                      </a>
-                    </sup>
-                  ))}
-                </Fragment>
-              ))}
-            </p>
-            {state.sources.length > 0 && (
-              <>
-                <p className="sources-label">Sources on this site:</p>
-                <ol className="sources">
-                  {state.sources.map((source, index) => (
-                    <li key={source.url} id={`ask-source-${index + 1}`}>
-                      <a href={source.url}>{source.title}</a>
-                    </li>
-                  ))}
-                </ol>
-              </>
-            )}
-            {state.refused && (
-              <p className="pointer">
-                Nothing published on this site covers that. For technology
-                questions, the <a href="/experience">experience page</a> lists
-                what Ed has published about his stack and how long he's used it.
-              </p>
-            )}
-            <p className="disclosure">
-              Generated from published site content — it may be imperfect, and
-              it isn't Ed speaking.
-            </p>
-          </div>
+          <AskExchange
+            exchange={state.exchange}
+            index={history.length}
+            showQuestion={history.length > 0}
+          />
         )}
       </div>
     </div>
