@@ -1,8 +1,8 @@
 ---
 title: "claude-code-config"
-problem: "AI coding agents drift without shared standards — every repository and machine ends up with different rules, permissions, and workflows."
-built: "A single source of truth for Claude Code: fourteen specialist agents, eighteen skills, composable permission and MCP templates, lifecycle hooks, and setup scripts that vendor consistent tooling into any project."
-differentiator: "Composable by design — stack templates merge (Django + React in one command) into a deny-aware permission set, and symlinked config propagates updates to every project and machine at once, validated by CI on each push."
+problem: "A reusable configuration system for keeping AI-assisted development consistent across repositories, technology stacks, and machines."
+built: "The project provides a single source of truth for Claude Code, including fourteen specialist agents, eighteen reusable skills, composable permission and MCP templates, lifecycle hooks, and setup scripts that install a standardised development environment into any repository."
+differentiator: "The configuration is composable rather than tied to a single stack. Templates can be combined — for example, Django and React in one command — while preserving explicit deny rules and shared security constraints. Symlinked configuration propagates updates across projects and machines, and CI validates the complete configuration on every push."
 tech:
   - Shell
   - Claude Code
