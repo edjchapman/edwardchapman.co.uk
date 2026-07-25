@@ -7,6 +7,7 @@ import {
   type ModelAdapter,
 } from "../../lib/agent/adapter.ts";
 import { AnthropicAdapter } from "../../lib/agent/anthropic-adapter.ts";
+import { DEFAULT_QUOTA_LIMIT, evaluateQuota } from "../../lib/agent/quota.ts";
 import { askRequestSchema, MAX_BODY_BYTES } from "../../lib/agent/schema.ts";
 import {
   AgentService,
@@ -22,6 +23,7 @@ type ErrorCode =
   | "invalid_request"
   | "method_not_allowed"
   | "rate_limited"
+  | "quota_exceeded"
   | "not_found"
   | "upstream_error";
 
@@ -29,6 +31,7 @@ const ERROR_STATUS: Record<ErrorCode, number> = {
   invalid_request: 400,
   method_not_allowed: 405,
   rate_limited: 429,
+  quota_exceeded: 429,
   not_found: 404,
   upstream_error: 502,
 };
@@ -37,6 +40,9 @@ const ERROR_MESSAGE: Record<ErrorCode, string> = {
   invalid_request: 'Send JSON like {"question": "…"} — up to 500 characters.',
   method_not_allowed: "Use POST with a JSON body.",
   rate_limited: "Too many questions right now — please try again in a minute.",
+  quota_exceeded:
+    "You've reached today's question limit for this demo — please come back " +
+    "tomorrow. Everything the assistant knows is on the published pages.",
   not_found: "Not found.",
   upstream_error:
     "The answer service had a problem. Nothing you did — try again shortly.",
@@ -49,9 +55,17 @@ interface RateLimitBinding {
 interface AskEnv {
   ASK_RATE_LIMITER?: RateLimitBinding;
   ASK_MODEL_MODE?: string;
+  ASK_QUOTA_SECRET?: string;
+  ASK_QUOTA_LIMIT?: string;
   ANTHROPIC_MODEL?: string;
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_BASE_URL?: string;
+}
+
+/** Wrangler vars arrive as strings; anything unparseable keeps the default. */
+function parseQuotaLimit(raw: string | undefined): number {
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : DEFAULT_QUOTA_LIMIT;
 }
 
 const jsonHeaders = {
@@ -201,6 +215,31 @@ const handleAsk: APIRoute = async (context) => {
     }
   }
 
+  // Per-visitor quota (ADR-0024): a signed cookie counts questions per 24h
+  // window; the server stays stateless. Absent secret ⇒ layer off — logged,
+  // and the live security probe fails if production ever runs without it.
+  let quotaCookie: string | undefined;
+  if (env.ASK_QUOTA_SECRET) {
+    const decision = await evaluateQuota({
+      cookieHeader: request.headers.get("cookie"),
+      secret: env.ASK_QUOTA_SECRET,
+      limit: parseQuotaLimit(env.ASK_QUOTA_LIMIT),
+      nowMs: Date.now(),
+      secure: !isLocal,
+    });
+    if (!decision.allowed) {
+      structuredLog({ event: "ask.quota_exceeded", requestId });
+      return errorResponse("quota_exceeded", requestId);
+    }
+    quotaCookie = decision.setCookie;
+  } else if (!isLocal) {
+    structuredLog({ event: "ask.quota_skipped", requestId });
+  }
+  const withQuota = (response: Response): Response => {
+    if (quotaCookie) response.headers.append("set-cookie", quotaCookie);
+    return response;
+  };
+
   const adapter = selectAdapter(env, isLocal);
   if (!adapter) {
     structuredLog({
@@ -208,7 +247,7 @@ const handleAsk: APIRoute = async (context) => {
       requestId,
       detail: "missing_model_credential",
     });
-    return errorResponse("upstream_error", requestId);
+    return withQuota(errorResponse("upstream_error", requestId));
   }
 
   const service = new AgentService(
@@ -221,36 +260,40 @@ const handleAsk: APIRoute = async (context) => {
   // other caller (no-JS, the deploy smoke, uptime-ask) gets the buffered JSON.
   const accept = request.headers.get("accept") ?? "";
   if (accept.includes("text/event-stream")) {
-    return streamResponse(service, parsed.data.question, requestId);
+    return withQuota(streamResponse(service, parsed.data.question, requestId));
   }
 
   const outcome = await service.ask(parsed.data.question, requestId);
 
   switch (outcome.kind) {
     case "answered":
-      return new Response(
-        JSON.stringify({
-          answer: outcome.answer,
-          citations: outcome.citations,
-          sources: outcome.sources,
-          requestId,
-        }),
-        { status: 200, headers: jsonHeaders },
+      return withQuota(
+        new Response(
+          JSON.stringify({
+            answer: outcome.answer,
+            citations: outcome.citations,
+            sources: outcome.sources,
+            requestId,
+          }),
+          { status: 200, headers: jsonHeaders },
+        ),
       );
     case "refused":
-      return new Response(
-        JSON.stringify({
-          answer: outcome.answer,
-          citations: [],
-          sources: [],
-          requestId,
-        }),
-        { status: 200, headers: jsonHeaders },
+      return withQuota(
+        new Response(
+          JSON.stringify({
+            answer: outcome.answer,
+            citations: [],
+            sources: [],
+            requestId,
+          }),
+          { status: 200, headers: jsonHeaders },
+        ),
       );
     case "upstream_rate_limited":
-      return errorResponse("rate_limited", requestId);
+      return withQuota(errorResponse("rate_limited", requestId));
     case "upstream_error":
-      return errorResponse("upstream_error", requestId);
+      return withQuota(errorResponse("upstream_error", requestId));
   }
 };
 

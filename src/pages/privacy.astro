@@ -4,13 +4,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="Privacy — Ed Chapman"
-  description="Privacy on edwardchapman.co.uk: no analytics, no cookies, no tracking."
+  description="Privacy on edwardchapman.co.uk: no analytics, no tracking, one functional cookie."
 >
   <h1>Privacy</h1>
   <p>
-    This site has no analytics, cookies, tracking scripts, or accounts. Reading
-    it leaves no record with me beyond the ordinary request logs Cloudflare
-    processes to operate the site.
+    This site has no analytics, tracking scripts, or accounts. Reading it leaves
+    no record with me beyond the ordinary request logs Cloudflare processes to
+    operate the site. The one cookie this site sets is functional and described
+    below.
   </p>
   <p>
     When you use <a href="/ask">Ask about Ed's work</a>, your question is sent
@@ -18,7 +19,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     operational logs so abuse of the assistant can be detected. Those logs
     expire automatically after a short period; answers are never stored, and
     there is no database or account system behind this site. Do not include
-    personal or sensitive information in a question.
+    personal or sensitive information in a question. To keep the assistant
+    available to everyone, asking a question sets a signed cookie that counts
+    how many questions your browser has asked in the past 24 hours. It contains
+    only that count — no identifier and no tracking — and is sent only with Ask
+    requests.
   </p>
   <p>
     Questions about any of this:

@@ -76,6 +76,14 @@ test.describe("/ask interface", () => {
     await expect(page.getByRole("main")).toContainText(
       "answers are never stored",
     );
+    // ADR-0024: the quota cookie is disclosed — the page must describe the
+    // counter, and honestly (a count, not an identifier).
+    await expect(page.getByRole("main")).toContainText(
+      "counts how many questions",
+    );
+    await expect(page.getByRole("main")).toContainText(
+      "no identifier and no tracking",
+    );
   });
 
   test("submits a question and renders the answer with inline citations", async ({
@@ -235,6 +243,70 @@ test.describe("/ask interface", () => {
     await expect(page.getByRole("status")).toContainText(
       "Too many questions right now",
     );
+  });
+
+  test("renders the exhausted-quota message (ADR-0024)", async ({ page }) => {
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 429,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: {
+            code: "quota_exceeded",
+            message:
+              "You've reached today's question limit for this demo — please " +
+              "come back tomorrow. Everything the assistant knows is on the " +
+              "published pages.",
+          },
+          requestId: "t",
+        }),
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+    await expect(page.getByRole("status")).toContainText(
+      "today's question limit",
+    );
+  });
+
+  test("real quota round-trip: cookie counts to the limit, then 429", async ({
+    request,
+  }) => {
+    // The webServer runs with ASK_QUOTA_LIMIT=2. The cookie is threaded by
+    // hand: wrangler dev presents the canonical host, so the cookie carries
+    // `Secure`, which Playwright's Node-side jar won't replay over local
+    // http (real browsers treat loopback as trustworthy and do).
+    const question = {
+      question: "How did Foreman handle reliable event processing?",
+    };
+    const replay = (setCookie: string) =>
+      /(ask_quota=[^;]+)/.exec(setCookie)?.[1] ?? "";
+
+    const first = await request.post("/api/ask", { data: question });
+    expect(first.status()).toBe(200);
+    const firstCookie = first.headers()["set-cookie"] ?? "";
+    expect(firstCookie).toContain("ask_quota=v1.");
+    expect(firstCookie).toContain("HttpOnly");
+
+    const second = await request.post("/api/ask", {
+      data: question,
+      headers: { cookie: replay(firstCookie) },
+    });
+    expect(second.status()).toBe(200);
+    const secondCookie = second.headers()["set-cookie"] ?? "";
+
+    const third = await request.post("/api/ask", {
+      data: question,
+      headers: { cookie: replay(secondCookie) },
+    });
+    expect(third.status()).toBe(429);
+    const body = (await third.json()) as {
+      error: { code: string; message: string };
+    };
+    expect(body.error.code).toBe("quota_exceeded");
+    expect(body.error.message).toContain("today's question limit");
   });
 
   test("example questions submit on click", async ({ page }) => {

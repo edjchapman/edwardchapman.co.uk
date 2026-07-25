@@ -18,7 +18,9 @@
   "observability": { "enabled": true },
   // Config-driven model selection (spec §2); ANTHROPIC_API_KEY arrives as a
   // Worker secret in Phase 4 via `wrangler secret put ANTHROPIC_API_KEY`.
-  "vars": { "ANTHROPIC_MODEL": "claude-haiku-4-5" },
+  // ASK_QUOTA_LIMIT tunes the per-visitor 24h question quota (ADR-0024);
+  // its signing key is the ASK_QUOTA_SECRET Worker secret.
+  "vars": { "ANTHROPIC_MODEL": "claude-haiku-4-5", "ASK_QUOTA_LIMIT": "10" },
   // Per-IP limiting for /api/ask (ADR-0009): the GA Workers rate-limit
   // binding — no KV/DO/D1.
   "ratelimits": [

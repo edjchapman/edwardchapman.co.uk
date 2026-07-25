@@ -73,6 +73,7 @@ function sleep(ms: number): Promise<void> {
 interface AskResult {
   status: number;
   cacheControl: string | null;
+  setCookie: string | null;
   answer: string;
   sources: { url: string }[];
   errorCode: string | undefined;
@@ -96,6 +97,7 @@ async function ask(question: string): Promise<AskResult> {
   return {
     status: response.status,
     cacheControl: response.headers.get("cache-control"),
+    setCookie: response.headers.get("set-cookie"),
     answer:
       typeof parsed["answer"] === "string" ? (parsed["answer"] as string) : "",
     sources: Array.isArray(parsed["sources"])
@@ -444,6 +446,34 @@ async function probeRobotsContract(): Promise<void> {
   );
 }
 
+// The per-visitor quota (ADR-0024) must be active in production: every
+// accepted ask response carries the signed cookie. A missing
+// ASK_QUOTA_SECRET silently disables the layer — this makes that loud.
+async function probeQuotaCookie(): Promise<void> {
+  let setCookie: string | null = null;
+  let status = 0;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const result = await ask(GROUNDED_QUESTION);
+    status = result.status;
+    setCookie = result.setCookie;
+    if (status === 200) break;
+    if (attempt < 3) await sleep(20_000);
+  }
+  const ok =
+    status === 200 &&
+    setCookie !== null &&
+    setCookie.includes("ask_quota=v1.") &&
+    setCookie.includes("HttpOnly");
+  record(
+    "quota cookie present on accepted answers (ADR-0024)",
+    ok,
+    ok
+      ? "ask_quota set with HttpOnly"
+      : `status=${status} set-cookie=${setCookie ?? "absent"}`,
+  );
+  await sleep(1500);
+}
+
 // Runs LAST: it deliberately exhausts the per-IP rate limit for ~60s.
 async function probeRateLimit(): Promise<void> {
   let sawLimited = false;
@@ -480,6 +510,7 @@ async function main(): Promise<void> {
   await probeGroundedOnOrigin();
   await probeInputBoundary();
   await probeRobotsContract();
+  await probeQuotaCookie();
   await probeRateLimit();
 
   let failures = 0;
