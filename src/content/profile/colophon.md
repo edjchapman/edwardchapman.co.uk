@@ -65,7 +65,9 @@ pass, along with a manual red-team check.
 
 ## Privacy boundaries
 
-No analytics, no cookies, no tracking. Private career material never enters
+No analytics, no tracking, and no cookies beyond one signed counter that
+caps how many questions the Ask demo answers per browser per day (it holds a
+count, not an identifier). Private career material never enters
 the repository, the build, prompts, or logs — a content-policy scanner runs
 inside the same gate as the tests and fails the build on violations, so the
 boundary is enforced by machinery rather than memory.

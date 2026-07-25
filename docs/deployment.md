@@ -50,6 +50,22 @@ Worker, never in the repo. This is a **separate** store from the GitHub secret
 of the same name. The canonical endpoint fails closed with `upstream_error`
 when it is absent; it never falls back to the fake adapter (ADR-0018).
 
+`ASK_QUOTA_SECRET` — a Worker secret that signs the per-visitor quota cookie
+(ADR-0024). Set it with the same versioned two-step as the Anthropic key
+(see [the versioned-deploy trap](#rotating-the-anthropic-api-key)); a
+generated value works well:
+
+```sh
+openssl rand -base64 32 |
+  pnpm exec wrangler versions secret put ASK_QUOTA_SECRET --name edwardchapman
+pnpm exec wrangler versions deploy --name edwardchapman
+```
+
+When it is absent the quota layer is skipped (logged as `ask.quota_skipped`)
+and `scripts/probe-live-security.ts` fails its cookie probe after the next
+deploy — production cannot silently run without the quota. Rotation is
+harmless: it resets every visitor's 24-hour window and nothing else.
+
 ### Local (optional)
 
 `ANTHROPIC_API_KEY_EDWARDCHAPMAN` — a shell environment variable used only to

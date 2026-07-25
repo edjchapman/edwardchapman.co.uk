@@ -2,8 +2,9 @@
  * Agent orchestration (spec §11 request-time steps): validate → retrieve →
  * confidence gate → model → validate response → whitelist citations. Pure of
  * HTTP concerns so the Worker route and the integration tests drive the same
- * code. Structured events go through the injected logger; question text is
- * never logged (spec §14).
+ * code. Structured events go through the injected logger; the accepted event
+ * records the question for abuse monitoring (ADR-0023) and answers are never
+ * logged.
  */
 
 import type {
@@ -27,6 +28,8 @@ export type AgentEvent = {
     | "ask.provider_timeout"
     | "ask.provider_rate_limited"
     | "ask.provider_error"
+    | "ask.quota_exceeded"
+    | "ask.quota_skipped"
     | "ask.response_invalid"
     | "ask.citations_stripped"
     | "ask.answered"

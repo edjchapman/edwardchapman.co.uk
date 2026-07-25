@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { REFUSAL_TEXT } from "../../src/lib/agent/prompt";
+import { signQuotaValue } from "../../src/lib/agent/quota";
 import { askResponseSchema } from "../../src/lib/agent/schema";
 import type { AgentStreamEvent } from "../../src/lib/agent/service";
 import { ALL, POST } from "../../src/pages/api/ask";
@@ -26,11 +27,15 @@ function postJson(
     url?: string;
     contentType?: string;
     env?: Record<string, unknown>;
+    headers?: Record<string, string>;
   } = {},
 ): Promise<Response> {
   const request = new Request(options.url ?? ENDPOINT, {
     method: "POST",
-    headers: { "content-type": options.contentType ?? "application/json" },
+    headers: {
+      "content-type": options.contentType ?? "application/json",
+      ...options.headers,
+    },
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
   return POST(makeContext(request, options.env ?? {})) as Promise<Response>;
@@ -219,6 +224,107 @@ describe("adversarial cases (deterministic invariants)", () => {
       }
     });
   }
+});
+
+describe("per-visitor quota (ADR-0024)", () => {
+  const QUESTION = "How did Foreman handle reliable event processing?";
+  const QUOTA_ENV = {
+    ASK_MODEL_MODE: "fake",
+    ASK_QUOTA_SECRET: "test-secret",
+    ASK_QUOTA_LIMIT: "2",
+  };
+  const nowSec = () => Math.floor(Date.now() / 1000);
+
+  it("sets a signed quota cookie on the first answer", async () => {
+    const response = await postJson(
+      { question: QUESTION },
+      { url: PRODUCTION_ENDPOINT, env: QUOTA_ENV },
+    );
+    expect(response.status).toBe(200);
+    const cookie = response.headers.get("set-cookie") ?? "";
+    expect(cookie).toContain("ask_quota=v1.");
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("Secure");
+    expect(cookie).toContain("Path=/api/ask");
+  });
+
+  it("omits Secure on local requests", async () => {
+    const response = await postJson({ question: QUESTION }, { env: QUOTA_ENV });
+    expect(response.status).toBe(200);
+    const cookie = response.headers.get("set-cookie") ?? "";
+    expect(cookie).toContain("ask_quota=v1.");
+    expect(cookie).not.toContain("Secure");
+  });
+
+  it("returns the quota_exceeded envelope at the limit", async () => {
+    const atLimit = await signQuotaValue(nowSec() - 60, 2, "test-secret");
+    const response = await postJson(
+      { question: QUESTION },
+      {
+        url: PRODUCTION_ENDPOINT,
+        env: QUOTA_ENV,
+        headers: { cookie: `ask_quota=${atLimit}` },
+      },
+    );
+    expect(response.status).toBe(429);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("set-cookie")).toBeNull();
+    const body = (await response.json()) as {
+      error: { code: string; message: string };
+    };
+    expect(body.error.code).toBe("quota_exceeded");
+    expect(body.error.message).toContain("today's question limit");
+  });
+
+  it("sets the cookie on the SSE path too", async () => {
+    const request = new Request(`${PRODUCTION_ENDPOINT}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "text/event-stream",
+      },
+      body: JSON.stringify({ question: QUESTION }),
+    });
+    const response = (await POST(makeContext(request, QUOTA_ENV))) as Response;
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    expect(response.headers.get("set-cookie")).toContain("ask_quota=v1.");
+  });
+
+  it("denies an exhausted SSE client with plain JSON, not a stream", async () => {
+    const atLimit = await signQuotaValue(nowSec() - 60, 2, "test-secret");
+    const request = new Request(`${PRODUCTION_ENDPOINT}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "text/event-stream",
+        cookie: `ask_quota=${atLimit}`,
+      },
+      body: JSON.stringify({ question: QUESTION }),
+    });
+    const response = (await POST(makeContext(request, QUOTA_ENV))) as Response;
+    expect(response.status).toBe(429);
+    expect(response.headers.get("content-type")).toContain("application/json");
+  });
+
+  it("sets no cookie on rejected requests", async () => {
+    const response = await postJson("question=hi", {
+      url: PRODUCTION_ENDPOINT,
+      env: QUOTA_ENV,
+      contentType: "text/plain",
+    });
+    expect(response.status).toBe(400);
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
+
+  it("skips the quota (no cookie) when the secret is absent", async () => {
+    const response = await postJson(
+      { question: QUESTION },
+      { url: PRODUCTION_ENDPOINT, env: { ASK_MODEL_MODE: "fake" } },
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
 });
 
 async function postStream(

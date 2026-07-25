@@ -20,7 +20,10 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "pnpm run build && pnpm exec wrangler dev --config dist/server/wrangler.json --var ASK_MODEL_MODE:fake --port 8788",
+      // ASK_QUOTA_LIMIT:2 keeps the real quota round-trip to three POSTs,
+      // safely under the local 10/60s IP limiter (every local request shares
+      // the "unknown" key because cf-connecting-ip is absent).
+      "pnpm run build && pnpm exec wrangler dev --config dist/server/wrangler.json --var ASK_MODEL_MODE:fake --var ASK_QUOTA_SECRET:e2e-secret --var ASK_QUOTA_LIMIT:2 --port 8788",
     url: "http://127.0.0.1:8788",
     reuseExistingServer: !process.env["CI"],
     timeout: 120_000,

@@ -72,6 +72,7 @@ export const askErrorSchema = z.object({
       "invalid_request",
       "method_not_allowed",
       "rate_limited",
+      "quota_exceeded",
       "not_found",
       "upstream_error",
     ]),

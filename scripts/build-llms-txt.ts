@@ -70,7 +70,8 @@ const PAGES: ReadonlyArray<{ path: string; label: string; blurb: string }> = [
   {
     path: "/privacy",
     label: "Privacy",
-    blurb: "no analytics, no cookies, no tracking",
+    blurb:
+      "no analytics, no tracking — one functional cookie caps Ask questions",
   },
 ];
 
