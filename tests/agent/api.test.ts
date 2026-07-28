@@ -66,6 +66,34 @@ describe("POST /api/ask contract", () => {
       { question: "How did Foreman handle reliable event processing?" },
       { url: PRODUCTION_ENDPOINT },
     );
+    // A missing credential is the non-retryable class: 503, not 502 (ADR-0026).
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("upstream_unavailable");
+  });
+
+  it("maps a non-retryable provider failure to 503 without leaking detail", async () => {
+    const response = await postJson(
+      { question: "How did Foreman handle reliable event processing?" },
+      { url: PRODUCTION_ENDPOINT, env: { ASK_MODEL_MODE: "fail-unavailable" } },
+    );
+    expect(response.status).toBe(503);
+    const raw = await response.text();
+    // The class name and friendly copy only — never the provider detail
+    // (status 400 / invalid_request_error / anthropic) (spec §10).
+    expect(raw).not.toMatch(/status 400|invalid_request|anthropic/i);
+    const body = JSON.parse(raw) as {
+      error: { code: string; message: string };
+    };
+    expect(body.error.code).toBe("upstream_unavailable");
+    expect(body.error.message).toContain("temporarily offline");
+  });
+
+  it("maps a transient provider failure to 502", async () => {
+    const response = await postJson(
+      { question: "How did Foreman handle reliable event processing?" },
+      { url: PRODUCTION_ENDPOINT, env: { ASK_MODEL_MODE: "fail-transient" } },
+    );
     expect(response.status).toBe(502);
     const body = (await response.json()) as { error: { code: string } };
     expect(body.error.code).toBe("upstream_error");
@@ -325,6 +353,20 @@ describe("per-visitor quota (ADR-0024)", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("set-cookie")).toBeNull();
   });
+
+  it("does not charge the quota on an upstream failure (ADR-0026)", async () => {
+    // A fresh visitor whose model call fails gets no set-cookie, so the
+    // increment never persists — the next request is back where they started.
+    const response = await postJson(
+      { question: QUESTION },
+      {
+        url: PRODUCTION_ENDPOINT,
+        env: { ...QUOTA_ENV, ASK_MODEL_MODE: "fail-unavailable" },
+      },
+    );
+    expect(response.status).toBe(503);
+    expect(response.headers.get("set-cookie")).toBeNull();
+  });
 });
 
 async function postStream(
@@ -390,5 +432,30 @@ describe("POST /api/ask streaming (ADR-0016)", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     const body = (await response.json()) as { answer: string };
     expect(typeof body.answer).toBe("string");
+  });
+
+  it("closes a stream with an upstream_unavailable terminal, still HTTP 200", async () => {
+    const request = new Request(ENDPOINT, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "text/event-stream",
+      },
+      body: JSON.stringify({
+        question: "How did Foreman handle reliable event processing?",
+      }),
+    });
+    const response = (await POST(
+      makeContext(request, { ASK_MODEL_MODE: "fail-unavailable" }),
+    )) as Response;
+    // The stream commits at open, so the non-retryable failure is a terminal
+    // event on a 200, not a 503 (ADR-0016 invariant).
+    expect(response.status).toBe(200);
+    const text = await response.text();
+    const events = text
+      .split("\n\n")
+      .filter((block) => block.startsWith("data: "))
+      .map((block) => JSON.parse(block.slice(6)) as AgentStreamEvent);
+    expect(events.at(-1)?.kind).toBe("upstream_unavailable");
   });
 });

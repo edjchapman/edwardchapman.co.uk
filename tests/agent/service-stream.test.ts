@@ -9,6 +9,7 @@ import {
 import { REFUSAL_TEXT } from "../../src/lib/agent/prompt";
 import {
   AgentService,
+  type AgentEvent,
   type AgentStreamEvent,
 } from "../../src/lib/agent/service";
 
@@ -25,6 +26,17 @@ const REFUSE_Q = "What's the weather in London today?";
 
 function service(adapter: ModelAdapter): AgentService {
   return new AgentService(corpus, adapter, () => {});
+}
+
+function serviceWithLog(adapter: ModelAdapter): {
+  service: AgentService;
+  events: AgentEvent[];
+} {
+  const events: AgentEvent[] = [];
+  return {
+    service: new AgentService(corpus, adapter, (event) => events.push(event)),
+    events,
+  };
 }
 
 /** An adapter that streams a fixed script; complete() is never used here. */
@@ -161,11 +173,41 @@ describe("AgentService.askStream", () => {
     ["timeout", "upstream_error"],
     ["rate_limited", "upstream_rate_limited"],
     ["provider_error", "upstream_error"],
+    ["provider_unavailable", "upstream_unavailable"],
   ] as const)("maps a %s terminal to %s", async (mode, kind) => {
     const events = await collect(
       service(new FakeModelAdapter({ mode })).askStream(CONFIDENT_Q, "req-7"),
     );
     expect(answerText(events)).toBe("");
     expect(events.at(-1)).toEqual({ kind });
+  });
+
+  // The stream path previously logged a bare ask.provider_error with no
+  // detail; ADR-0026 restores parity with the buffered path.
+  it("logs the failure detail and the right event on the stream path", async () => {
+    const providerFail = serviceWithLog(
+      new FakeModelAdapter({ mode: "provider_error" }),
+    );
+    await collect(providerFail.service.askStream(CONFIDENT_Q, "req-8"));
+    const providerLog = providerFail.events.find(
+      (event) => event.event === "ask.provider_error",
+    );
+    expect(providerLog?.detail).toContain("fake 500");
+
+    const unavailable = serviceWithLog(
+      new FakeModelAdapter({ mode: "provider_unavailable" }),
+    );
+    await collect(unavailable.service.askStream(CONFIDENT_Q, "req-9"));
+    expect(
+      unavailable.events.find(
+        (event) => event.event === "ask.provider_unavailable",
+      )?.detail,
+    ).toContain("status 400");
+
+    const timeout = serviceWithLog(new FakeModelAdapter({ mode: "timeout" }));
+    await collect(timeout.service.askStream(CONFIDENT_Q, "req-10"));
+    expect(timeout.events.map((event) => event.event)).toContain(
+      "ask.provider_timeout",
+    );
   });
 });

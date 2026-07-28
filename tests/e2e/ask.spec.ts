@@ -271,6 +271,160 @@ test.describe("/ask interface", () => {
     );
   });
 
+  test("renders the offline state (503) with a pointer, not a retry (ADR-0026)", async ({
+    page,
+  }) => {
+    // The non-retryable class: honest copy plus a route to the published
+    // pages, never "try again shortly".
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: {
+            code: "upstream_unavailable",
+            message:
+              "The answer service is temporarily offline — a fault on Ed's " +
+              "side, flagged for attention. Everything the assistant knows " +
+              "is on the published pages.",
+          },
+          requestId: "t",
+        }),
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    const status = page.getByRole("status");
+    await expect(status).toContainText("temporarily offline");
+    await expect(status).not.toContainText("try again shortly");
+    await expect(
+      status.getByRole("link", { name: "experience page" }),
+    ).toHaveAttribute("href", "/experience");
+    await expect(
+      status.getByRole("link", { name: "projects" }),
+    ).toHaveAttribute("href", "/projects");
+  });
+
+  test("renders the offline state from a streamed terminal too", async ({
+    page,
+  }) => {
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ kind: "upstream_unavailable" })}\n\n`,
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    const status = page.getByRole("status");
+    await expect(status).toContainText("temporarily offline");
+    await expect(
+      status.getByRole("link", { name: "experience page" }),
+    ).toHaveAttribute("href", "/experience");
+  });
+
+  test("renders a streamed transient error without an offline pointer", async ({
+    page,
+  }) => {
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ kind: "upstream_error" })}\n\n`,
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    const status = page.getByRole("status");
+    await expect(status).toContainText("try again shortly");
+    // Transient ≠ offline: no pointer paragraph.
+    await expect(status).not.toContainText("The published pages cover");
+  });
+
+  test("an unknown terminal kind fails to a transient error, not a silent idle", async ({
+    page,
+  }) => {
+    // A newer server sending a kind this cached client doesn't know must not
+    // leave the form looking hung (ADR-0026).
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ kind: "future_kind" })}\n\n`,
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    await expect(page.getByRole("status")).toContainText("try again shortly");
+    await expect(page.getByLabel("Your question")).toBeEnabled();
+  });
+
+  test("a stream that dies with no answer surfaces an error, not an empty card", async ({
+    page,
+  }) => {
+    // Zero deltas, no terminal: the connection died before answering. This
+    // must read as an error, not a blank "Stopped early" card (ADR-0026).
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: "",
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    const status = page.getByRole("status");
+    await expect(status).toContainText("try again shortly");
+    await expect(status).not.toContainText("Stopped early");
+  });
+
+  test("a network failure shows the didn't-complete message", async ({
+    page,
+  }) => {
+    await page.route("**/api/ask", (route) => route.abort());
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+
+    await expect(page.getByRole("status")).toContainText("didn't complete");
+  });
+
+  test("a stalled request trips the watchdog instead of hanging forever", async ({
+    page,
+  }) => {
+    // Route never fulfils; the 60s client watchdog aborts and surfaces an
+    // error rather than an indefinitely-disabled form (ADR-0026). Fake the
+    // clock so the test doesn't wait a real minute.
+    await page.clock.install();
+    await page.route("**/api/ask", () => new Promise(() => {}));
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+    await expect(page.getByRole("status")).toContainText("Looking through");
+
+    await page.clock.fastForward(61_000);
+    await expect(page.getByRole("status")).toContainText("didn't complete");
+    await expect(page.getByLabel("Your question")).toBeEnabled();
+  });
+
   test("real quota round-trip: cookie counts to the limit, then 429", async ({
     request,
   }) => {

@@ -39,7 +39,11 @@ export type ModelResult =
   | { type: "completion"; answer: ModelAnswer }
   | { type: "timeout" }
   | { type: "rate_limited" }
-  | { type: "provider_error"; detail: string };
+  // Transient provider failure (5xx, unexpected): a retry may succeed.
+  | { type: "provider_error"; detail: string }
+  // Non-retryable provider rejection (4xx: billing, auth, retired model):
+  // retrying won't help until the operator acts (ADR-0026).
+  | { type: "provider_unavailable"; detail: string };
 
 /**
  * One event in a streamed completion (ADR-0016). Text arrives as `text` deltas
@@ -55,7 +59,8 @@ export type ModelStreamEvent =
   | { type: "completed" }
   | { type: "timeout" }
   | { type: "rate_limited" }
-  | { type: "provider_error"; detail: string };
+  | { type: "provider_error"; detail: string }
+  | { type: "provider_unavailable"; detail: string };
 
 export interface ModelAdapter {
   complete(request: ModelRequest): Promise<ModelResult>;
@@ -74,6 +79,7 @@ export type FakeBehaviour =
   | { mode: "timeout" }
   | { mode: "rate_limited" }
   | { mode: "provider_error" }
+  | { mode: "provider_unavailable" }
   | { mode: "leak-system-prompt" }
   | { mode: "hallucinate-citations" }
   | { mode: "refusal-with-citations" };
@@ -131,6 +137,11 @@ export class FakeModelAdapter implements ModelAdapter {
           type: "provider_error",
           detail: "fake 500: upstream exploded",
         });
+      case "provider_unavailable":
+        return Promise.resolve({
+          type: "provider_unavailable",
+          detail: "fake status 400 invalid_request_error",
+        });
       case "malformed":
         // Inconsistent span (start > end): a provider-contract violation the
         // service must reject as invalid rather than serve.
@@ -178,6 +189,12 @@ export class FakeModelAdapter implements ModelAdapter {
         return;
       case "provider_error":
         yield { type: "provider_error", detail: "fake 500: upstream exploded" };
+        return;
+      case "provider_unavailable":
+        yield {
+          type: "provider_unavailable",
+          detail: "fake status 400 invalid_request_error",
+        };
         return;
       case "malformed":
         yield* streamAnswer("Broken span payload.", [

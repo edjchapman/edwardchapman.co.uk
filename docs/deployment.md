@@ -47,8 +47,9 @@ below); Workers Scripts is what day-to-day deploys use.
 `ANTHROPIC_API_KEY` — a Worker secret the deployed Worker reads at request time
 as `env.ANTHROPIC_API_KEY` to answer `/api/ask` (Phase 4). Stored on the
 Worker, never in the repo. This is a **separate** store from the GitHub secret
-of the same name. The canonical endpoint fails closed with `upstream_error`
-when it is absent; it never falls back to the fake adapter (ADR-0018).
+of the same name. The canonical endpoint fails closed with `upstream_unavailable`
+(the non-retryable class, 503, ADR-0026) when it is absent; it never falls back
+to the fake adapter (ADR-0018).
 
 `ASK_QUOTA_SECRET` — a Worker secret that signs the per-visitor quota cookie
 (ADR-0024). Set it with the same versioned two-step as the Anthropic key
@@ -137,7 +138,8 @@ external credential that can rot between deploys (rotation, revocation, expiry).
 Two checks guard it, both keyed on the same invariant — a **grounded** answer,
 i.e. HTTP 200 with a non-empty `sources` array (the invariant
 `tests/e2e/ask.spec.ts` asserts). A refusal (`"sources":[]`) or an
-`upstream_error` 502 fails both:
+upstream failure (`upstream_error` 502 or `upstream_unavailable` 503, ADR-0026)
+fails both:
 
 - **Post-deploy smoke** (`deploy.yml`) — gates every production deploy on a real
   `/api/ask` POST returning a grounded answer. It asserts non-empty `sources`,
@@ -314,14 +316,27 @@ DMARC ratchet (`p=none` → `quarantine`/`reject` once reports run clean).
   assets; confirm `dist/server/wrangler.json` was used (not the repo config).
 - **Wrong content serving** — compare `/api/health` sha to `main`; if stale,
   the deploy didn't run or rolled back.
-- **`/api/ask` returns `upstream_error` (502)** — the Worker reached Anthropic
-  but the call failed; the usual cause is a missing/rotated `ANTHROPIC_API_KEY`
-  (a rejected key → 401 → `provider_error`). Confirm with
-  `wrangler tail --name edwardchapman` (look for `ask.provider_error`,
-  `detail: "status 401 …"`) and re-key via [Rotating the Anthropic API
-  key](#rotating-the-anthropic-api-key). Note: questions that don't clear the
-  retrieval confidence gate return a 200 refusal regardless, so probe with a
-  question known to retrieve (e.g. the smoke question above).
+- **`/api/ask` returns `upstream_unavailable` (503)** — the non-retryable
+  class (ADR-0026): the Worker reached Anthropic and got an operator-actionable
+  rejection, or has no credential at all. `wrangler tail --name edwardchapman`
+  and read the `ask.provider_unavailable` `detail`:
+  - `detail: "status 400 invalid_request_error"` → **API credit exhausted →
+    top up in the [Anthropic Console](https://console.anthropic.com/) (Billing).
+    Do _not_ rotate the key** — the key is valid; a `400` is billing, a `401`
+    is a dead key. (This is the 2026-07-25 outage signature.)
+  - `detail: "status 401 authentication_error"` → dead/rotated key → re-key via
+    [Rotating the Anthropic API key](#rotating-the-anthropic-api-key).
+  - `detail: "status 404 not_found_error"` → the `ANTHROPIC_MODEL` var names a
+    retired model → update it in `wrangler.jsonc`.
+  - `detail: "missing_model_credential"` → the Worker secret is absent → set it
+    (see [Secrets](#secrets)).
+- **`/api/ask` returns `upstream_error` (502)** — the transient class: a
+  provider `500`/`529` or a connection timeout. Usually self-heals; confirm
+  with `wrangler tail` (look for `ask.provider_error` / `ask.provider_timeout`)
+  and retry before acting.
+- Both: questions that don't clear the retrieval confidence gate return a 200
+  refusal regardless, so probe with a question known to retrieve (e.g. the
+  smoke question above).
 - **CSP console errors on the live site only ("Executing inline script
   violates … script-src"), with a hash that changes on every load** — that is
   not the build. Cloudflare **Bot Fight Mode** injects an inline

@@ -28,6 +28,7 @@ export type AgentEvent = {
     | "ask.provider_timeout"
     | "ask.provider_rate_limited"
     | "ask.provider_error"
+    | "ask.provider_unavailable"
     | "ask.quota_exceeded"
     | "ask.quota_skipped"
     | "ask.response_invalid"
@@ -71,6 +72,7 @@ export type AgentOutcome =
     }
   | { kind: "refused"; answer: string; reason: RefusalReason }
   | { kind: "upstream_error" }
+  | { kind: "upstream_unavailable" }
   | { kind: "upstream_rate_limited" };
 
 /**
@@ -89,9 +91,12 @@ export type AgentStreamEvent =
     }
   | { kind: "refused"; answer: string; reason: RefusalReason }
   | { kind: "upstream_error" }
+  | { kind: "upstream_unavailable" }
   | { kind: "upstream_rate_limited" };
 
 const TOP_K = 5;
+/** Bound provider-error detail before it reaches the logs (content-free). */
+const DETAIL_LIMIT = 120;
 
 export class AgentService {
   private readonly retriever: Retriever;
@@ -142,12 +147,21 @@ export class AgentService {
       this.log({ event: "ask.provider_rate_limited", requestId, durationMs });
       return { kind: "upstream_rate_limited" };
     }
+    if (result.type === "provider_unavailable") {
+      this.log({
+        event: "ask.provider_unavailable",
+        requestId,
+        durationMs,
+        detail: result.detail.slice(0, DETAIL_LIMIT),
+      });
+      return { kind: "upstream_unavailable" };
+    }
     if (result.type === "provider_error") {
       this.log({
         event: "ask.provider_error",
         requestId,
         durationMs,
-        detail: result.detail.slice(0, 120),
+        detail: result.detail.slice(0, DETAIL_LIMIT),
       });
       return { kind: "upstream_error" };
     }
@@ -273,9 +287,12 @@ export class AgentService {
     chunks: CorpusChunk[],
     requestId: string,
   ): Generator<AgentStreamEvent> {
-    if (!terminal || terminal.type === "error") {
-      this.log({ event: "ask.provider_error", requestId });
-      yield { kind: "upstream_error" };
+    if (
+      !terminal ||
+      terminal.type === "error" ||
+      terminal.type === "unavailable"
+    ) {
+      yield* this.streamFailure(terminal, requestId);
       return;
     }
     if (terminal.type === "rate_limited") {
@@ -305,6 +322,41 @@ export class AgentService {
       citations: mapped.citations,
       sources: mapped.sources,
     };
+  }
+
+  /**
+   * Map a failed stream terminal to its outcome, logging with the same event
+   * names and detail the buffered path uses (ADR-0026 — the stream path
+   * previously logged a bare `ask.provider_error` with no detail). An absent
+   * terminal means the adapter stream ended without one: transient, tagged
+   * `missing_terminal` so it's greppable.
+   */
+  private *streamFailure(
+    terminal:
+      Extract<StreamTerminal, { type: "error" | "unavailable" }> | undefined,
+    requestId: string,
+  ): Generator<AgentStreamEvent> {
+    if (terminal?.type === "unavailable") {
+      this.log({
+        event: "ask.provider_unavailable",
+        requestId,
+        detail: terminal.detail.slice(0, DETAIL_LIMIT),
+      });
+      yield { kind: "upstream_unavailable" };
+      return;
+    }
+    if (terminal?.cause === "timeout") {
+      this.log({ event: "ask.provider_timeout", requestId });
+    } else if (terminal?.cause === "invalid_output") {
+      this.log({ event: "ask.response_invalid", requestId });
+    } else {
+      this.log({
+        event: "ask.provider_error",
+        requestId,
+        detail: terminal?.detail?.slice(0, DETAIL_LIMIT) ?? "missing_terminal",
+      });
+    }
+    yield { kind: "upstream_error" };
   }
 }
 

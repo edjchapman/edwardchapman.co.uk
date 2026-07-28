@@ -75,6 +75,7 @@ export const askErrorSchema = z.object({
       "quota_exceeded",
       "not_found",
       "upstream_error",
+      "upstream_unavailable",
     ]),
     message: z.string(),
   }),

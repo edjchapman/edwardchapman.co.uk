@@ -82,6 +82,18 @@ describe("agent service outcomes", () => {
     expect(outcome.kind).toBe("upstream_rate_limited");
   });
 
+  it("maps a non-retryable provider failure to upstream_unavailable, logging the detail", async () => {
+    const { service, events } = makeService(
+      new FakeModelAdapter({ mode: "provider_unavailable" }),
+    );
+    const outcome = await service.ask(SUPPORTED_QUESTION, "req-4b");
+    expect(outcome.kind).toBe("upstream_unavailable");
+    const logged = events.find(
+      (event) => event.event === "ask.provider_unavailable",
+    );
+    expect(logged?.detail).toContain("status 400");
+  });
+
   it("rejects structurally invalid citation spans", async () => {
     const { service, events } = makeService(
       new FakeModelAdapter({ mode: "malformed" }),
