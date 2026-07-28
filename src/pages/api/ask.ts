@@ -85,6 +85,7 @@ interface AskEnv {
   ANTHROPIC_MODEL?: string;
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_BASE_URL?: string;
+  ASK_AI_GATEWAY_TOKEN?: string;
 }
 
 /** Wrangler vars arrive as strings; anything unparseable keeps the default. */
@@ -243,6 +244,7 @@ function selectAdapter(
     apiKey: env.ANTHROPIC_API_KEY,
     model: env.ANTHROPIC_MODEL ?? "claude-haiku-4-5",
     baseURL: env.ANTHROPIC_BASE_URL,
+    gatewayToken: env.ASK_AI_GATEWAY_TOKEN,
   });
 }
 

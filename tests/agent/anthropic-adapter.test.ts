@@ -197,6 +197,29 @@ describe("anthropic adapter outbound request", () => {
       "https://gateway.example.com/anthropic/v1/messages",
     );
   });
+
+  it("adds the cf-aig-authorization header when a gateway token is set (ADR-0025)", async () => {
+    const { fetch, calls } = stubFetch([
+      messageResponse([textBlock("ok", [searchCitation(0)])]),
+    ]);
+    await makeAdapter(fetch, {
+      baseURL: "https://gateway.example.com/anthropic",
+      gatewayToken: "gw-token-123",
+    }).complete(REQUEST);
+    const headers = new Headers(calls[0]!.init.headers as HeadersInit);
+    expect(headers.get("cf-aig-authorization")).toBe("Bearer gw-token-123");
+    // The Anthropic key still authenticates against Anthropic behind the gateway.
+    expect(headers.get("x-api-key")).toBe("test-key");
+  });
+
+  it("sends no gateway header without a token (direct Anthropic API)", async () => {
+    const { fetch, calls } = stubFetch([
+      messageResponse([textBlock("ok", [searchCitation(0)])]),
+    ]);
+    await makeAdapter(fetch).complete(REQUEST);
+    const headers = new Headers(calls[0]!.init.headers as HeadersInit);
+    expect(headers.get("cf-aig-authorization")).toBeNull();
+  });
 });
 
 describe("anthropic adapter response parsing", () => {

@@ -67,6 +67,24 @@ and `scripts/probe-live-security.ts` fails its cookie probe after the next
 deploy — production cannot silently run without the quota. Rotation is
 harmless: it resets every visitor's 24-hour window and nothing else.
 
+`ANTHROPIC_BASE_URL` + `ASK_AI_GATEWAY_TOKEN` — the optional Cloudflare AI
+Gateway routing (ADR-0025). Both **unset** ⇒ the Worker calls the Anthropic API
+directly (the default). Set **both** to route through the authenticated gateway:
+
+```sh
+printf 'https://gateway.ai.cloudflare.com/v1/<account_id>/edwardchapman-ask/anthropic' |
+  pnpm exec wrangler versions secret put ANTHROPIC_BASE_URL --name edwardchapman
+pnpm exec wrangler versions secret put ASK_AI_GATEWAY_TOKEN --name edwardchapman  # paste the gateway token
+pnpm exec wrangler versions deploy --name edwardchapman
+```
+
+They are Worker secrets (not committed vars), so turning the gateway on or off
+is a runtime op with no code change and no redeploy risk — remove both to revert
+to the direct API. `ANTHROPIC_BASE_URL` set **without** the token sends
+unauthenticated requests the gateway rejects; set the pair together. Dashboard
+setup (create the gateway, its 100 req/hr rate limit, and the auth token, plus
+the Anthropic Console spend limit) is in ADR-0025.
+
 ### Local (optional)
 
 `ANTHROPIC_API_KEY_EDWARDCHAPMAN` — a shell environment variable used only to
