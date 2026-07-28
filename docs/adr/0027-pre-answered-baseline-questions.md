@@ -100,6 +100,15 @@ the model path kept independently observable.
   ugly — a failure after the SSE 200-commit can't cleanly splice a canned
   answer). The serving-policy switch is a single route call site, so this
   remains a one-place change if the trade-off is ever revisited.
+- **LangGraph / an orchestration framework.** Reconsidered 2026-07-28 and
+  rejected on merits, not only spec §3/§19. It orchestrates model/tool calls —
+  the model-_calling_ path — whereas an offline fallback is about _not_ calling
+  the model, so it replaces nothing and would still need this exact-key lookup
+  underneath. It also can't deploy cleanly to a Cloudflare Worker
+  (LangChain/LangGraph.js carry Node `fs` dependencies; `nodejs_compat`
+  polyfills bloat the bundle). It is the right tool in a different shape — Ed's
+  own AI-DDA runs LangGraph.js on a Fastify Node server for a genuine
+  multi-step agent — but not for a single-shot lookup in this edge Worker.
 
 ## Consequences
 
