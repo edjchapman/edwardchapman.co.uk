@@ -22,7 +22,17 @@ import { REFUSAL_TEXT } from "./prompt.ts";
 export type StreamTerminal =
   | { type: "answered" }
   | { type: "refused"; reason: "model_declined" | "no_citations" }
-  | { type: "error" }
+  // Transient failure, tagged with its cause so the service logs it with
+  // parity to the buffered path (ADR-0026): `timeout` and `provider` come
+  // from the adapter (the latter carries its detail), `invalid_output` is a
+  // guard-detected empty answer or policy leak.
+  | {
+      type: "error";
+      cause: "timeout" | "provider" | "invalid_output";
+      detail?: string;
+    }
+  // Non-retryable provider rejection surfaced mid-stream (ADR-0026).
+  | { type: "unavailable"; detail: string }
   | { type: "rate_limited" };
 
 export type GuardStep = { emit: string[]; done?: StreamTerminal };
@@ -51,8 +61,17 @@ export class StreamGuard {
       case "rate_limited":
         return { emit: [], done: { type: "rate_limited" } };
       case "timeout":
+        return { emit: [], done: { type: "error", cause: "timeout" } };
       case "provider_error":
-        return { emit: [], done: { type: "error" } };
+        return {
+          emit: [],
+          done: { type: "error", cause: "provider", detail: event.detail },
+        };
+      case "provider_unavailable":
+        return {
+          emit: [],
+          done: { type: "unavailable", detail: event.detail },
+        };
     }
   }
 
@@ -69,7 +88,7 @@ export class StreamGuard {
   private drainGuarded(): GuardStep {
     if (!this.grounded) return { emit: [] }; // grounding buffer still closed
     if (looksLikePolicyLeak(this.full))
-      return { emit: [], done: { type: "error" } };
+      return { emit: [], done: { type: "error", cause: "invalid_output" } };
     if (this.full.includes(REFUSAL_TEXT)) return { emit: [] }; // finish() refuses
     return { emit: this.drain(this.full.length - MAX_FINGERPRINT_LENGTH) };
   }
@@ -84,7 +103,7 @@ export class StreamGuard {
 
   private finish(): GuardStep {
     if (this.full.trim() === "" || looksLikePolicyLeak(this.full)) {
-      return { emit: [], done: { type: "error" } };
+      return { emit: [], done: { type: "error", cause: "invalid_output" } };
     }
     if (this.full.includes(REFUSAL_TEXT)) {
       return { emit: [], done: { type: "refused", reason: "model_declined" } };

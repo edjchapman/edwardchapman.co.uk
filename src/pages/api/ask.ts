@@ -4,9 +4,19 @@ import corpusJson from "../../generated/corpus.json";
 import type { Corpus } from "../../../scripts/build-agent-corpus.ts";
 import {
   FakeModelAdapter,
+  type FakeBehaviour,
   type ModelAdapter,
 } from "../../lib/agent/adapter.ts";
 import { AnthropicAdapter } from "../../lib/agent/anthropic-adapter.ts";
+import {
+  INVALID_REQUEST_MESSAGE,
+  METHOD_NOT_ALLOWED_MESSAGE,
+  NOT_FOUND_MESSAGE,
+  QUOTA_EXCEEDED_MESSAGE,
+  RATE_LIMITED_MESSAGE,
+  UPSTREAM_ERROR_MESSAGE,
+  UPSTREAM_UNAVAILABLE_MESSAGE,
+} from "../../lib/agent/ask-copy.ts";
 import { DEFAULT_QUOTA_LIMIT, evaluateQuota } from "../../lib/agent/quota.ts";
 import { askRequestSchema, MAX_BODY_BYTES } from "../../lib/agent/schema.ts";
 import {
@@ -25,8 +35,13 @@ type ErrorCode =
   | "rate_limited"
   | "quota_exceeded"
   | "not_found"
-  | "upstream_error";
+  | "upstream_error"
+  | "upstream_unavailable";
 
+// 502 vs 503 splits the two upstream classes at the HTTP layer (ADR-0026):
+// 502 upstream_error is a transient bad-gateway (a retry may succeed); 503
+// upstream_unavailable is "service unable" — down until the operator acts —
+// so status alone tells the monitors and any status-based tooling apart.
 const ERROR_STATUS: Record<ErrorCode, number> = {
   invalid_request: 400,
   method_not_allowed: 405,
@@ -34,18 +49,19 @@ const ERROR_STATUS: Record<ErrorCode, number> = {
   quota_exceeded: 429,
   not_found: 404,
   upstream_error: 502,
+  upstream_unavailable: 503,
 };
 
+// Assembled from ask-copy.ts (the single source of truth the AskForm island
+// also imports) — the Record type forces every code to have copy.
 const ERROR_MESSAGE: Record<ErrorCode, string> = {
-  invalid_request: 'Send JSON like {"question": "…"} — up to 500 characters.',
-  method_not_allowed: "Use POST with a JSON body.",
-  rate_limited: "Too many questions right now — please try again in a minute.",
-  quota_exceeded:
-    "You've reached today's question limit for this demo — please come back " +
-    "tomorrow. Everything the assistant knows is on the published pages.",
-  not_found: "Not found.",
-  upstream_error:
-    "The answer service had a problem. Nothing you did — try again shortly.",
+  invalid_request: INVALID_REQUEST_MESSAGE,
+  method_not_allowed: METHOD_NOT_ALLOWED_MESSAGE,
+  rate_limited: RATE_LIMITED_MESSAGE,
+  quota_exceeded: QUOTA_EXCEEDED_MESSAGE,
+  not_found: NOT_FOUND_MESSAGE,
+  upstream_error: UPSTREAM_ERROR_MESSAGE,
+  upstream_unavailable: UPSTREAM_UNAVAILABLE_MESSAGE,
 };
 
 interface RateLimitBinding {
@@ -151,6 +167,26 @@ async function resolveEnv(locals: unknown): Promise<AskEnv> {
 }
 
 /**
+ * Fake-adapter behaviour from the explicit ASK_MODEL_MODE binding (ADR-0018).
+ * The two `fail-*` modes let the offline/transient degraded states be driven
+ * end-to-end under `wrangler dev` for manual and live verification; they are
+ * checked before the isLocal echo default so local dev can simulate a failure.
+ * `undefined` means "no fake" — fall through to the real adapter.
+ */
+function fakeBehaviourFor(
+  env: AskEnv,
+  isLocal: boolean,
+): FakeBehaviour | undefined {
+  if (env.ASK_MODEL_MODE === "fail-unavailable")
+    return { mode: "provider_unavailable" };
+  if (env.ASK_MODEL_MODE === "fail-transient")
+    return { mode: "provider_error" };
+  if (isLocal || env.ASK_MODEL_MODE === "fake")
+    return { mode: "echo-first-citation" };
+  return undefined;
+}
+
+/**
  * Adapter selection is environment-explicit (ADR-0018): local requests always
  * use the deterministic fake, while the canonical host requires its Worker
  * secret. Model id and base URL are config-driven bindings, never hard-coded
@@ -160,8 +196,8 @@ function selectAdapter(
   env: AskEnv,
   isLocal: boolean,
 ): ModelAdapter | undefined {
-  if (isLocal || env.ASK_MODEL_MODE === "fake")
-    return new FakeModelAdapter({ mode: "echo-first-citation" });
+  const fake = fakeBehaviourFor(env, isLocal);
+  if (fake) return new FakeModelAdapter(fake);
   if (!env.ANTHROPIC_API_KEY) return undefined;
   return new AnthropicAdapter({
     apiKey: env.ANTHROPIC_API_KEY,
@@ -242,12 +278,15 @@ const handleAsk: APIRoute = async (context) => {
 
   const adapter = selectAdapter(env, isLocal);
   if (!adapter) {
+    // A missing credential is an operator-actionable outage, not a transient
+    // blip: the non-retryable class, and (like all upstream failures) it does
+    // not burn the visitor's quota (ADR-0026 amends ADR-0024).
     structuredLog({
-      event: "ask.provider_error",
+      event: "ask.provider_unavailable",
       requestId,
       detail: "missing_model_credential",
     });
-    return withQuota(errorResponse("upstream_error", requestId));
+    return errorResponse("upstream_unavailable", requestId);
   }
 
   const service = new AgentService(
@@ -290,10 +329,16 @@ const handleAsk: APIRoute = async (context) => {
           { status: 200, headers: jsonHeaders },
         ),
       );
+    // Upstream failures do not attach the incremented cookie, so the count
+    // never persists — a natural refund for a question that got no answer
+    // (ADR-0026 amends ADR-0024). Refusals above still count: the visitor got
+    // a truthful answer.
     case "upstream_rate_limited":
-      return withQuota(errorResponse("rate_limited", requestId));
+      return errorResponse("rate_limited", requestId);
+    case "upstream_unavailable":
+      return errorResponse("upstream_unavailable", requestId);
     case "upstream_error":
-      return withQuota(errorResponse("upstream_error", requestId));
+      return errorResponse("upstream_error", requestId);
   }
 };
 

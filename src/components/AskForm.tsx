@@ -3,6 +3,15 @@ import { useRef, useState, type FormEvent } from "react";
 import { REFUSAL_TEXT } from "../lib/agent/refusal.ts";
 import AskExchange, { type Exchange, type Source } from "./AskExchange.tsx";
 import { type CitationSpan } from "./ask-citations.ts";
+import {
+  type AskState,
+  errorMessage,
+  isAbortError,
+  NETWORK_ERROR_MESSAGE,
+  parseStreamEvent,
+  terminalState,
+  transientError,
+} from "./ask-stream.ts";
 
 /**
  * The site's one React island (ADR-0004): the ask form's state machine —
@@ -19,22 +28,10 @@ import { type CitationSpan } from "./ask-citations.ts";
  * live region; the live region holds only the in-flight or most recent
  * state, so each finished answer is announced exactly once. A visitor can
  * stop an in-flight stream; the partial text is kept as a stopped exchange.
+ * A watchdog fails a stalled request rather than leaving the form hung
+ * (ADR-0026); the error phase distinguishes a transient blip from an
+ * operator-actionable outage (`offline`).
  */
-
-type AskState =
-  | { phase: "idle" }
-  | { phase: "loading" }
-  | { phase: "streaming"; answer: string }
-  | { phase: "answered"; exchange: Exchange }
-  | { phase: "error"; message: string };
-
-/** The wire events the streaming route emits (ADR-0016). */
-type StreamEvent =
-  | { kind: "answer_delta"; text: string }
-  | { kind: "answered"; citations?: CitationSpan[]; sources?: Source[] }
-  | { kind: "refused"; answer: string }
-  | { kind: "upstream_error" }
-  | { kind: "upstream_rate_limited" };
 
 // Golden-fixture phrasings where one exists (retrieval is pinned to answer
 // them); the career and education questions use their goldens' verbatim
@@ -48,80 +45,12 @@ const EXAMPLE_QUESTIONS = [
   "What does Ed mean by evaluation-driven AI engineering?",
 ];
 
-// Mirror the server's user-facing copy for the terminal error events, which
-// carry a kind but no message (the buffered path surfaces the JSON envelope's).
-const RATE_LIMITED_MESSAGE =
-  "Too many questions right now — please try again in a minute.";
-const UPSTREAM_ERROR_MESSAGE =
-  "The answer service had a problem. Nothing you did — try again shortly.";
-
 const MAX_QUESTION_LENGTH = 500;
 const COUNTER_FROM = 400;
-
-function parseStreamEvent(block: string): StreamEvent | null {
-  const line = block.split("\n").find((entry) => entry.startsWith("data:"));
-  if (!line) return null;
-  try {
-    return JSON.parse(line.slice(line.indexOf(":") + 1)) as StreamEvent;
-  } catch {
-    return null;
-  }
-}
-
-async function errorMessage(response: Response): Promise<string> {
-  try {
-    const body: unknown = await response.json();
-    const message = (body as { error?: { message?: unknown } }).error?.message;
-    if (typeof message === "string") return message;
-  } catch {
-    /* non-JSON body — fall through to the generic message */
-  }
-  return "Something went wrong — please try again shortly.";
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
-}
-
-/** Map a terminal stream event to its finished state; null for deltas. */
-function terminalState(
-  event: StreamEvent,
-  answer: string,
-  asked: string,
-): AskState | null {
-  switch (event.kind) {
-    case "answer_delta":
-      return null;
-    case "answered":
-      return {
-        phase: "answered",
-        exchange: {
-          question: asked,
-          answer,
-          citations: event.citations ?? [],
-          sources: event.sources ?? [],
-          refused: false,
-          stopped: false,
-        },
-      };
-    case "refused":
-      return {
-        phase: "answered",
-        exchange: {
-          question: asked,
-          answer: event.answer,
-          citations: [],
-          sources: [],
-          refused: true,
-          stopped: false,
-        },
-      };
-    case "upstream_rate_limited":
-      return { phase: "error", message: RATE_LIMITED_MESSAGE };
-    case "upstream_error":
-      return { phase: "error", message: UPSTREAM_ERROR_MESSAGE };
-  }
-}
+// Longer than the server's worst case (20s adapter timeout + one SDK retry):
+// this only fires when the request is genuinely stuck, so the visitor gets an
+// error instead of an indefinitely-disabled form.
+const WATCHDOG_MS = 60_000;
 
 export default function AskForm() {
   const [question, setQuestion] = useState("");
@@ -129,6 +58,9 @@ export default function AskForm() {
   const [history, setHistory] = useState<Exchange[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Distinguishes a watchdog-triggered abort (→ error) from the visitor
+  // pressing Stop (→ quiet idle / kept partial).
+  const watchdogRef = useRef(false);
   const busy = state.phase === "loading" || state.phase === "streaming";
 
   function finishWith(next: AskState) {
@@ -180,18 +112,34 @@ export default function AskForm() {
             setState({ phase: "streaming", answer });
             continue;
           }
-          finishWith(terminalState(event, answer, asked) ?? { phase: "idle" });
+          // Unknown terminal kinds resolve to the transient error, never a
+          // silent idle that leaves the form looking hung (ADR-0026).
+          finishWith(terminalState(event, answer, asked) ?? transientError());
           return;
         }
       }
     } catch (error) {
-      // The visitor pressed Stop mid-stream: keep the partial text.
       if (!isAbortError(error)) throw error;
+      // The watchdog fired mid-stream: a stalled request, not a visitor Stop.
+      if (watchdogRef.current) {
+        finishWith({
+          phase: "error",
+          message: NETWORK_ERROR_MESSAGE,
+          offline: false,
+        });
+        return;
+      }
+      // The visitor pressed Stop mid-stream: keep the partial text.
       finishWith({ phase: "answered", exchange: stoppedExchange() });
       return;
     }
-    // The stream ended without a terminal event (stopped, or the connection
-    // died): finalise rather than staying busy forever.
+    // The stream ended without a terminal event. With no text at all the
+    // connection died before answering — surface an error rather than an empty
+    // "stopped" card; with partial text, keep it as a stopped exchange.
+    if (answer === "") {
+      finishWith(transientError());
+      return;
+    }
     finishWith({ phase: "answered", exchange: stoppedExchange() });
   }
 
@@ -202,6 +150,11 @@ export default function AskForm() {
     setState({ phase: "loading" });
     const controller = new AbortController();
     abortRef.current = controller;
+    watchdogRef.current = false;
+    const watchdog = setTimeout(() => {
+      watchdogRef.current = true;
+      controller.abort();
+    }, WATCHDOG_MS);
 
     try {
       const response = await fetch("/api/ask", {
@@ -215,7 +168,12 @@ export default function AskForm() {
       });
 
       if (!response.ok) {
-        finishWith({ phase: "error", message: await errorMessage(response) });
+        const { message, code } = await errorMessage(response);
+        finishWith({
+          phase: "error",
+          message,
+          offline: code === "upstream_unavailable",
+        });
         return;
       }
 
@@ -244,15 +202,27 @@ export default function AskForm() {
         },
       });
     } catch (error) {
-      // Stopped before any answer arrived: return quietly to the form.
       if (isAbortError(error)) {
+        // Watchdog abort before any response: a stalled request. A visitor
+        // Stop before any response returns quietly to the form.
+        if (watchdogRef.current) {
+          finishWith({
+            phase: "error",
+            message: NETWORK_ERROR_MESSAGE,
+            offline: false,
+          });
+          return;
+        }
         finishWith({ phase: "idle" });
         return;
       }
       finishWith({
         phase: "error",
-        message: "The request didn't complete — please try again.",
+        message: NETWORK_ERROR_MESSAGE,
+        offline: false,
       });
+    } finally {
+      clearTimeout(watchdog);
     }
   }
 
@@ -339,7 +309,18 @@ export default function AskForm() {
         {state.phase === "loading" && (
           <p>Looking through the published pages…</p>
         )}
-        {state.phase === "error" && <p className="error">{state.message}</p>}
+        {state.phase === "error" && (
+          <>
+            <p className="error">{state.message}</p>
+            {state.offline && (
+              <p className="pointer">
+                The published pages cover the same ground — start with the{" "}
+                <a href="/experience">experience page</a> or the{" "}
+                <a href="/projects">projects</a>.
+              </p>
+            )}
+          </>
+        )}
         {state.phase === "streaming" && (
           <div className="answer">
             <p>{state.answer}</p>

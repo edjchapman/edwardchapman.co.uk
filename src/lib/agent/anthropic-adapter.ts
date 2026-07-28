@@ -237,12 +237,17 @@ function mapProviderError(error: unknown): ModelResult {
   }
   if (error instanceof Anthropic.APIError) {
     // Status + API error type only — content-free, safe for logs and eval
-    // reports, and enough to tell a rejected request shape (400) from an
-    // auth or capacity failure.
-    return {
-      type: "provider_error",
-      detail: `status ${String(error.status)} ${error.type ?? ""}`.trim(),
-    };
+    // reports, and enough to tell the class apart. Classify by status, never
+    // by message (ADR-0026): 4xx here (429 already peeled above) is a
+    // non-retryable rejection the operator must act on — billing 400, dead
+    // key 401, forbidden 403, retired model 404. Everything else (5xx, or a
+    // missing status) is transient.
+    const detail = `status ${String(error.status)} ${error.type ?? ""}`.trim();
+    const status = error.status;
+    if (typeof status === "number" && status >= 400 && status < 500) {
+      return { type: "provider_unavailable", detail };
+    }
+    return { type: "provider_error", detail };
   }
   return { type: "provider_error", detail: "unexpected adapter failure" };
 }

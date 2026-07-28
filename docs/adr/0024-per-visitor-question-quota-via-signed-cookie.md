@@ -1,6 +1,14 @@
 # ADR-0024: Per-visitor question quota via a signed cookie
 
-**Status:** Accepted (2026-07-25)
+**Status:** Accepted (2026-07-25); amended 2026-07-28 (ADR-0026)
+
+> **Amendment (ADR-0026, 2026-07-28):** the counting rule below said upstream
+> failures are "not refunded". They now are, on the buffered path: an
+> `upstream_error` / `upstream_unavailable` / `upstream_rate_limited` response
+> is returned without the incremented `set-cookie`, so the count never
+> persists — a question that got no answer does not spend the visitor's quota.
+> Refusals still count. The streaming path cannot refund (headers commit at
+> 200-open); that loss is accepted.
 
 ## Context
 

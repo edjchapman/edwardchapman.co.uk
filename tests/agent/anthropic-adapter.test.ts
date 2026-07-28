@@ -330,7 +330,7 @@ describe("anthropic adapter error mapping", () => {
     expect(result).toEqual({ type: "rate_limited" });
   });
 
-  it("maps 500 to a provider error carrying status and error type", async () => {
+  it("maps 500 to a transient provider error carrying status and error type", async () => {
     const { fetch } = stubFetch([errorResponse(500), errorResponse(500)]);
     const result = await makeAdapter(fetch).complete(REQUEST);
     expect(result).toEqual({
@@ -339,15 +339,29 @@ describe("anthropic adapter error mapping", () => {
     });
   });
 
-  it("maps 400 to a provider error without retrying", async () => {
-    const { fetch, calls } = stubFetch([errorResponse(400)]);
+  it("maps 529 overloaded to a transient provider error", async () => {
+    const { fetch } = stubFetch([errorResponse(529), errorResponse(529)]);
     const result = await makeAdapter(fetch).complete(REQUEST);
     expect(result).toEqual({
       type: "provider_error",
-      detail: "status 400 api_error",
+      detail: "status 529 api_error",
     });
-    expect(calls.length).toBe(1);
   });
+
+  // 400 billing, 401 dead key, 404 retired model: all non-retryable, all the
+  // operator-actionable class (ADR-0026). Status drives it, not the message.
+  it.each([400, 401, 403, 404])(
+    "maps %i to a non-retryable provider_unavailable without retrying",
+    async (status) => {
+      const { fetch, calls } = stubFetch([errorResponse(status)]);
+      const result = await makeAdapter(fetch).complete(REQUEST);
+      expect(result).toEqual({
+        type: "provider_unavailable",
+        detail: `status ${String(status)} api_error`,
+      });
+      expect(calls.length).toBe(1); // 4xx is not retried
+    },
+  );
 });
 
 describe("anthropic adapter streaming (ADR-0016)", () => {
@@ -467,5 +481,14 @@ describe("anthropic adapter streaming (ADR-0016)", () => {
     expect(events).toEqual([
       { type: "provider_error", detail: "status 500 api_error" },
     ]);
+  });
+
+  it("maps a streaming 401 to a provider_unavailable terminal event", async () => {
+    const { fetch, calls } = stubFetch([errorResponse(401)]);
+    const events = await collectStream(makeAdapter(fetch).stream(REQUEST));
+    expect(events).toEqual([
+      { type: "provider_unavailable", detail: "status 401 api_error" },
+    ]);
+    expect(calls.length).toBe(1);
   });
 });
