@@ -41,6 +41,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler deploy --config dist/server/wrangler.json
       - name: Post-deploy smoke (real /api/ask POST)
+        id: smoke
         # The pre-merge e2e suite already exercises /api/ask against the built
         # worker, so this is a prod-only backstop (bindings, secrets). It gates
         # on the endpoint producing a *grounded* answer — a non-empty `sources`
@@ -66,7 +67,9 @@ jobs:
             fi
             echo "attempt $i: /api/ask HTTP $code, not yet grounded (deployed sha $sha)"
           done
-          echo "post-deploy smoke failed: /api/ask did not return a grounded answer within the window"
+          errcode=$(jq -r '.error.code // "none"' ask-smoke.json 2>/dev/null || echo "unparseable")
+          echo "detail=HTTP $code, error code $errcode" >> "$GITHUB_OUTPUT"
+          echo "post-deploy smoke failed: /api/ask did not return a grounded answer within the window (HTTP $code, error code $errcode)"
           # Surface enough of the last response to attribute edge-level blocks
           # (e.g. cf-mitigated: challenge) without rerunning from a runner.
           echo "last response headers:"
@@ -76,16 +79,32 @@ jobs:
           exit 1
       - name: Open incident issue on smoke failure
         # A red workflow was ignored for ~a day on 2026-07-14; an open, deduped
-        # issue notifies and persists instead. Shares a title with uptime-ask,
-        # so either check closes it on recovery.
+        # issue (assigned + @mentioning the maintainer, with the observed
+        # failure class) notifies and persists instead. Shares a title with
+        # uptime-ask, so either check closes it on recovery.
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
+          INCIDENT_DETAIL: ${{ steps.smoke.outputs.detail }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ALERT_SMTP_HOST: ${{ secrets.ALERT_SMTP_HOST }}
+          ALERT_SMTP_PORT: ${{ secrets.ALERT_SMTP_PORT }}
+          ALERT_SMTP_USER: ${{ secrets.ALERT_SMTP_USER }}
+          ALERT_SMTP_PASS: ${{ secrets.ALERT_SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
         run: ./scripts/report-incident.sh fail "deploy smoke"
       - name: Close incident issue on healthy deploy
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ALERT_SMTP_HOST: ${{ secrets.ALERT_SMTP_HOST }}
+          ALERT_SMTP_PORT: ${{ secrets.ALERT_SMTP_PORT }}
+          ALERT_SMTP_USER: ${{ secrets.ALERT_SMTP_USER }}
+          ALERT_SMTP_PASS: ${{ secrets.ALERT_SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
         run: ./scripts/report-incident.sh ok "deploy smoke"
       - name: Summary
         run: |
