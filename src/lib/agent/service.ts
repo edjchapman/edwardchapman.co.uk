@@ -31,6 +31,7 @@ export type AgentEvent = {
     | "ask.provider_unavailable"
     | "ask.quota_exceeded"
     | "ask.quota_skipped"
+    | "ask.baseline_served"
     | "ask.response_invalid"
     | "ask.citations_stripped"
     | "ask.answered"

@@ -5,27 +5,51 @@ import { expect, test } from "@playwright/test";
 // worker endpoint, then mocked-backend cases for submission, loading,
 // answer + source rendering, failure states, and the released posture.
 test.describe("/ask interface", () => {
-  test("real endpoint answers a corpus question (no mocks)", async ({
+  test("real endpoint serves a pinned baseline question (no mocks)", async ({
     request,
   }) => {
-    // Regression guard: unit tests fake `locals` and the other e2e cases fake
-    // the network, so only this probe exercises the deployed handler's env
-    // access and rate-limiter path inside workerd.
+    // A chip question is answered from the baseline (ADR-0027) — served before
+    // the model path, so it works with no credential, exercised here inside
+    // workerd.
     const response = await request.post("/api/ask", {
       data: { question: "How did Foreman handle reliable event processing?" },
     });
     expect(response.status()).toBe(200);
     const body = (await response.json()) as {
       answer: string;
-      citations: { start: number; end: number; sourceIndex: number }[];
       sources: { url: string }[];
-      requestId: string;
+      served: string;
     };
+    expect(body.served).toBe("baseline");
     expect(body.answer.length).toBeGreaterThan(0);
     expect(body.sources.length).toBeGreaterThan(0);
     for (const source of body.sources) {
       expect(source.url).toMatch(/^https:\/\/edwardchapman\.co\.uk\//);
     }
+  });
+
+  test("real endpoint answers a novel question via the model path (no mocks)", async ({
+    request,
+  }) => {
+    // Regression guard: unit tests fake `locals` and the other e2e cases fake
+    // the network, so only this probe exercises the deployed handler's env
+    // access, rate-limiter, and fake-adapter path inside workerd. A nonce
+    // suffix misses the baseline so the model path actually runs.
+    const response = await request.post("/api/ask", {
+      data: {
+        question: "How did Foreman handle reliable event processing? probe-e2e",
+      },
+    });
+    expect(response.status()).toBe(200);
+    const body = (await response.json()) as {
+      answer: string;
+      citations: { start: number; end: number; sourceIndex: number }[];
+      sources: { url: string }[];
+      served: string;
+    };
+    expect(body.served).toBe("model");
+    expect(body.answer.length).toBeGreaterThan(0);
+    expect(body.sources.length).toBeGreaterThan(0);
     // The fake adapter path exercises API-enforced citations end-to-end
     // inside workerd (ADR-0012): spans must satisfy the contract invariants.
     expect(body.citations.length).toBeGreaterThan(0);
@@ -65,8 +89,13 @@ test.describe("/ask interface", () => {
     page,
   }) => {
     await page.goto("/privacy");
+    // ADR-0027: the pre-answered-baseline check is disclosed alongside the
+    // model path.
     await expect(page.getByRole("main")).toContainText(
-      "your question is sent to Anthropic",
+      "checked against a short list of pre-written answers",
+    );
+    await expect(page.getByRole("main")).toContainText(
+      "sent to Anthropic to generate an answer",
     );
     // ADR-0023: questions are recorded for abuse monitoring and the page
     // must say so; answers stay unstored.
@@ -431,9 +460,11 @@ test.describe("/ask interface", () => {
     // The webServer runs with ASK_QUOTA_LIMIT=2. The cookie is threaded by
     // hand: wrangler dev presents the canonical host, so the cookie carries
     // `Secure`, which Playwright's Node-side jar won't replay over local
-    // http (real browsers treat loopback as trustworthy and do).
+    // http (real browsers treat loopback as trustworthy and do). A nonce
+    // suffix misses the baseline (ADR-0027) so the quota-charged model path
+    // runs — a baseline hit would never set the cookie.
     const question = {
-      question: "How did Foreman handle reliable event processing?",
+      question: "How did Foreman handle reliable event processing? probe-quota",
     };
     const replay = (setCookie: string) =>
       /(ask_quota=[^;]+)/.exec(setCookie)?.[1] ?? "";
@@ -503,6 +534,50 @@ test.describe("/ask interface", () => {
       .click();
     await expect(page.getByRole("status")).toContainText("Ok.");
     expect(received).toContain("Foreman");
+  });
+
+  test("an unmocked chip is answered instantly from the baseline", async ({
+    page,
+  }) => {
+    // No route mock: the real wrangler-dev endpoint serves the chip from the
+    // baseline (ADR-0027), so the answer and its distinct disclosure render
+    // without a model call.
+    await page.goto("/ask");
+    await page
+      .getByRole("button", { name: "What is Ed's educational background?" })
+      .click();
+    const status = page.getByRole("status");
+    await expect(status).toContainText("Birkbeck");
+    await expect(status).toContainText("A pre-written answer from published");
+    await expect(status.locator("ol.sources")).toHaveCount(1);
+  });
+
+  test("a baseline-served response shows the pre-written disclosure", async ({
+    page,
+  }) => {
+    await page.route("**/api/ask", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          answer: "A canned answer.",
+          citations: [],
+          sources: [],
+          served: "baseline",
+          requestId: "t",
+        }),
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByLabel("Your question").fill("Anything");
+    await page.getByRole("button", { name: "Ask" }).click();
+    const status = page.getByRole("status");
+    await expect(status).toContainText("A pre-written answer from published");
+    // The baseline disclosure replaces the model one, not adds to it. A
+    // response with no `served` field keeps "Generated from published site
+    // content" (the existing citation test covers that stale-mock case).
+    await expect(status).not.toContainText("Generated from published site");
   });
 
   test("axe scan is clean", async ({ page }) => {

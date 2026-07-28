@@ -36,7 +36,7 @@ import {
 // Golden-fixture phrasings where one exists (retrieval is pinned to answer
 // them); the career and education questions use their goldens' verbatim
 // wording.
-const EXAMPLE_QUESTIONS = [
+export const EXAMPLE_QUESTIONS = [
   "What kind of engineering roles is Ed best suited to?",
   "Where has Ed worked, and when?",
   "Is Ed open to contract or permanent roles?",
@@ -92,6 +92,7 @@ export default function AskForm() {
       sources: [],
       refused: false,
       stopped: true,
+      baseline: false,
     });
 
     try {
@@ -183,12 +184,15 @@ export default function AskForm() {
         return;
       }
 
-      // Buffered fallback: a JSON answer (mocked tests, or a non-streaming
-      // backend). Refusals arrive here too — answer with empty sources.
+      // Buffered fallback: a JSON answer (mocked tests, a non-streaming
+      // backend, or a pre-answered baseline hit). Refusals arrive here too —
+      // answer with empty sources. `served: "baseline"` drives the distinct
+      // disclosure line (ADR-0027).
       const body = (await response.json()) as {
         answer: string;
         citations?: CitationSpan[];
         sources?: Source[];
+        served?: "model" | "baseline";
       };
       finishWith({
         phase: "answered",
@@ -199,6 +203,7 @@ export default function AskForm() {
           sources: body.sources ?? [],
           refused: body.answer === REFUSAL_TEXT,
           stopped: false,
+          baseline: body.served === "baseline",
         },
       });
     } catch (error) {

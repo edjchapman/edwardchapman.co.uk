@@ -148,6 +148,13 @@ completeness, citation correctness, and refusal quality** using an
 LLM-as-judge, against thresholds recorded in this document once the first
 baseline run exists (set from evidence, then frozen — see below).
 
+The pre-answered baseline (ADR-0027) sits **outside** this evaluated pipeline:
+`run-agent-evals.ts` constructs `AgentService` directly, so every golden and
+adversarial case still exercises the real model — the baseline lookup is in the
+route, which the evals bypass. The live monitors probe with a nonce that misses
+the baseline and assert `served == "model"`, so baseline serving never masks a
+model regression.
+
 Runs from `eval-live.yml`: manual dispatch plus a weekly schedule, inside the
 `production` GitHub environment, with a hard per-run question budget.
 Reports are workflow artifacts; logs contain scores and case ids — never full

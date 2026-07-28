@@ -57,6 +57,9 @@ lint: ## ESLint over the repo
 corpus: ## Generate src/generated/corpus.json (the /api/ask route imports it)
 	@node scripts/build-agent-corpus.ts
 
+baseline: ## Generate src/generated/baseline.json (pre-answered questions, ADR-0027)
+	@node scripts/build-baseline-answers.ts
+
 og-cards: ## Generate per-page social cards into public/og/
 	@node scripts/build-og-cards.ts
 
@@ -66,7 +69,7 @@ icons: ## Generate apple-touch-icon.png and manifest icon fallbacks into public/
 llms: ## Generate public/llms.txt from published content
 	@node scripts/build-llms-txt.ts
 
-typecheck: corpus ## astro check (TypeScript + .astro diagnostics)
+typecheck: corpus baseline ## astro check (TypeScript + .astro diagnostics)
 	@pnpm exec astro check
 
 test: ## Vitest unit/integration suites (corpus via vitest globalSetup)

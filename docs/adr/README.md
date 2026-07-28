@@ -33,6 +33,7 @@ marked here and in their own status line.
 | [0023](0023-record-questions-for-abuse-monitoring.md)                   | Record submitted questions in operational logs for abuse monitoring          | Accepted 2026-07-25          |
 | [0024](0024-per-visitor-question-quota-via-signed-cookie.md)            | Per-visitor question quota via a signed cookie                               | Accepted 2026-07-25; amended |
 | [0026](0026-upstream-failure-taxonomy-and-honest-degraded-responses.md) | Upstream failure taxonomy and honest degraded responses                      | Accepted 2026-07-28          |
+| [0027](0027-pre-answered-baseline-questions.md)                         | Pre-answered baseline questions served without a model call                  | Accepted 2026-07-28          |
 
 0025 is reserved (forward-referenced by ADR-0024): the global spend guard —
 Cloudflare AI Gateway plus an Anthropic provider spend limit — not yet written.

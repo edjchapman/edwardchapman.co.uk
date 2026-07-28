@@ -57,15 +57,17 @@ jobs:
             sleep 8
             health=$(curl -sS https://edwardchapman.co.uk/api/health || true)
             case "$health" in *"$GITHUB_SHA"*) sha="visible" ;; *) sha="propagating" ;; esac
+            # Nonce so the probe misses the pre-answered baseline (ADR-0027);
+            # served==model so a baseline hit can't green a dead model path.
             code=$(curl -sS -D ask-smoke-headers.txt -o ask-smoke.json -w '%{http_code}' \
               https://edwardchapman.co.uk/api/ask \
               -H 'content-type: application/json' \
-              -d '{"question":"How did Foreman handle reliable event processing?"}' || true)
-            if [ "$code" = "200" ] && jq -e '.sources | length > 0' ask-smoke.json >/dev/null 2>&1; then
-              echo "smoke ok: /api/ask returns a grounded answer (deployed sha $sha)"
+              -d "{\"question\":\"How did Foreman handle reliable event processing? probe-${GITHUB_SHA}\"}" || true)
+            if [ "$code" = "200" ] && jq -e '.served == "model" and (.sources | length > 0)' ask-smoke.json >/dev/null 2>&1; then
+              echo "smoke ok: /api/ask returns a grounded model answer (deployed sha $sha)"
               exit 0
             fi
-            echo "attempt $i: /api/ask HTTP $code, not yet grounded (deployed sha $sha)"
+            echo "attempt $i: /api/ask HTTP $code, not yet a grounded model answer (deployed sha $sha)"
           done
           errcode=$(jq -r '.error.code // "none"' ask-smoke.json 2>/dev/null || echo "unparseable")
           echo "detail=HTTP $code, error code $errcode" >> "$GITHUB_OUTPUT"

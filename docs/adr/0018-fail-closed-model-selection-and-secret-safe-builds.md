@@ -1,6 +1,14 @@
 # ADR-0018: Fail closed on missing model credentials and strip local secrets from builds
 
-**Status:** Accepted (2026-07-20)
+**Status:** Accepted (2026-07-20); noted 2026-07-28 (ADR-0027)
+
+> **Note (ADR-0027, 2026-07-28):** the pre-answered baseline can serve a chip
+> question with no credential present — but this does **not** weaken the
+> fail-closed guarantee. A baseline answer is reviewed published content,
+> labelled `served: "baseline"`, not the "plausible fake" this ADR forbids; and
+> the deploy smoke, `uptime-ask`, and live security probe all assert
+> `served == "model"` against a nonce question that misses the baseline, so a
+> missing or dead credential stays a visible failure.
 
 ## Context
 

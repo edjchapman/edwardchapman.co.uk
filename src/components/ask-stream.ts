@@ -107,6 +107,7 @@ export function terminalState(
           sources: event.sources ?? [],
           refused: false,
           stopped: false,
+          baseline: false,
         },
       };
     case "refused":
@@ -119,6 +120,7 @@ export function terminalState(
           sources: [],
           refused: true,
           stopped: false,
+          baseline: false,
         },
       };
     case "upstream_rate_limited":

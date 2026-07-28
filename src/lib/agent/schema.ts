@@ -33,6 +33,10 @@ export const askResponseSchema = z
     answer: z.string(),
     citations: z.array(citationSpanSchema),
     sources: z.array(sourceSchema),
+    // Whether the model produced this answer or it was served from the
+    // pre-answered baseline (ADR-0027). Optional so older cached clients and
+    // pre-baseline fixtures still validate; defaults to model semantics.
+    served: z.enum(["model", "baseline"]).optional(),
     requestId: z.string(),
   })
   .superRefine((value, ctx) => {
