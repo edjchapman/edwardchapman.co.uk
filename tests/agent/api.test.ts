@@ -12,6 +12,13 @@ import { ALL, POST } from "../../src/pages/api/ask";
 const ENDPOINT = "http://localhost/api/ask";
 const PRODUCTION_ENDPOINT = "https://edwardchapman.co.uk/api/ask";
 
+// The Foreman question is a baseline hit (a pinned chip, ADR-0027), so it
+// short-circuits before quota and the adapter. Tests that must exercise the
+// *model* path use a nonce-suffixed variant: it misses the exact-match
+// baseline but still retrieves Foreman confidently (an unmatched token adds
+// nothing to the lexical score).
+const MODEL_Q = "How did Foreman handle reliable event processing? probe-42";
+
 type RouteContext = Parameters<typeof POST>[0];
 
 function makeContext(
@@ -43,9 +50,7 @@ function postJson(
 
 describe("POST /api/ask contract", () => {
   it("answers a supported question with citations, sources and a requestId", async () => {
-    const response = await postJson({
-      question: "How did Foreman handle reliable event processing?",
-    });
+    const response = await postJson({ question: MODEL_Q });
     expect(response.status).toBe(200);
     const body: unknown = await response.json();
     // The shared contract schema enforces the span invariants (spec §10):
@@ -56,14 +61,50 @@ describe("POST /api/ask contract", () => {
       expect(parsed.data.answer.length).toBeGreaterThan(0);
       expect(parsed.data.citations.length).toBeGreaterThan(0);
       expect(parsed.data.sources.length).toBeGreaterThan(0);
+      expect(parsed.data.served).toBe("model");
       expect(parsed.data.requestId).toMatch(/[0-9a-f-]{36}/);
     }
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
-  it("fails closed on the canonical host when the model credential is absent", async () => {
+  it("serves a pinned baseline question without a model call, even with no credential", async () => {
+    // The outage-proof pin: on the canonical host, no ANTHROPIC_API_KEY, a
+    // chip question is answered from the baseline (ADR-0027) — the exact case
+    // that would 503 through the model path.
     const response = await postJson(
       { question: "How did Foreman handle reliable event processing?" },
+      { url: PRODUCTION_ENDPOINT },
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      answer: string;
+      sources: unknown[];
+      served: string;
+    };
+    expect(body.served).toBe("baseline");
+    expect(body.answer.length).toBeGreaterThan(0);
+    expect(body.sources.length).toBeGreaterThan(0);
+  });
+
+  it("serves a baseline hit as buffered JSON even to an SSE client", async () => {
+    const request = new Request(ENDPOINT, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "text/event-stream",
+      },
+      body: JSON.stringify({ question: "What is Foreman?" }),
+    });
+    const response = (await POST(makeContext(request, {}))) as Response;
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("application/json");
+    const body = (await response.json()) as { served: string };
+    expect(body.served).toBe("baseline");
+  });
+
+  it("fails closed on the canonical host when the model credential is absent", async () => {
+    const response = await postJson(
+      { question: MODEL_Q },
       { url: PRODUCTION_ENDPOINT },
     );
     // A missing credential is the non-retryable class: 503, not 502 (ADR-0026).
@@ -74,7 +115,7 @@ describe("POST /api/ask contract", () => {
 
   it("maps a non-retryable provider failure to 503 without leaking detail", async () => {
     const response = await postJson(
-      { question: "How did Foreman handle reliable event processing?" },
+      { question: MODEL_Q },
       { url: PRODUCTION_ENDPOINT, env: { ASK_MODEL_MODE: "fail-unavailable" } },
     );
     expect(response.status).toBe(503);
@@ -91,7 +132,7 @@ describe("POST /api/ask contract", () => {
 
   it("maps a transient provider failure to 502", async () => {
     const response = await postJson(
-      { question: "How did Foreman handle reliable event processing?" },
+      { question: MODEL_Q },
       { url: PRODUCTION_ENDPOINT, env: { ASK_MODEL_MODE: "fail-transient" } },
     );
     expect(response.status).toBe(502);
@@ -101,7 +142,7 @@ describe("POST /api/ask contract", () => {
 
   it("keeps local requests deterministic even when a model credential exists", async () => {
     const response = await postJson(
-      { question: "How did Foreman handle reliable event processing?" },
+      { question: MODEL_Q },
       {
         env: {
           ANTHROPIC_API_KEY: "test-only-key",
@@ -116,7 +157,7 @@ describe("POST /api/ask contract", () => {
 
   it("supports the explicit fake binding used by the local Worker", async () => {
     const response = await postJson(
-      { question: "How did Foreman handle reliable event processing?" },
+      { question: MODEL_Q },
       {
         url: PRODUCTION_ENDPOINT,
         env: { ASK_MODEL_MODE: "fake" },
@@ -255,7 +296,7 @@ describe("adversarial cases (deterministic invariants)", () => {
 });
 
 describe("per-visitor quota (ADR-0024)", () => {
-  const QUESTION = "How did Foreman handle reliable event processing?";
+  const QUESTION = MODEL_Q;
   const QUOTA_ENV = {
     ASK_MODEL_MODE: "fake",
     ASK_QUOTA_SECRET: "test-secret",
@@ -391,9 +432,7 @@ async function postStream(
 
 describe("POST /api/ask streaming (ADR-0016)", () => {
   it("streams answer deltas then an answered terminal for a supported question", async () => {
-    const { response, events } = await postStream(
-      "How did Foreman handle reliable event processing?",
-    );
+    const { response, events } = await postStream(MODEL_Q);
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/event-stream");
     expect(response.headers.get("cache-control")).toBe("no-store");
@@ -426,9 +465,7 @@ describe("POST /api/ask streaming (ADR-0016)", () => {
   });
 
   it("keeps the buffered JSON contract when the client does not opt into streaming", async () => {
-    const response = await postJson({
-      question: "How did Foreman handle reliable event processing?",
-    });
+    const response = await postJson({ question: MODEL_Q });
     expect(response.headers.get("content-type")).toContain("application/json");
     const body = (await response.json()) as { answer: string };
     expect(typeof body.answer).toBe("string");
@@ -441,9 +478,7 @@ describe("POST /api/ask streaming (ADR-0016)", () => {
         "content-type": "application/json",
         accept: "text/event-stream",
       },
-      body: JSON.stringify({
-        question: "How did Foreman handle reliable event processing?",
-      }),
+      body: JSON.stringify({ question: MODEL_Q }),
     });
     const response = (await POST(
       makeContext(request, { ASK_MODEL_MODE: "fail-unavailable" }),

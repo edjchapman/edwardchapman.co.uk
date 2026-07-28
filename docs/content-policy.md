@@ -102,6 +102,20 @@ collections never enter the corpus. The corpus builder re-runs the
 prohibited-terms scan over its own output as a final tripwire. Questions the
 corpus cannot support are refused, not improvised.
 
+Pre-answered baseline entries (`src/content/ask-baseline/`, ADR-0027) are
+reviewed content written specifically for this site (category 5 above). Each
+answer must cite corpus sections with `[[sectionId]]` markers, and every claim
+must trace to those sections — the same public-source rule as any other
+content. The build (`scripts/build-baseline-answers.ts`) runs the
+prohibited-terms scan over each answer, and **fails** if an answer cites a
+section that no longer exists, so a renamed or deleted section can't leave a
+stale canned answer live. A PR that edits or removes a corpus section a
+baseline entry cites must update that entry in the same change (grep
+`src/content/ask-baseline` for the `sectionId`) — this is the mitigation for
+semantic drift the build can't catch. Career, education, and availability
+entries carry Ed's affirmation in review, as for the corpus itself
+(ADR-0019/0022).
+
 ## Removing or correcting published information
 
 1. Edit or delete the content entry (or flip it to `draft: true`) in a PR;

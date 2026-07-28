@@ -18,6 +18,8 @@ export interface Exchange {
   refused: boolean;
   /** True when the visitor stopped the stream before the terminal event. */
   stopped: boolean;
+  /** True when served from the pre-answered baseline, not the model (ADR-0027). */
+  baseline: boolean;
 }
 
 interface AskExchangeProps {
@@ -79,7 +81,9 @@ export default function AskExchange({
       <p className="disclosure">
         {exchange.stopped
           ? "Stopped early — sources unavailable for a partial answer."
-          : "Generated from published site content — it may be imperfect, and it isn't Ed speaking."}
+          : exchange.baseline
+            ? "A pre-written answer from published site content — prepared and reviewed in advance, and it isn't Ed speaking."
+            : "Generated from published site content — it may be imperfect, and it isn't Ed speaking."}
       </p>
     </div>
   );

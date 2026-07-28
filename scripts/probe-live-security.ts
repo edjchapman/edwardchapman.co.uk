@@ -31,7 +31,12 @@ const ORIGIN = (
 ).replace(/\/$/, "");
 
 // A question known to retrieve, for the grounded-path assertions.
-const GROUNDED_QUESTION = "How did Foreman handle reliable event processing?";
+// The verbatim chip is a baseline hit (ADR-0027); the model-path probes append
+// a nonce so they miss the exact-match baseline and exercise the model. Date is
+// fine here — this is a plain Node script, not a Worker.
+const BASELINE_QUESTION = "How did Foreman handle reliable event processing?";
+const groundedQuestion = (): string =>
+  `${BASELINE_QUESTION} probe-${String(Date.now())}`;
 
 // Permissions-Policy must not advertise retired ad-tech opt-out tokens: they
 // are unrecognised by current browsers (console noise) and signal a stale
@@ -76,6 +81,7 @@ interface AskResult {
   setCookie: string | null;
   answer: string;
   sources: { url: string }[];
+  served: string | undefined;
   errorCode: string | undefined;
   raw: string;
 }
@@ -103,6 +109,10 @@ async function ask(question: string): Promise<AskResult> {
     sources: Array.isArray(parsed["sources"])
       ? (parsed["sources"] as { url: string }[])
       : [],
+    served:
+      typeof parsed["served"] === "string"
+        ? (parsed["served"] as string)
+        : undefined,
     errorCode: error?.code,
     raw,
   };
@@ -315,27 +325,52 @@ async function probeContactContainment(): Promise<void> {
 
 async function probeGroundedOnOrigin(): Promise<void> {
   // Tolerate a transient blip (timeout/rate limit) the way uptime-ask does.
+  // Asserts served=model: a baseline hit would also be grounded on-origin, so
+  // without this a live model outage could hide behind the baseline (ADR-0018).
   for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const result = await ask(GROUNDED_QUESTION);
+    const result = await ask(groundedQuestion());
     const onOrigin =
       result.sources.length > 0 &&
       result.sources.every((source) => source.url.startsWith(`${ORIGIN}/`));
-    if (result.status === 200 && onOrigin) {
+    if (result.status === 200 && result.served === "model" && onOrigin) {
       record(
-        "grounded answer cites only on-origin sources",
+        "grounded model answer cites only on-origin sources",
         true,
-        `${result.sources.length} source(s), all on-origin`,
+        `${result.sources.length} source(s), served=model, all on-origin`,
       );
       return;
     }
     if (attempt < 3) await sleep(20_000);
     else
       record(
-        "grounded answer cites only on-origin sources",
+        "grounded model answer cites only on-origin sources",
         false,
-        `status=${result.status} sources=${result.sources.length}`,
+        `status=${result.status} served=${result.served ?? "?"} sources=${result.sources.length}`,
       );
   }
+}
+
+async function probeBaseline(): Promise<void> {
+  // A pinned chip is served from the baseline (ADR-0027): free (no quota
+  // cookie), on-origin, no-store, and never a refusal.
+  const result = await ask(BASELINE_QUESTION);
+  const onOrigin = result.sources.every((source) =>
+    source.url.startsWith(`${ORIGIN}/`),
+  );
+  const ok =
+    result.status === 200 &&
+    result.served === "baseline" &&
+    result.sources.length > 0 &&
+    onOrigin &&
+    result.setCookie === null &&
+    result.cacheControl === "no-store";
+  record(
+    "pinned baseline question is served without a model call (ADR-0027)",
+    ok,
+    ok
+      ? "served=baseline, on-origin sources, no quota cookie"
+      : `status=${result.status} served=${result.served ?? "?"} sources=${result.sources.length} cookie=${result.setCookie ? "set" : "absent"}`,
+  );
 }
 
 async function probeInputBoundary(): Promise<void> {
@@ -453,7 +488,9 @@ async function probeQuotaCookie(): Promise<void> {
   let setCookie: string | null = null;
   let status = 0;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
-    const result = await ask(GROUNDED_QUESTION);
+    // Nonce: the cookie is only set on the model path, so a baseline hit would
+    // never set it (ADR-0027).
+    const result = await ask(groundedQuestion());
     status = result.status;
     setCookie = result.setCookie;
     if (status === 200) break;
@@ -507,6 +544,7 @@ async function main(): Promise<void> {
   await probeRefusals();
   await probeNoLeak();
   await probeContactContainment();
+  await probeBaseline();
   await probeGroundedOnOrigin();
   await probeInputBoundary();
   await probeRobotsContract();

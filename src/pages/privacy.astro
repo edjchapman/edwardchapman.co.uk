@@ -14,16 +14,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     below.
   </p>
   <p>
-    When you use <a href="/ask">Ask about Ed's work</a>, your question is sent
-    to Anthropic to generate an answer, and is recorded in the site's
-    operational logs so abuse of the assistant can be detected. Those logs
-    expire automatically after a short period; answers are never stored, and
-    there is no database or account system behind this site. Do not include
-    personal or sensitive information in a question. To keep the assistant
-    available to everyone, asking a question sets a signed cookie that counts
-    how many questions your browser has asked in the past 24 hours. It contains
-    only that count — no identifier and no tracking — and is sent only with Ask
-    requests.
+    When you use <a href="/ask">Ask about Ed's work</a>, your question is first
+    checked against a short list of pre-written answers to common questions; if
+    none matches, it is sent to Anthropic to generate an answer. Either way it
+    is recorded in the site's operational logs so abuse of the assistant can be
+    detected. Those logs expire automatically after a short period; answers are
+    never stored, and there is no database or account system behind this site.
+    Do not include personal or sensitive information in a question. To keep the
+    assistant available to everyone, asking a question that reaches the model
+    sets a signed cookie that counts how many questions your browser has asked
+    in the past 24 hours. It contains only that count — no identifier and no
+    tracking — and is sent only with Ask requests.
   </p>
   <p>
     Questions about any of this:

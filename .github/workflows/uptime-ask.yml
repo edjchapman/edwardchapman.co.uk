@@ -43,17 +43,21 @@ jobs:
         id: probe
         # A few attempts absorb a transient timeout or rate-limit so a blip
         # doesn't flap the monitor; a persistently dead key fails all of them.
+        # The question carries a per-run nonce so it MISSES the pre-answered
+        # baseline (ADR-0027) and the assertion requires `served == "model"` —
+        # otherwise a baseline hit would keep this green while the model path is
+        # dead, the exact blindness ADR-0018 forbids.
         run: |
           for i in $(seq 1 3); do
             code=$(curl -sS -o ask-probe.json -w '%{http_code}' \
               https://edwardchapman.co.uk/api/ask \
               -H 'content-type: application/json' \
-              -d '{"question":"How did Foreman handle reliable event processing?"}' || true)
-            if [ "$code" = "200" ] && jq -e '.sources | length > 0' ask-probe.json >/dev/null 2>&1; then
-              echo "ok: /api/ask returns a grounded answer (attempt $i)"
+              -d "{\"question\":\"How did Foreman handle reliable event processing? probe-${GITHUB_RUN_ID}\"}" || true)
+            if [ "$code" = "200" ] && jq -e '.served == "model" and (.sources | length > 0)' ask-probe.json >/dev/null 2>&1; then
+              echo "ok: /api/ask returns a grounded model answer (attempt $i)"
               exit 0
             fi
-            echo "attempt $i: /api/ask HTTP $code, not grounded"
+            echo "attempt $i: /api/ask HTTP $code, not a grounded model answer"
             sleep 20
           done
           errcode=$(jq -r '.error.code // "none"' ask-probe.json 2>/dev/null || echo "unparseable")

@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 
+import baselineJson from "../../generated/baseline.json";
 import corpusJson from "../../generated/corpus.json";
 import type { Corpus } from "../../../scripts/build-agent-corpus.ts";
 import {
@@ -8,6 +9,11 @@ import {
   type ModelAdapter,
 } from "../../lib/agent/adapter.ts";
 import { AnthropicAdapter } from "../../lib/agent/anthropic-adapter.ts";
+import {
+  createBaselineLookup,
+  type BaselineAnswers,
+  type BaselineEntry,
+} from "../../lib/agent/baseline.ts";
 import {
   INVALID_REQUEST_MESSAGE,
   METHOD_NOT_ALLOWED_MESSAGE,
@@ -28,6 +34,9 @@ import {
 export const prerender = false;
 
 const CANONICAL_HOST = "edwardchapman.co.uk";
+
+// Exact-match pre-answered questions (ADR-0027), built once at module init.
+const lookupBaseline = createBaselineLookup(baselineJson as BaselineAnswers);
 
 type ErrorCode =
   | "invalid_request"
@@ -106,6 +115,37 @@ const structuredLog: AgentLogger = (event) => {
   // platform's log retention); answers are never logged.
   console.log(JSON.stringify(event));
 };
+
+/**
+ * Serve a pre-answered baseline entry as buffered JSON (ADR-0027) — even to
+ * SSE clients (the island's dual-mode path renders it). `served: "baseline"`
+ * is the honesty + observability marker: the monitors assert `served ==
+ * "model"` so a baseline hit can never mask a dead model path (ADR-0018). The
+ * accepted event still records the question (ADR-0023 abuse-monitoring parity);
+ * a distinct `ask.baseline_served` carries only the entry id.
+ */
+function baselineResponse(
+  entry: BaselineEntry,
+  question: string,
+  requestId: string,
+): Response {
+  structuredLog({
+    event: "ask.accepted",
+    requestId,
+    question: question.slice(0, 500),
+  });
+  structuredLog({ event: "ask.baseline_served", requestId, detail: entry.id });
+  return new Response(
+    JSON.stringify({
+      answer: entry.answer,
+      citations: entry.citations,
+      sources: entry.sources,
+      served: "baseline",
+      requestId,
+    }),
+    { status: 200, headers: jsonHeaders },
+  );
+}
 
 /**
  * Server-Sent-Events stream of the validated answer (ADR-0016). Each line is
@@ -251,6 +291,17 @@ const handleAsk: APIRoute = async (context) => {
     }
   }
 
+  // Pre-answered baseline (ADR-0027): exact-match questions short-circuit
+  // here — after the IP limiter, before the quota gate (a hit costs nothing,
+  // so it never spends the visitor's daily budget) and before adapter
+  // selection (it needs no credential, so example chips answer through an
+  // outage). This call site is the serving-policy switch. SSE clients get
+  // buffered JSON; the island's fallback renders it.
+  const baselineHit = lookupBaseline(parsed.data.question);
+  if (baselineHit) {
+    return baselineResponse(baselineHit, parsed.data.question, requestId);
+  }
+
   // Per-visitor quota (ADR-0024): a signed cookie counts questions per 24h
   // window; the server stays stateless. Absent secret ⇒ layer off — logged,
   // and the live security probe fails if production ever runs without it.
@@ -312,6 +363,7 @@ const handleAsk: APIRoute = async (context) => {
             answer: outcome.answer,
             citations: outcome.citations,
             sources: outcome.sources,
+            served: "model",
             requestId,
           }),
           { status: 200, headers: jsonHeaders },
@@ -324,6 +376,7 @@ const handleAsk: APIRoute = async (context) => {
             answer: outcome.answer,
             citations: [],
             sources: [],
+            served: "model",
             requestId,
           }),
           { status: 200, headers: jsonHeaders },

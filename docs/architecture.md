@@ -26,7 +26,10 @@ The Worker exists only for routes that declare `prerender = false`.
 `make build` runs three pre-build generators before `astro build`, in order:
 
 1. **`scripts/build-agent-corpus.ts`** — the versioned agent corpus
-   ([ADR-0005](adr/0005-build-time-corpus-deterministic-retrieval.md)).
+   ([ADR-0005](adr/0005-build-time-corpus-deterministic-retrieval.md)), then
+   **`scripts/build-baseline-answers.ts`** — the pre-answered baseline
+   ([ADR-0027](adr/0027-pre-answered-baseline-questions.md)), which resolves
+   its citations against that corpus and fails the build on a stale section.
 2. **`scripts/build-og-cards.ts`** — per-page social cards (spec §9). It
    renders one 1200×630 PNG per non-draft project and note into
    `public/og/{projects,notes}/`, plus the site-wide fallback
@@ -93,6 +96,11 @@ ingestion) + authored pages. The boundary is enforced mechanically by
 
 1. Validate (Content-Type, byte cap, zod question schema) and rate-limit
    (per-IP binding, [ADR-0009](adr/0009-rate-limiting-without-stateful-infra.md)).
+   - Then an exact-match pre-answered baseline lookup
+     ([ADR-0027](adr/0027-pre-answered-baseline-questions.md)): a hit is served
+     as buffered JSON (`served: "baseline"`) here — before the quota gate and
+     the model, so it is free and works with no credential. A miss falls
+     through to the model path.
 2. Retrieve top-5 corpus chunks (deterministic BM25-style scoring); refuse
    below the confidence gate without calling the model.
 3. Send the chunks as `search_result` blocks (canonical URL + title, citations
@@ -101,9 +109,11 @@ ingestion) + authored pages. The boundary is enforced mechanically by
 4. Normalise at the adapter seam to `{text, citations}`; validate spans;
    whitelist citation indices (anomaly tripwire); check policy-leak
    fingerprints; treat the refusal sentence or zero citations as a refusal.
-5. Return `{answer, citations, sources, requestId}` — spans map answer ranges
-   to sources, deduplicated by URL and ordered by first citation; the island
-   renders them as inline markers.
+5. Return `{answer, citations, sources, served: "model", requestId}` — spans
+   map answer ranges to sources, deduplicated by URL and ordered by first
+   citation; the island renders them as inline markers. `served` distinguishes
+   a model answer from a baseline hit (ADR-0027); the monitors assert
+   `served == "model"`.
 
 The fake adapter speaks the same normalised shape, so the whole path runs
 deterministically in CI and local dev without a key. Local built Workers are

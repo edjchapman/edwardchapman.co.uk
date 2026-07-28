@@ -566,7 +566,8 @@ Request shape:
 ```
 
 Successful response shape _(amended — see
-[ADR-0012](adr/0012-api-enforced-citations-via-search-results.md))_:
+[ADR-0012](adr/0012-api-enforced-citations-via-search-results.md) and
+[ADR-0027](adr/0027-pre-answered-baseline-questions.md))_:
 
 ```json
 {
@@ -584,9 +585,14 @@ Successful response shape _(amended — see
       "url": "string"
     }
   ],
+  "served": "model | baseline",
   "requestId": "string"
 }
 ```
+
+`served` (ADR-0027) reports whether the model produced the answer or it was
+served from the pre-answered baseline; it is optional for backward
+compatibility (absent ⇒ model).
 
 Citation invariants:
 
