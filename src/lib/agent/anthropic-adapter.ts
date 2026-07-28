@@ -30,6 +30,12 @@ export type AnthropicAdapterConfig = {
   /** Optional AI Gateway endpoint; defaults to the Anthropic API. */
   baseURL?: string | undefined;
   /**
+   * Optional Cloudflare AI Gateway token (ADR-0025). When set, sent as the
+   * `cf-aig-authorization` header so an authenticated gateway accepts the
+   * request; absent ⇒ no header, so the direct Anthropic API is unaffected.
+   */
+  gatewayToken?: string | undefined;
+  /**
    * Test seam: stubs the transport while the real SDK still performs request
    * serialisation and error classification. Production never sets it.
    */
@@ -59,6 +65,13 @@ export class AnthropicAdapter implements ModelAdapter {
     this.client = new Anthropic({
       apiKey: config.apiKey,
       ...(config.baseURL ? { baseURL: config.baseURL } : {}),
+      ...(config.gatewayToken
+        ? {
+            defaultHeaders: {
+              "cf-aig-authorization": `Bearer ${config.gatewayToken}`,
+            },
+          }
+        : {}),
       ...(config.fetch ? { fetch: config.fetch } : {}),
       timeout: TIMEOUT_MS,
       maxRetries: 1,
