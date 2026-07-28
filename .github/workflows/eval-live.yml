@@ -11,6 +11,10 @@ on:
     # Tuesdays 08:00 UTC — offset from the Monday scheduled-check.
     - cron: "0 8 * * 2"
 
+permissions:
+  contents: read # checkout (to run scripts/report-incident.sh)
+  issues: write # open/close the quality incident issue
+
 jobs:
   eval-live:
     name: live agent evaluation
@@ -63,3 +67,18 @@ jobs:
           name: eval-report
           path: eval-report.json
           retention-days: 30
+      # A weekly cron is the easiest red run to miss (the 2026-07-25 outage
+      # lesson). Quality drift gets its own deduped incident issue — separate
+      # kind/title from the /api/ask outage incident so the two never conflate
+      # or auto-close each other. GitHub notification only (assignee/mention);
+      # the phone/email channels are reserved for outage-class incidents.
+      - name: Open quality incident on failure
+        if: failure() && steps.key.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/report-incident.sh fail "eval-live" quality
+      - name: Close quality incident on pass
+        if: success() && steps.key.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/report-incident.sh ok "eval-live" quality

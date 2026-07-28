@@ -143,23 +143,45 @@ i.e. HTTP 200 with a non-empty `sources` array (the invariant
   `/api/ask` POST returning a grounded answer. It asserts non-empty `sources`,
   not merely an `"answer"` field, because a refusal is also `200 {"answer":…}` —
   grepping `"answer"` would pass a dead key.
-- **Synthetic monitor** (`uptime-ask.yml`) — runs the same probe on a 6-hourly
+- **Synthetic monitor** (`uptime-ask.yml`) — runs the same probe on an hourly
   cron (plus `workflow_dispatch`) to catch credential rot **between** deploys,
   which the deploy-time smoke cannot. It hits only the public endpoint, so it
-  needs no external secrets. Dispatch it manually after rotating the key to
-  confirm production recovered.
+  needs no external secrets (one Haiku call per healthy run — ~24/day,
+  negligible; failed runs cost nothing). Dispatch it manually after rotating
+  the key or topping up credit to confirm production recovered.
 
 **Alerting.** A red workflow run is not a reliable signal on its own — a red
-post-deploy smoke was ignored for ~a day on 2026-07-14 while the deploy shipped
-regardless (the smoke runs after `wrangler deploy`). So on failure both checks
-call `scripts/report-incident.sh`, which opens a deduped GitHub issue titled
-_"🚨 production /api/ask is not returning a grounded answer"_ (label
-`production`) via the built-in token — no external service. Both checks share
-one issue, so whichever next sees a grounded answer (a later deploy smoke or an
-`uptime-ask` run) auto-closes it. The issue body links the two remedies: a dead
-key (`make rotate-anthropic-key`) versus a code regression (`wrangler rollback`).
-There is deliberately no auto-rollback — the common failure is a dead external
-key, which rollback cannot fix and which would discard a good deploy.
+post-deploy smoke was ignored for ~a day on 2026-07-14, and the 2026-07-25
+credit-exhaustion outage ran for three days behind an incident issue nobody
+was notified about (an unassigned bot-authored issue notifies no one). So on
+failure both checks call `scripts/report-incident.sh`, which opens a deduped
+GitHub issue titled _"🚨 production /api/ask is not returning a grounded
+answer"_ (label `production`) via the built-in token, **assigned to and
+@mentioning `edjchapman`** — assignment and mentions both trigger GitHub
+notifications, and the assignment is re-applied idempotently on every
+still-failing comment so pre-existing incidents get picked up too. The probes
+pass the observed failure class along (`INCIDENT_DETAIL`, e.g.
+`HTTP 502, error code upstream_error`), so billing, key, and regression causes
+are distinguishable from the issue alone. Incident open/resolve transitions
+additionally push to a phone (ntfy) and email when the optional repository
+secrets are configured — transitions only, so a long outage pings the direct
+channels twice, not hourly:
+
+- `NTFY_TOPIC` — private ntfy.sh topic; subscribe to it in the ntfy app.
+- `ALERT_SMTP_USER` / `ALERT_SMTP_PASS` / `ALERT_EMAIL_TO` (plus optional
+  `ALERT_SMTP_HOST`/`ALERT_SMTP_PORT`/`ALERT_EMAIL_FROM`, defaulting to a
+  Gmail app-password setup) — sent with curl's SMTP support, no third-party
+  action.
+
+Both checks share one issue, so whichever next sees a grounded answer (a later
+deploy smoke or an `uptime-ask` run) auto-closes it. The issue body carries
+the cause→remedy table: exhausted credit (top up — do **not** rotate), a dead
+key (`make rotate-anthropic-key`), a retired model id (`ANTHROPIC_MODEL` var),
+versus a code regression (`wrangler rollback`). `eval-live.yml` failures open
+a separate `quality`-kind incident (own title, GitHub notification only) so
+quality drift never conflates with an outage. There is deliberately no
+auto-rollback — the common failure is a dead external key, which rollback
+cannot fix and which would discard a good deploy.
 
 ## Rollback
 

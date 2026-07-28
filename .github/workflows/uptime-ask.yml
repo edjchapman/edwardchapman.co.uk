@@ -3,22 +3,26 @@ name: uptime-ask
 # Synthetic monitor for the live model path of /api/ask. The post-deploy smoke
 # in deploy.yml proves the endpoint at *deploy* time, but the Anthropic key is
 # an external credential that can rot between deploys (rotation, revocation,
-# expiry) with no push to re-check it — exactly how a dead key once sat silently
-# in production. This probes the *public* endpoint on a schedule and fails (a
-# red run is the alert; GitHub notifies on workflow failure) unless it gets a
-# grounded answer: HTTP 200 with a non-empty `sources` array. A refusal
-# (`"sources":[]`) or an `upstream_error` 502 both fail it — the same invariant
-# the deploy smoke and the e2e round-trip assert.
+# expiry, credit exhaustion) with no push to re-check it — a dead key once sat
+# silently in production, and the 2026-07-25 credit drain went unnoticed for
+# three days. This probes the *public* endpoint hourly and fails unless it
+# gets a grounded answer: HTTP 200 with a non-empty `sources` array. A refusal
+# (`"sources":[]`) or an upstream-failure error both fail it — the same
+# invariant the deploy smoke and the e2e round-trip assert.
 #
-# No external secrets: it only calls the public endpoint (which uses the
-# Worker's own secret) and, on failure, opens a deduped GitHub incident issue
-# via the built-in token — a red run alone was ignorable, an open issue is not.
-# One live Haiku call per run — negligible cost, well within the ASK_RATE_LIMITER
-# (10/60s per IP).
+# The alert is the deduped incident issue (scripts/report-incident.sh):
+# assigned to and @mentioning the maintainer, carrying the observed HTTP
+# status + error code so billing, key, and regression causes are readable from
+# the issue alone. Open/resolve transitions also push to phone/email when the
+# optional NTFY_TOPIC / ALERT_* repository secrets are configured. No secrets
+# are *required*: the probe calls only the public endpoint (which uses the
+# Worker's own secret) and the issue uses the built-in token. One live Haiku
+# call per healthy run (~24/day, negligible, well within the ASK_RATE_LIMITER
+# 10/60s per IP); failed runs cost nothing.
 
 on:
   schedule:
-    - cron: "0 */6 * * *" # every 6 hours
+    - cron: "0 * * * *" # hourly: detection within the hour, not within six
   workflow_dispatch:
 
 concurrency:
@@ -36,6 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Probe /api/ask for a grounded answer
+        id: probe
         # A few attempts absorb a transient timeout or rate-limit so a blip
         # doesn't flap the monitor; a persistently dead key fails all of them.
         run: |
@@ -51,18 +56,35 @@ jobs:
             echo "attempt $i: /api/ask HTTP $code, not grounded"
             sleep 20
           done
-          echo "uptime-ask failed: /api/ask is not returning a grounded answer"
+          errcode=$(jq -r '.error.code // "none"' ask-probe.json 2>/dev/null || echo "unparseable")
+          echo "detail=HTTP $code, error code $errcode" >> "$GITHUB_OUTPUT"
+          echo "uptime-ask failed: /api/ask is not returning a grounded answer (HTTP $code, error code $errcode)"
           echo "last response body (first 300 bytes):"
           head -c 300 ask-probe.json || true; echo
-          echo "likely cause: the Worker ANTHROPIC_API_KEY is missing/rotated — see docs/deployment.md (Rotating the Anthropic API key)"
+          echo "cause → remedy table: docs/deployment.md → Diagnosing failures (billing vs key vs regression)"
           exit 1
       - name: Open incident issue on failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
+          INCIDENT_DETAIL: ${{ steps.probe.outputs.detail }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ALERT_SMTP_HOST: ${{ secrets.ALERT_SMTP_HOST }}
+          ALERT_SMTP_PORT: ${{ secrets.ALERT_SMTP_PORT }}
+          ALERT_SMTP_USER: ${{ secrets.ALERT_SMTP_USER }}
+          ALERT_SMTP_PASS: ${{ secrets.ALERT_SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
         run: ./scripts/report-incident.sh fail "uptime-ask"
       - name: Close incident issue on recovery
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ALERT_SMTP_HOST: ${{ secrets.ALERT_SMTP_HOST }}
+          ALERT_SMTP_PORT: ${{ secrets.ALERT_SMTP_PORT }}
+          ALERT_SMTP_USER: ${{ secrets.ALERT_SMTP_USER }}
+          ALERT_SMTP_PASS: ${{ secrets.ALERT_SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM: ${{ secrets.ALERT_EMAIL_FROM }}
         run: ./scripts/report-incident.sh ok "uptime-ask"
