@@ -9,6 +9,9 @@ const PAGES = [
   "/projects/foreman",
   "/notes",
   "/notes/llm-as-judge-as-a-ci-quality-gate",
+  // Carries the site's only ts code fence — keeps the token-mapped Shiki
+  // colours under the contrast gate in both schemes.
+  "/notes/api-enforced-citations",
   "/experience",
   "/now",
   "/colophon",
