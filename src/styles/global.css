@@ -84,6 +84,59 @@ code {
   border-radius: var(--radius);
 }
 
+/* Breakout canvas — every page's <main> is a named-line grid: children land
+ * in the reading column (--measure) by default; structural elements opt into
+ * the wide canvas with .u-wide. The wide side-tracks collapse to zero on
+ * narrow viewports, so below ~600px this is byte-identical to a single
+ * column with --space-4 gutters. Lives here rather than in BaseLayout's
+ * scoped style because scoped selectors cannot reach slotted page content.
+ * (.u-wide/.card-grid are the small utility layer spec §2 allows.) */
+main {
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(var(--space-4), 1fr)
+    [wide-start] minmax(0, calc((var(--measure-wide) - var(--measure)) / 2))
+    [content-start] min(var(--measure), 100% - 2 * var(--space-4))
+    [content-end]
+    minmax(0, calc((var(--measure-wide) - var(--measure)) / 2))
+    [wide-end]
+    minmax(var(--space-4), 1fr) [full-end];
+  padding-block: var(--space-5);
+}
+
+/* astro-island is display:contents, so an island's children are laid out as
+ * main's own grid items but never match `main > *` — without the second
+ * selector they auto-place into the gutter track and render crushed. */
+main > *,
+main > astro-island > * {
+  grid-column: content;
+}
+
+main > .u-wide {
+  grid-column: wide;
+  /* Escape the base measure cap on p/ul/ol — wide elements manage their
+   * own internal reading widths. */
+  max-width: none;
+}
+
+/* Project cards: stacked by default, three abreast on the wide canvas.
+ * The counter feeds each card's editorial index number. */
+.card-grid {
+  counter-reset: project;
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 64rem) {
+  /* Cards size to their own content — a ragged bottom edge reads better
+   * than equal-height cards padded with dead space when one card (metrics)
+   * runs much longer than its neighbours. */
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    align-items: start;
+  }
+}
+
 /* Anchor targets (skip link's #main, the ask sources' #ask-source-N) land
  * with breathing room instead of flush against the viewport edge. */
 [id] {

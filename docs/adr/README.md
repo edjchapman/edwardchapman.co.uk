@@ -35,6 +35,7 @@ marked here and in their own status line.
 | [0025](0025-ai-gateway-and-provider-spend-limit.md)                     | Global spend guard — Cloudflare AI Gateway + Anthropic provider spend limit  | Accepted 2026-07-28          |
 | [0026](0026-upstream-failure-taxonomy-and-honest-degraded-responses.md) | Upstream failure taxonomy and honest degraded responses                      | Accepted 2026-07-28          |
 | [0027](0027-pre-answered-baseline-questions.md)                         | Pre-answered baseline questions served without a model call                  | Accepted 2026-07-28          |
+| [0028](0028-wide-canvas-layout-and-token-mapped-code-highlighting.md)   | Wide-canvas responsive layout and token-mapped code highlighting             | Accepted 2026-08-12          |
 
 Reading order for newcomers: 0001–0003 set the platform shape, 0005–0008 define
 the agent's grounding and evaluation model, 0007/0011/0019 govern what content

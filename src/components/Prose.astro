@@ -7,6 +7,13 @@
     max-width: var(--measure);
   }
 
+  /* Grid items contain child margins (no collapsing out of the box), so the
+   * page grid would otherwise pay each block's trailing margin twice —
+   * trim it and let the following sibling's own spacing carry the rhythm. */
+  .prose > :global(:last-child) {
+    margin-bottom: 0;
+  }
+
   /* Long-form headings share the Section.astro vocabulary: a rule under h2
    * marks each movement of a case study or note. */
   .prose :global(h2) {

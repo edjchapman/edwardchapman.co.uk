@@ -51,8 +51,10 @@ const formatDate = (date: Date) =>
   <Prose><Positioning /></Prose>
   <AskCallout />
 
-  <Section id="projects" heading="Selected projects">
-    {projects.map((project) => <ProjectCard project={project} />)}
+  <Section id="projects" heading="Selected projects" class="u-wide">
+    <div class="card-grid">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </div>
   </Section>
 
   <Section id="how-i-work" heading="How I work">

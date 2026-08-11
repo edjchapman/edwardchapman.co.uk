@@ -31,11 +31,13 @@ const collectionPage = collectionPageNode({
     Each project links to a case study covering the architecture, the decisions
     that carried weight, honest limitations, and what I'd do next.
   </p>
-  {
-    projects.map((project) => (
-      <ProjectCard project={project} headingLevel={2} />
-    ))
-  }
+  <div class="card-grid u-wide">
+    {
+      projects.map((project) => (
+        <ProjectCard project={project} headingLevel={2} />
+      ))
+    }
+  </div>
   <JsonLd nodes={[collectionPage]} />
 </BaseLayout>
 
