@@ -98,19 +98,16 @@ copy may simply not exist.
 suffix keeps the project key from colliding with a global `ANTHROPIC_API_KEY`
 that other tooling picks up.
 
-Give it a durable home rather than a bare `export` — an ad-hoc
-`launchctl setenv` does not survive a reboot and goes stale silently at the
-next rotation, invisible to every shell profile. On macOS, the Keychain:
+Give it a durable home — whatever already holds your other shell credentials
+(an encrypted dotfiles secrets file, a password manager, the OS keychain).
+This runbook deliberately does not prescribe one: it is a per-developer,
+per-platform choice, and the only property that matters is that the value is
+recoverable and updatable in one known place.
 
-```sh
-# Store once (-w last ⇒ hidden prompt, value never on argv or in history):
-security add-generic-password -U -a "$USER" -s edwardchapman-anthropic -w
-
-# Read on demand, in ~/.zshrc:
-export ANTHROPIC_API_KEY_EDWARDCHAPMAN=$(
-  security find-generic-password -w -s edwardchapman-anthropic 2>/dev/null
-)
-```
+What it must **not** be is an ad-hoc `export` typed into a terminal, or a bare
+`launchctl setenv` on macOS. Such a value survives no reboot, appears in no
+shell profile, and so goes stale invisibly at the next rotation — this
+paragraph exists because that is precisely how it was found broken.
 
 A stale value fails confusingly (HTTP 401 mid-evaluation) rather than cleanly.
 To check one without spending tokens, authenticate against a request that
@@ -147,7 +144,7 @@ three independent places, which fix different things:
 | --------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Cloudflare Worker                 | production `/api/ask`        | `wrangler versions secret put ANTHROPIC_API_KEY --name edwardchapman`, then `wrangler versions deploy --name edwardchapman` |
 | GitHub Actions (`production` env) | the live-eval workflow       | `gh secret set ANTHROPIC_API_KEY --env production`                                                                          |
-| Local shell (optional)            | local `make eval-agent-live` | `security add-generic-password -U -a "$USER" -s edwardchapman-anthropic -w` (see [Local](#local-optional))                  |
+| Local shell (optional)            | local `make eval-agent-live` | update `ANTHROPIC_API_KEY_EDWARDCHAPMAN` in whatever holds your shell credentials — see [Local](#local-optional)            |
 
 **Reading the commands: every token shown is literal — type it exactly.**
 `ANTHROPIC_API_KEY` is the secret's _name_ (not its value), `edwardchapman` is

@@ -95,5 +95,6 @@ echo "  · REQUIRED: revoke the OLD key in the Anthropic Console (Settings → A
 echo "    Until then both keys spend against the same wallet, and the probe above"
 echo "    cannot distinguish the new key from the old one still working."
 echo "  · Optional between-deploys check: gh workflow run uptime-ask.yml"
-echo "  · Optional local evals: update the Keychain copy (docs/deployment.md, 'Local'):"
-echo "    security add-generic-password -U -a \"\$USER\" -s edwardchapman-anthropic -w"
+echo "  · Optional local evals: update ANTHROPIC_API_KEY_EDWARDCHAPMAN wherever your"
+echo "    shell credentials live — docs/deployment.md, 'Local', which also gives a"
+echo "    zero-cost check distinguishing a live key from a revoked one."
