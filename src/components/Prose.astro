@@ -7,6 +7,14 @@
     max-width: var(--measure);
   }
 
+  /* Long-form headings share the Section.astro vocabulary: a rule under h2
+   * marks each movement of a case study or note. */
+  .prose :global(h2) {
+    margin-top: var(--space-5);
+    padding-bottom: var(--space-2);
+    border-bottom: var(--rule);
+  }
+
   .prose :global(h3) {
     margin-top: var(--space-4);
   }
@@ -15,11 +23,90 @@
     padding-left: 1.25em;
   }
 
+  .prose :global(ol) {
+    padding-left: 1.25em;
+  }
+
   .prose :global(li) {
     margin-bottom: var(--space-1);
   }
 
+  .prose :global(li::marker) {
+    color: var(--color-muted);
+  }
+
   .prose :global(strong) {
     font-weight: 600;
+  }
+
+  .prose :global(blockquote) {
+    margin: var(--space-4) 0;
+    padding-left: var(--space-4);
+    border-left: 2px solid var(--color-rule-strong);
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: var(--color-muted);
+  }
+
+  .prose :global(blockquote p:last-child) {
+    margin-bottom: 0;
+  }
+
+  /* A thematic break is a pause, not a wall: short centred rule. */
+  .prose :global(hr) {
+    border: 0;
+    border-top: var(--rule);
+    width: var(--space-6);
+    margin: var(--space-5) auto;
+  }
+
+  /* Rule-only tables — horizontal structure, no boxed grid. */
+  .prose :global(table) {
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: var(--space-3);
+  }
+
+  .prose :global(th) {
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid var(--color-rule-strong);
+    padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  }
+
+  .prose :global(td) {
+    border-bottom: var(--rule);
+    padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  }
+
+  .prose :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+
+  .prose :global(figcaption) {
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    margin-top: var(--space-2);
+  }
+
+  /* Code blocks: colours come from the --astro-code-* tokens (tokens.css);
+   * the container gets the raised-surface treatment cards use. */
+  .prose :global(pre.astro-code) {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    margin-bottom: var(--space-3);
+  }
+
+  .prose :global(:not(pre) > code) {
+    background: var(--color-rule);
+    padding: 0.1em 0.35em;
+    border-radius: var(--radius);
   }
 </style>

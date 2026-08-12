@@ -52,6 +52,16 @@ ol {
   max-width: var(--measure);
 }
 
+/* Progressive nicety (Chromium): avoid single-word last lines. */
+p {
+  text-wrap: pretty;
+}
+
+/* Dates and counters align digit-for-digit wherever they appear. */
+time {
+  font-variant-numeric: tabular-nums;
+}
+
 a {
   color: var(--color-accent);
   text-decoration-thickness: 1px;

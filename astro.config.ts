@@ -46,6 +46,13 @@ export default defineConfig({
       },
     }),
   ],
+  // Syntax highlighting consumes the site's design tokens: the css-variables
+  // theme emits var(--astro-code-*) inline styles, and tokens.css maps those
+  // to the paper/ink palette in both colour schemes. A named theme would
+  // hardcode hexes that fight the palette and dodge the axe contrast gate.
+  markdown: {
+    shikiConfig: { theme: "css-variables" },
+  },
   // Sessions are unused on this site. Without an explicit driver the adapter
   // auto-provisions a Cloudflare KV namespace (spec: no KV — see docs/spec.md
   // "Simplicity before infrastructure").
