@@ -1,5 +1,8 @@
 ---
 import AskForm from "../components/AskForm.tsx";
+// React-free module on purpose: importing the list from AskForm.tsx would
+// pull React into the server graph that client:only keeps it out of.
+import { EXAMPLE_QUESTIONS } from "../components/ask-examples.ts";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 // Released (Phase 4 gates passed, docs/evaluation.md): linked in the nav, in
@@ -31,6 +34,21 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <div class="fallback-input"></div>
         <div class="fallback-button"></div>
       </div>
+      {
+        /* The example list renders its real text so the skeleton's height
+          matches the hydrated form to the pixel — hydration then causes no
+          layout shift at all, not just a small one. */
+      }
+      <p class="examples-label">Or try one of these:</p>
+      <ul class="examples">
+        {
+          EXAMPLE_QUESTIONS.map((example) => (
+            <li>
+              <div class="fallback-example">{example}</div>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </AskForm>
 
@@ -127,6 +145,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     margin: var(--space-1) 0 0;
     color: var(--color-muted);
     font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
   }
 
   .ask .examples-label {
@@ -251,5 +270,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     border-radius: var(--radius);
     background: var(--color-ink);
     opacity: 0.85;
+  }
+
+  /* Same metrics as .ask .examples button (padding, border, type) so each
+   * skeleton row occupies exactly the space its real button will. */
+  .ask-fallback .fallback-example {
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius);
+    background: var(--color-paper-raised);
+    color: var(--color-ink);
+    font-size: var(--text-sm);
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
   }
 </style>

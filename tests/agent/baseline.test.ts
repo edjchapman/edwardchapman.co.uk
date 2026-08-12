@@ -6,7 +6,7 @@ import {
   buildBaselineAnswers,
   extractCitations,
 } from "../../scripts/build-baseline-answers";
-import { EXAMPLE_QUESTIONS } from "../../src/components/AskForm";
+import { EXAMPLE_QUESTIONS } from "../../src/components/ask-examples";
 import {
   createBaselineLookup,
   normalizeBaselineKey,

@@ -179,6 +179,17 @@ main > .u-wide {
   ::view-transition-new(root) {
     animation-duration: var(--duration-gentle);
   }
+
+  /* Chrome holds steady while page content cross-fades: header and footer
+   * are identical on every page, so naming them opts them out of the root
+   * transition. Names are unique per page — one of each per BaseLayout. */
+  header {
+    view-transition-name: site-header;
+  }
+
+  footer {
+    view-transition-name: site-footer;
+  }
 }
 
 /* Print — force ink-on-white regardless of the OS theme (a dark-scheme visitor

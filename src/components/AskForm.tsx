@@ -3,6 +3,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { REFUSAL_TEXT } from "../lib/agent/refusal.ts";
 import AskExchange, { type Exchange, type Source } from "./AskExchange.tsx";
 import { type CitationSpan } from "./ask-citations.ts";
+import { EXAMPLE_QUESTIONS } from "./ask-examples.ts";
 import {
   type AskState,
   errorMessage,
@@ -32,18 +33,6 @@ import {
  * (ADR-0026); the error phase distinguishes a transient blip from an
  * operator-actionable outage (`offline`).
  */
-
-// Golden-fixture phrasings where one exists (retrieval is pinned to answer
-// them); the career and education questions use their goldens' verbatim
-// wording.
-export const EXAMPLE_QUESTIONS = [
-  "What kind of engineering roles is Ed best suited to?",
-  "Where has Ed worked, and when?",
-  "Is Ed open to contract or permanent roles?",
-  "What is Ed's educational background?",
-  "How did Foreman handle reliable event processing?",
-  "What does Ed mean by evaluation-driven AI engineering?",
-];
 
 const MAX_QUESTION_LENGTH = 500;
 const COUNTER_FROM = 400;
