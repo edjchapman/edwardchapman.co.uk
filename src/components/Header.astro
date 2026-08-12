@@ -54,6 +54,7 @@ const currentPath = normalizePath(Astro.url.pathname);
   .site-name {
     font-family: var(--font-serif);
     font-weight: 600;
+    font-size: var(--text-lg);
     color: var(--color-ink);
     text-decoration: none;
     white-space: nowrap;
@@ -63,10 +64,12 @@ const currentPath = normalizePath(Astro.url.pathname);
     text-decoration: underline;
   }
 
+  /* Row gap holds the offset underline of the current page clear of a
+   * wrapped second nav row on narrow viewports. */
   nav ul {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-1) var(--space-3);
+    gap: var(--space-2) var(--space-3);
     list-style: none;
     margin: 0;
     padding: 0;
@@ -76,12 +79,22 @@ const currentPath = normalizePath(Astro.url.pathname);
     color: var(--color-muted);
     text-decoration: none;
     font-size: var(--text-sm);
+    letter-spacing: 0.01em;
     transition: color var(--duration-quick) var(--ease-out);
   }
 
-  nav a:hover,
+  nav a:hover {
+    color: var(--color-ink);
+    text-decoration: underline;
+  }
+
+  /* You-are-here in the accent: a settled underline, distinct from the
+   * hover affordance. */
   nav a[aria-current="page"] {
     color: var(--color-ink);
     text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
   }
 </style>
