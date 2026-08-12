@@ -104,6 +104,6 @@ test.describe("smoke", () => {
     const svg = await favicon.text();
     expect(svg).toContain("<path");
     expect(svg).not.toContain("<text");
-    expect(svg).toContain("#7fb0ef"); // the accent tick, from the palette
+    expect(svg).toContain("#e89a6b"); // the accent tick, from the palette
   });
 });

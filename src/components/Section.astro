@@ -2,12 +2,15 @@
 interface Props {
   id: string;
   heading: string;
+  /** Extra classes on the section element — e.g. u-wide to span the wide
+   * canvas of the page grid. */
+  class?: string;
 }
 
-const { id, heading } = Astro.props;
+const { id, heading, class: className } = Astro.props;
 ---
 
-<section aria-labelledby={id}>
+<section class:list={[className]} aria-labelledby={id}>
   <h2 id={id}>{heading}</h2>
   <slot />
 </section>

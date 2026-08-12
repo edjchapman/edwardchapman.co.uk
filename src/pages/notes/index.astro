@@ -37,7 +37,7 @@ const formatDate = (date: Date) =>
     Occasional technical writing — mostly the engineering around AI systems:
     evaluation, grounding, and guardrails.
   </p>
-  <ul class="notes">
+  <ul class="notes u-wide">
     {
       notes.map((note) => (
         <li>
@@ -69,6 +69,35 @@ const formatDate = (date: Date) =>
     margin-bottom: var(--space-4);
     padding-bottom: var(--space-4);
     border-bottom: var(--rule);
+  }
+
+  /* Marginalia dates on the wide canvas: each entry mirrors the page grid —
+   * titles and descriptions keep the reading column's left edge, dates hang
+   * in the left margin. The rules under each entry span the full wide track.
+   * (64rem — the one desktop breakpoint; see tokens.css.) */
+  @media (min-width: 64rem) {
+    /* Track arithmetic mirrors the main grid exactly (side tracks are
+     * (wide − measure) / 2), so column 2 shares the reading column's left
+     * edge; a gap would shift it. The date's own padding provides the
+     * separation instead. */
+    .notes li {
+      display: grid;
+      grid-template-columns: 1fr min(var(--measure), 100%) 1fr;
+    }
+
+    .notes li > * {
+      grid-column: 2;
+    }
+
+    .notes li time {
+      grid-column: 1;
+      grid-row: 1;
+      justify-self: end;
+      align-self: baseline;
+      text-align: right;
+      margin: 0;
+      padding-right: var(--space-4);
+    }
   }
 
   .notes a {

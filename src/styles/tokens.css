@@ -11,7 +11,10 @@
   --color-paper: #faf9f6;
   --color-ink: #1a1a18;
   --color-muted: #5c5a54;
-  --color-accent: #1a5fb4;
+  /* Warm terracotta accent (5.44:1 on paper, 5.73:1 on paper-raised) — the
+   * one saturated hue in the system; error stays in the crimson range so
+   * the two never read as the same signal. */
+  --color-accent: #a84a1f;
   --color-rule: #e5e2da;
   /* rule-strong: borders that carry a surface (cards, controls, asides) —
    * decorative under WCAG 1.4.11, since no control is identified by border
@@ -20,8 +23,8 @@
   --color-paper-raised: #ffffff;
   /* accent-subtle: quiet accent-tinted fill (callout panels). Ink and accent
    * on this surface hold ≥ 4.5:1 in both schemes. */
-  --color-accent-subtle: #edf2f9;
-  --color-error: #8a2b1d;
+  --color-accent-subtle: #f7ede5;
+  --color-error: #a12733;
 
   /* elevation — ink-derived, two steps only: resting surfaces and the one
    * emphasised surface (the ask answer). */
@@ -57,9 +60,18 @@
   --text-2xl: clamp(1.6rem, 1.3rem + 1.4vw, 1.953rem);
   --text-3xl: clamp(1.9rem, 1.4rem + 2.2vw, 2.441rem);
 
+  /* hero display size: one step past 3xl on the same 1.25 modular scale */
+  --text-4xl: clamp(2.2rem, 1.6rem + 3vw, 3.052rem);
+
   --leading-tight: 1.2;
   --leading-body: 1.6;
   --measure: 65ch;
+  /* Wide canvas for structural elements (card grids, hero, index lists);
+   * prose never leaves --measure. Consumed by the main breakout grid in
+   * global.css. Breakpoint convention: media queries cannot read custom
+   * properties, so the one desktop breakpoint is the literal 64rem —
+   * grep "64rem" to find every use. */
+  --measure-wide: 68rem;
 
   /* space: 4px base */
   --space-1: 0.25rem;
@@ -68,6 +80,7 @@
   --space-4: 1.5rem;
   --space-5: 2.5rem;
   --space-6: 4rem;
+  --space-7: 6rem;
 
   --radius: 4px;
   --rule: 1px solid var(--color-rule);
@@ -102,16 +115,17 @@
     --color-paper: #171614;
     --color-ink: #eceae4;
     --color-muted: #a29d92;
-    --color-accent: #7fb0ef;
+    /* Soft apricot (7.98:1 on paper, 6.83:1 on paper-raised). */
+    --color-accent: #e89a6b;
     --color-rule: #302e2a;
     --color-rule-strong: #3a3833;
     /* Raised a step from the old #201e1b: 1px rules alone can't carry
      * figure/ground in the dark scheme, so surface + border + shadow work
      * together. Text pairs on this surface stay ≥ 4.5:1 (muted 5.73,
-     * accent 6.90, ink 12.88). */
+     * accent 6.83, ink 12.88). */
     --color-paper-raised: #262420;
-    --color-accent-subtle: #1f2734;
-    --color-error: #f0a99b;
+    --color-accent-subtle: #33261c;
+    --color-error: #f2a3ae;
 
     /* Ink-alpha shadows disappear on a dark page; use true black. */
     --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
