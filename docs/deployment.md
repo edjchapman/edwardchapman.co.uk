@@ -104,14 +104,12 @@ This runbook deliberately does not prescribe one: it is a per-developer,
 per-platform choice, and the only property that matters is that the value is
 recoverable and updatable in one known place.
 
-What it must **not** be is an ad-hoc `export` typed into a terminal, or a bare
-`launchctl setenv` on macOS. Such a value survives no reboot, appears in no
-shell profile, and so goes stale invisibly at the next rotation — this
-paragraph exists because that is precisely how it was found broken.
-
-A stale value fails confusingly (HTTP 401 mid-evaluation) rather than cleanly.
-To check one without spending tokens, authenticate against a request that
-generates none:
+A stale value fails confusingly (HTTP 401 mid-evaluation) rather than cleanly,
+and a long-running process holds whatever the variable was when it started — so
+an editor, terminal multiplexer, or agent session launched before a rotation
+keeps serving the old value long after the file on disk is correct. Restart it
+before concluding the key is wrong. To check a value without spending tokens,
+authenticate against a request that generates none:
 
 ```sh
 curl -s -o /dev/null -w '%{http_code}\n' https://api.anthropic.com/v1/models \
