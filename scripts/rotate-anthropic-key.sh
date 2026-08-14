@@ -91,5 +91,10 @@ done
   fail "live /api/ask did not return a grounded answer — inspect: pnpm exec wrangler tail --name $WORKER_NAME (look for ask.provider_error)"
 
 note "Done — $SECRET_NAME rotated in the Worker and GitHub $GH_ENV env; /api/ask is answering."
+echo "  · REQUIRED: revoke the OLD key in the Anthropic Console (Settings → API keys)."
+echo "    Until then both keys spend against the same wallet, and the probe above"
+echo "    cannot distinguish the new key from the old one still working."
 echo "  · Optional between-deploys check: gh workflow run uptime-ask.yml"
-echo "  · Optional local evals: update ANTHROPIC_API_KEY_EDWARDCHAPMAN where you export it."
+echo "  · Optional local evals: update ANTHROPIC_API_KEY_EDWARDCHAPMAN wherever your"
+echo "    shell credentials live — docs/deployment.md, 'Local', which also gives a"
+echo "    zero-cost check distinguishing a live key from a revoked one."

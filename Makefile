@@ -109,8 +109,16 @@ check-external-links: ## Probe external URLs in content (manual + weekly; not in
 eval-agent: ## Deterministic agent evaluations (also run inside `make check` via test)
 	@pnpm exec vitest run tests/agent
 
+# The project-scoped ANTHROPIC_API_KEY_EDWARDCHAPMAN is the documented local
+# name (docs/deployment.md, ADR-0014); the suffix keeps it from colliding with a
+# global ANTHROPIC_API_KEY other tooling reads. The script reads the unsuffixed
+# name, so bridge them here rather than in a shell profile. `:-` so an
+# exported-but-empty value also falls through; empty both ways still trips the
+# script's own "ANTHROPIC_API_KEY is required" guard. CI sets the unsuffixed
+# name (eval-live.yml), where this is a no-op.
 eval-agent-live: ## Live model evaluation vs thresholds (needs ANTHROPIC_API_KEY)
-	@node scripts/run-agent-evals.ts
+	@ANTHROPIC_API_KEY="$${ANTHROPIC_API_KEY:-$$ANTHROPIC_API_KEY_EDWARDCHAPMAN}" \
+		node scripts/run-agent-evals.ts
 
 redteam-live: ## Live security probe vs a deployed origin (PROBE_ORIGIN=... to override)
 	@node scripts/probe-live-security.ts

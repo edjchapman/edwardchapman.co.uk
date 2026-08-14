@@ -89,7 +89,33 @@ the Anthropic Console spend limit) is in ADR-0025.
 
 `ANTHROPIC_API_KEY_EDWARDCHAPMAN` — a shell environment variable used only to
 run `make eval-agent-live` locally. Not needed for CI, deploys, or production.
-Local development of everything else needs no secrets.
+Local development of everything else needs no secrets. It is **not** an
+authoritative store (ADR-0014): live evaluation runs in CI by default, so this
+copy may simply not exist.
+
+`scripts/run-agent-evals.ts` reads the **unsuffixed** `ANTHROPIC_API_KEY`; the
+`eval-agent-live` target bridges the two names, so exporting either works. The
+suffix keeps the project key from colliding with a global `ANTHROPIC_API_KEY`
+that other tooling picks up.
+
+Give it a durable home — whatever already holds your other shell credentials
+(an encrypted dotfiles secrets file, a password manager, the OS keychain).
+This runbook deliberately does not prescribe one: it is a per-developer,
+per-platform choice, and the only property that matters is that the value is
+recoverable and updatable in one known place.
+
+A stale value fails confusingly (HTTP 401 mid-evaluation) rather than cleanly,
+and a long-running process holds whatever the variable was when it started — so
+an editor, terminal multiplexer, or agent session launched before a rotation
+keeps serving the old value long after the file on disk is correct. Restart it
+before concluding the key is wrong. To check a value without spending tokens,
+authenticate against a request that generates none:
+
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' https://api.anthropic.com/v1/models \
+  -H "x-api-key: $ANTHROPIC_API_KEY_EDWARDCHAPMAN" -H 'anthropic-version: 2023-06-01'
+# 200 = live, 401 = revoked
+```
 
 Local `/api/ask` requests use the deterministic fake adapter even if a
 developer has a key configured. The local preview and Playwright commands pass
@@ -116,7 +142,7 @@ three independent places, which fix different things:
 | --------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Cloudflare Worker                 | production `/api/ask`        | `wrangler versions secret put ANTHROPIC_API_KEY --name edwardchapman`, then `wrangler versions deploy --name edwardchapman` |
 | GitHub Actions (`production` env) | the live-eval workflow       | `gh secret set ANTHROPIC_API_KEY --env production`                                                                          |
-| Local shell (optional)            | local `make eval-agent-live` | update `ANTHROPIC_API_KEY_EDWARDCHAPMAN` wherever you export it (profile / `.env` / secrets manager)                        |
+| Local shell (optional)            | local `make eval-agent-live` | update `ANTHROPIC_API_KEY_EDWARDCHAPMAN` in whatever holds your shell credentials — see [Local](#local-optional)            |
 
 **Reading the commands: every token shown is literal — type it exactly.**
 `ANTHROPIC_API_KEY` is the secret's _name_ (not its value), `edwardchapman` is
@@ -133,12 +159,25 @@ local working tree), then `wrangler versions deploy` promotes it to traffic.
 Secrets persist across versions, so the next CI deploy inherits it
 automatically: set each secret once.
 
+**Revoke the old key.** Rotation is not finished until the previous key is
+deleted in the Anthropic Console (Settings → API keys). Until then both keys
+spend against the same wallet, so a leak of the old one — usually the reason
+for rotating — is still live, and every check below stays ambiguous.
+
 **Verify the rotation:**
 
-- Production Worker: `curl https://edwardchapman.co.uk/api/ask -H 'content-type: application/json' -d '{"question":"How did Foreman handle reliable event processing?"}'` returns an answer, not `upstream_error`.
+- Production Worker: `curl https://edwardchapman.co.uk/api/ask -H 'content-type: application/json' -d '{"question":"How did Foreman handle reliable event processing?"}'` returns an answer, not `upstream_error`. This proves the **new** key is serving only once the old one is revoked — before that, a rotation that silently failed to promote passes identically.
+- Worker version audit: `pnpm exec wrangler versions list --name edwardchapman`
+  — the newest version should be messaged _Updated secret "ANTHROPIC_API_KEY"_,
+  and `pnpm exec wrangler versions secret list --name edwardchapman` should show
+  that same version at **(100%)**. This is what catches the skipped-promote
+  trap directly, rather than inferring it from endpoint behaviour.
 - GitHub Actions: dispatch `eval-live.yml` (Actions → live agent evaluation →
   Run workflow, or `gh workflow run eval-live.yml`) and confirm it runs the
-  evaluation rather than logging _"ANTHROPIC_API_KEY is not configured"_.
+  evaluation rather than logging _"ANTHROPIC_API_KEY is not configured"_. To
+  confirm the copy without spending a live evaluation, re-set it from the same
+  value you verified: `gh secret set ANTHROPIC_API_KEY --env production`.
+  `gh secret list --env production` shows names and timestamps, never values.
 
 ## Deploy flow
 
