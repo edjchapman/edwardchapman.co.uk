@@ -53,3 +53,16 @@ This repo is a public demonstration artefact. These rules override convenience.
   becomes the squash-commit subject on `main`.
 - Keep commits and PRs focused and reviewable — one coherent change each.
 - Never commit directly to `main`; never bypass required checks.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues, driven via the `gh` CLI. External
+PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The seven triage labels match the canonical role names one-to-one
+(`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`,
+`wontfix`, plus `bug` / `enhancement`). See `docs/agents/triage-labels.md`.
