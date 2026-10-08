@@ -21,5 +21,16 @@ overrides:
   # sharp: dev-only via miniflare/wrangler (local dev server emulation); the
   # production Worker bundle never includes it, and this repo feeds it no
   # untrusted images. Dependabot alert 7 (libvips CVE-2026-33327/33328/
-  # 35590/35591); miniflare's own range lags the patched minor.
-  sharp@<0.35.0: ">=0.35.0"
+  # 35590/35591), then GHSA-wq5f-xc86-pv6w; miniflare's own range lags the
+  # patched release.
+  sharp@<0.35.5: "^0.35.5"
+  # Build-time only, via satori (OG image generation) and vite's postcss; never
+  # in the Worker bundle. Caret targets stay inside the minor the parent already
+  # resolves. GHSA-px8p-9vwx-vf98 (fflate), GHSA-68fv-2mgg-jv7q (source-map-js).
+  fflate@>=0.7.0 <0.7.5: "^0.7.5"
+  source-map-js@>=1.0.0 <1.2.2: "^1.2.2"
+  # Deliberately not overridden (all dev-only via @lhci/cli → puppeteer-core):
+  # extract-zip (GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3) and sprintf-js
+  # (GHSA-hp3w-g68c-fv3c) have no patched release; basic-ftp (GHSA-c475-qrg2-
+  # pj4r) is fixed only in 6.x while every get-uri release pins ^5, and the FTP
+  # path is reached only through a PAC proxy that Lighthouse CI never configures.
