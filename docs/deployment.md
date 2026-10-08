@@ -87,7 +87,7 @@ half-configured one, which fails closed on every request.
 
 They are Worker secrets (not committed vars), so turning the gateway on or off
 is a runtime op with no code change and no redeploy risk — remove both to revert
-to the direct API. `ANTHROPIC_BASE_URL` set **without** the token sends
+to the direct API, and drop the gateway sentences from /privacy (ADR-0029). `ANTHROPIC_BASE_URL` set **without** the token sends
 unauthenticated requests the gateway rejects; set the pair together. Dashboard
 setup (create the gateway, its 100 req/hr rate limit, and the auth token, plus
 the Anthropic Console spend limit) is in ADR-0025, with the live values in its

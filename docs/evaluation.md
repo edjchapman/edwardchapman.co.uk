@@ -145,8 +145,8 @@ post-deploy live run plus a red-team re-run (the system prompt changed).
 Calls the configured model (`ANTHROPIC_MODEL`) through the production
 adapter, **directly against the Anthropic API**: the runner refuses to start
 if `ANTHROPIC_BASE_URL` is set, because the production AI Gateway is
-authenticated and its global rate limit is the visitors' budget (ADR-0025). Scores golden and adversarial sets for **groundedness,
-completeness, citation correctness, and refusal quality** using an
+authenticated and its global rate limit is the visitors' budget (ADR-0025).
+Scores golden and adversarial sets for **groundedness, completeness, citation correctness, and refusal quality** using an
 LLM-as-judge, against thresholds recorded in this document once the first
 baseline run exists (set from evidence, then frozen — see below).
 

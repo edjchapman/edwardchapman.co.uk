@@ -95,9 +95,10 @@ The guard is live. Values and the open questions the activation settled:
   100 requests / 1 hour, sliding. The auth token has only the account-scoped
   `AI Gateway → Run` permission. Request log collection is on — see
   [ADR-0029](0029-ai-gateway-request-logs-retain-answers.md).
-- **Worker:** version `1efbf4d6` carries all four secrets and was promoted
-  once at 100%. A grounded answer and its gateway log entry were both
-  observed.
+- **Worker:** version `1efbf4d6` carries all four secrets and runs at 100%.
+  A grounded answer and its gateway log entry were both observed. The first
+  `versions deploy` re-promoted the old version by mis-pick (no
+  half-configured state shipped); the runbook now deploys by version ID.
 - **Is 100 req/hr right?** Kept. Normal spend is ~$4/month, far below the
   ceiling; in a spike, shedding requests beyond 100/hr is the intended
   behaviour, and the $40 cap stops whatever still gets through.
@@ -105,9 +106,12 @@ The guard is live. Values and the open questions the activation settled:
   Anthropic API directly, stay under the provider cap, and do not consume the
   visitors' global rate limit. `scripts/run-agent-evals.ts` refuses to start
   if `ANTHROPIC_BASE_URL` is set (the SDK would otherwise read it from the
-  environment and every call would fail the gateway's authentication).
+  environment and every call would fail the gateway's authentication). The
+  production probes do use the gateway, since they call `/api/ask`:
+  `uptime-ask` hourly and `redteam-live` twice daily — a few of the 100
+  requests per hour.
 - **Does the gateway buffer SSE?** No. A streamed request arrived as ~45
-  separate network chunks ~25 ms apart, first text 1.34 s after sending.
+  separate network chunks ~25 ms apart, first text ~1.4 s after sending.
 
 ## Revisit conditions
 

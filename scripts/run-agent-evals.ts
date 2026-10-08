@@ -218,23 +218,32 @@ function citationsViolateContract(outcome: {
  * budget; this runner sends no gateway token, so a gateway base URL would fail
  * every call. Refuse loudly instead of silently ignoring the variable.
  */
-export function evalEnvProblem(
+export type EvalEnv =
+  { ok: true; apiKey: string } | { ok: false; problem: string };
+
+export function readEvalEnv(
   env: Readonly<Record<string, string | undefined>>,
-): string | null {
-  if (!env["ANTHROPIC_API_KEY"]) return "ANTHROPIC_API_KEY is required";
-  if (env["ANTHROPIC_BASE_URL"]) {
-    return "ANTHROPIC_BASE_URL must be unset — live evals call the Anthropic API directly (ADR-0025)";
+): EvalEnv {
+  const apiKey = env["ANTHROPIC_API_KEY"];
+  if (!apiKey) return { ok: false, problem: "ANTHROPIC_API_KEY is required" };
+  // Mirrors the SDK, which treats a blank value as unset.
+  if (env["ANTHROPIC_BASE_URL"]?.trim()) {
+    return {
+      ok: false,
+      problem:
+        "ANTHROPIC_BASE_URL must be unset — live evals call the Anthropic API directly (ADR-0025)",
+    };
   }
-  return null;
+  return { ok: true, apiKey };
 }
 
 async function main(): Promise<void> {
-  const problem = evalEnvProblem(process.env);
-  if (problem) {
-    console.error(`run-agent-evals: ${problem}`);
+  const evalEnv = readEvalEnv(process.env);
+  if (!evalEnv.ok) {
+    console.error(`run-agent-evals: ${evalEnv.problem}`);
     process.exit(1);
   }
-  const apiKey = process.env["ANTHROPIC_API_KEY"] as string;
+  const { apiKey } = evalEnv;
   const model = process.env["ANTHROPIC_MODEL"] ?? "claude-haiku-4-5";
   const judgeModel = process.env["JUDGE_MODEL"] ?? "claude-sonnet-5";
 
