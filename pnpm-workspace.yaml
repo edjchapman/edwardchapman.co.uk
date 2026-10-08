@@ -29,8 +29,11 @@ overrides:
   # resolves. GHSA-px8p-9vwx-vf98 (fflate), GHSA-68fv-2mgg-jv7q (source-map-js).
   fflate@>=0.7.0 <0.7.5: "^0.7.5"
   source-map-js@>=1.0.0 <1.2.2: "^1.2.2"
-  # Deliberately not overridden (all dev-only via @lhci/cli → puppeteer-core):
-  # extract-zip (GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3) and sprintf-js
-  # (GHSA-hp3w-g68c-fv3c) have no patched release; basic-ftp (GHSA-c475-qrg2-
+  # Dev-only via @lhci/cli → lighthouse → puppeteer-core@24. @puppeteer/browsers
+  # 3.x drops extract-zip (GHSA-jmr9-qjv8-65gv, GHSA-7pqw-9j4j-h8q3; no patched
+  # release) entirely. Cross-major, proven by `make check-perf`.
+  "@puppeteer/browsers@<3": "^3.1.0"
+  # Deliberately not overridden (all dev-only via @lhci/cli):
+  # sprintf-js (GHSA-hp3w-g68c-fv3c) has no patched release; basic-ftp (GHSA-c475-qrg2-
   # pj4r) is fixed only in 6.x while every get-uri release pins ^5, and the FTP
   # path is reached only through a PAC proxy that Lighthouse CI never configures.
