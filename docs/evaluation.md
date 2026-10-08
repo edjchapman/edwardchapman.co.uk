@@ -143,7 +143,9 @@ post-deploy live run plus a red-team re-run (the system prompt changed).
 ## Live evaluation mode — `make eval-agent-live` (Phase 4)
 
 Calls the configured model (`ANTHROPIC_MODEL`) through the production
-adapter. Scores golden and adversarial sets for **groundedness,
+adapter, **directly against the Anthropic API**: the runner refuses to start
+if `ANTHROPIC_BASE_URL` is set, because the production AI Gateway is
+authenticated and its global rate limit is the visitors' budget (ADR-0025). Scores golden and adversarial sets for **groundedness,
 completeness, citation correctness, and refusal quality** using an
 LLM-as-judge, against thresholds recorded in this document once the first
 baseline run exists (set from evidence, then frozen — see below).
@@ -451,7 +453,10 @@ text). `/ask` is now linked in the nav, indexed, and in the sitemap.
 _(The log-redaction condition above described the launch posture.
 [ADR-0023](adr/0023-record-questions-for-abuse-monitoring.md) deliberately
 superseded it on 2026-07-25: the accepted event now carries the question
-text for abuse monitoring, disclosed on /privacy; answers remain unlogged.)_
+text for abuse monitoring, disclosed on /privacy; answers remain unlogged.
+[ADR-0029](adr/0029-ai-gateway-request-logs-retain-answers.md) later
+(2026-10-08) let the AI Gateway's request log keep model answers, also
+disclosed.)_
 
 ## Limitations (recorded honestly)
 

@@ -904,7 +904,10 @@ Cover at minimum:
 - HSTS through Cloudflare.
 - Redacted structured logs.
 - No full question logging by default.
-- No model response logging by default.
+- No model response logging by default. _(Superseded for the AI Gateway's
+  request log by [ADR-0029](adr/0029-ai-gateway-request-logs-retain-answers.md),
+  2026-10-08: model questions and answers are kept there and disclosed on
+  /privacy.)_
 - Documented retention policy.
 - Separate preview and production secrets.
 

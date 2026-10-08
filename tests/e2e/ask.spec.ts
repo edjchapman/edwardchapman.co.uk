@@ -98,12 +98,17 @@ test.describe("/ask interface", () => {
       "sent to Anthropic to generate an answer",
     );
     // ADR-0023: questions are recorded for abuse monitoring and the page
-    // must say so; answers stay unstored.
+    // must say so.
     await expect(page.getByRole("main")).toContainText(
       "recorded in the site's operational logs",
     );
+    // ADR-0029: the AI Gateway keeps model questions with their answers, and
+    // the page must disclose both the storage and its retention rule.
     await expect(page.getByRole("main")).toContainText(
-      "answers are never stored",
+      "together with the generated answer",
+    );
+    await expect(page.getByRole("main")).toContainText(
+      "holds the most recent 100,000 requests",
     );
     // ADR-0024: the quota cookie is disclosed — the page must describe the
     // counter, and honestly (a count, not an identifier).

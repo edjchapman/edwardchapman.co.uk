@@ -13,6 +13,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -211,28 +212,40 @@ function citationsViolateContract(outcome: {
   );
 }
 
+/**
+ * Live evals always call the Anthropic API directly (ADR-0025). The production
+ * AI Gateway is authenticated and its global rate limit is the visitors'
+ * budget; this runner sends no gateway token, so a gateway base URL would fail
+ * every call. Refuse loudly instead of silently ignoring the variable.
+ */
+export function evalEnvProblem(
+  env: Readonly<Record<string, string | undefined>>,
+): string | null {
+  if (!env["ANTHROPIC_API_KEY"]) return "ANTHROPIC_API_KEY is required";
+  if (env["ANTHROPIC_BASE_URL"]) {
+    return "ANTHROPIC_BASE_URL must be unset — live evals call the Anthropic API directly (ADR-0025)";
+  }
+  return null;
+}
+
 async function main(): Promise<void> {
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) {
-    console.error("run-agent-evals: ANTHROPIC_API_KEY is required");
+  const problem = evalEnvProblem(process.env);
+  if (problem) {
+    console.error(`run-agent-evals: ${problem}`);
     process.exit(1);
   }
+  const apiKey = process.env["ANTHROPIC_API_KEY"] as string;
   const model = process.env["ANTHROPIC_MODEL"] ?? "claude-haiku-4-5";
   const judgeModel = process.env["JUDGE_MODEL"] ?? "claude-sonnet-5";
-  const baseURL = process.env["ANTHROPIC_BASE_URL"];
 
   const root = process.cwd();
   const corpus = buildCorpus(root);
   const failure: { note: string | null } = { note: null };
   const adapter = withFailureNote(
-    new AnthropicAdapter({ apiKey, model, baseURL }),
+    new AnthropicAdapter({ apiKey, model }),
     failure,
   );
-  const judgeClient = new Anthropic({
-    apiKey,
-    ...(baseURL ? { baseURL } : {}),
-    timeout: 30_000,
-  });
+  const judgeClient = new Anthropic({ apiKey, timeout: 30_000 });
   const service = new AgentService(corpus, adapter, () => {});
 
   const golden = (
@@ -445,4 +458,6 @@ async function main(): Promise<void> {
   console.log("\nrun-agent-evals: all thresholds met");
 }
 
-await main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await main();
+}

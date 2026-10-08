@@ -75,15 +75,24 @@ directly (the default). Set **both** to route through the authenticated gateway:
 printf 'https://gateway.ai.cloudflare.com/v1/<account_id>/edwardchapman-ask/anthropic' |
   pnpm exec wrangler versions secret put ANTHROPIC_BASE_URL --name edwardchapman
 pnpm exec wrangler versions secret put ASK_AI_GATEWAY_TOKEN --name edwardchapman  # paste the gateway token
-pnpm exec wrangler versions deploy --name edwardchapman
+pnpm exec wrangler versions list --name edwardchapman  # newest is LAST; copy its Version ID
+pnpm exec wrangler versions deploy <version-id>@100% --name edwardchapman --yes
 ```
+
+Deploy by explicit version ID. Each `secret put` creates its own version, so
+the two-step leaves a half-configured version (base URL, no token) next to
+the complete one, and the interactive picker does not list the newest first —
+choosing the wrong one either re-promotes the old version or ships the
+half-configured one, which fails closed on every request.
 
 They are Worker secrets (not committed vars), so turning the gateway on or off
 is a runtime op with no code change and no redeploy risk — remove both to revert
 to the direct API. `ANTHROPIC_BASE_URL` set **without** the token sends
 unauthenticated requests the gateway rejects; set the pair together. Dashboard
 setup (create the gateway, its 100 req/hr rate limit, and the auth token, plus
-the Anthropic Console spend limit) is in ADR-0025.
+the Anthropic Console spend limit) is in ADR-0025, with the live values in its
+activation record. CI live evals never use these: `run-agent-evals.ts` refuses
+to start when `ANTHROPIC_BASE_URL` is set.
 
 ### Local (optional)
 
