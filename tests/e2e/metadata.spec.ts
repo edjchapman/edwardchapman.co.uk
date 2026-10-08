@@ -81,14 +81,14 @@ test.describe("metadata", () => {
     const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
 
     expect(locs.length).toBeGreaterThanOrEqual(3);
+    // The home entry must match the page's canonical tag exactly; the root
+    // path is always "/", so it is the one URL that legitimately ends in one.
+    expect(locs).toContain(`${ORIGIN}/`);
     for (const loc of locs) {
-      // On-origin without a look-alike-host hole: the bare apex (canonical is
-      // slash-free) or a path under it — not a regex with unescaped dots and no
-      // end anchor.
-      expect(loc === ORIGIN || (loc?.startsWith(`${ORIGIN}/`) ?? false)).toBe(
-        true,
-      );
-      if (loc !== ORIGIN) expect(loc?.endsWith("/")).toBe(false);
+      // Parsed origin comparison, not a prefix match: no look-alike-host hole.
+      const url = new URL(loc ?? "");
+      expect(url.origin).toBe(ORIGIN);
+      if (url.pathname !== "/") expect(url.pathname.endsWith("/")).toBe(false);
       expect(loc).not.toContain("404");
     }
   });
