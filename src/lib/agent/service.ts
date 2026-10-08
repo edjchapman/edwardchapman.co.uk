@@ -3,8 +3,8 @@
  * confidence gate → model → validate response → whitelist citations. Pure of
  * HTTP concerns so the Worker route and the integration tests drive the same
  * code. Structured events go through the injected logger; the accepted event
- * records the question for abuse monitoring (ADR-0023) and answers are never
- * logged.
+ * records the question for abuse monitoring (ADR-0023); answers never reach
+ * these logs (the AI Gateway's request log keeps them — ADR-0029).
  */
 
 import type {
@@ -42,7 +42,7 @@ export type AgentEvent = {
   detail?: string;
   /** The visitor's question, carried on `ask.accepted` only (ADR-0023):
    * recorded for abuse monitoring, bounded by the 500-char validation and
-   * defensively truncated here; answers are never logged. */
+   * defensively truncated here; answers are never logged here (ADR-0029). */
   question?: string;
 };
 

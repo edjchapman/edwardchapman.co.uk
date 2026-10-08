@@ -3,7 +3,7 @@
 Nygard-style ADRs, numbered in the order the decisions were made. Every ADR
 records context, the decision, alternatives considered, consequences, and
 revisit conditions. A decision that contradicts an accepted ADR requires a
-superseding ADR, not silent drift (see CLAUDE.md); superseded entries would be
+superseding ADR, not silent drift (see CLAUDE.md); superseded entries are
 marked here and in their own status line.
 
 | ADR                                                                     | Decision                                                                     | Status                       |
@@ -30,12 +30,13 @@ marked here and in their own status line.
 | [0020](0020-motion-elevation-and-css-view-transitions.md)               | Motion and elevation vocabulary, CSS-only view transitions                   | Accepted 2026-07-24          |
 | [0021](0021-self-hosted-display-serif.md)                               | One self-hosted display serif via the fonts API                              | Accepted 2026-07-24          |
 | [0022](0022-published-availability-surface.md)                          | A published availability surface, corpus-included and Ed-affirmed            | Accepted 2026-07-24          |
-| [0023](0023-record-questions-for-abuse-monitoring.md)                   | Record submitted questions in operational logs for abuse monitoring          | Accepted 2026-07-25          |
+| [0023](0023-record-questions-for-abuse-monitoring.md)                   | Record submitted questions in operational logs for abuse monitoring          | Part-superseded 2026-10-08   |
 | [0024](0024-per-visitor-question-quota-via-signed-cookie.md)            | Per-visitor question quota via a signed cookie                               | Accepted 2026-07-25; amended |
 | [0025](0025-ai-gateway-and-provider-spend-limit.md)                     | Global spend guard — Cloudflare AI Gateway + Anthropic provider spend limit  | Accepted 2026-07-28          |
 | [0026](0026-upstream-failure-taxonomy-and-honest-degraded-responses.md) | Upstream failure taxonomy and honest degraded responses                      | Accepted 2026-07-28          |
 | [0027](0027-pre-answered-baseline-questions.md)                         | Pre-answered baseline questions served without a model call                  | Accepted 2026-07-28          |
 | [0028](0028-wide-canvas-layout-and-token-mapped-code-highlighting.md)   | Wide-canvas responsive layout and token-mapped code highlighting             | Accepted 2026-08-12          |
+| [0029](0029-ai-gateway-request-logs-retain-answers.md)                  | AI Gateway request logs retain questions and answers                         | Accepted 2026-10-08          |
 
 Reading order for newcomers: 0001–0003 set the platform shape, 0005–0008 define
 the agent's grounding and evaluation model, 0007/0011/0019 govern what content

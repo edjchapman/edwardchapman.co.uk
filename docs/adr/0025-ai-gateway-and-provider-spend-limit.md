@@ -84,6 +84,35 @@ ADR-0009 (per-IP rate) and ADR-0024 (per-visitor quota) as the third, global
 layer. Its failure modes ride ADR-0026's taxonomy. Uses the `ANTHROPIC_BASE_URL`
 seam recorded in spec §2 and ADR-0012.
 
+## Activation record (2026-10-08, issue #162)
+
+The guard is live. Values and the open questions the activation settled:
+
+- **Provider cap:** Anthropic organisation monthly spend limit $40, email
+  alert at $15 (already set before activation). Org-wide, so it covers CI
+  live evals too; recent months ran $3.91 (Aug) and $4.14 (Sep).
+- **Gateway:** `edwardchapman-ask`, Authenticated Gateway on, rate limit
+  100 requests / 1 hour, sliding. The auth token has only the account-scoped
+  `AI Gateway → Run` permission. Request log collection is on — see
+  [ADR-0029](0029-ai-gateway-request-logs-retain-answers.md).
+- **Worker:** version `1efbf4d6` carries all four secrets and runs at 100%.
+  A grounded answer and its gateway log entry were both observed. The first
+  `versions deploy` re-promoted the old version by mis-pick (no
+  half-configured state shipped); the runbook now deploys by version ID.
+- **Is 100 req/hr right?** Kept. Normal spend is ~$4/month, far below the
+  ceiling; in a spike, shedding requests beyond 100/hr is the intended
+  behaviour, and the $40 cap stops whatever still gets through.
+- **Should CI live evals route through the gateway?** No. Evals call the
+  Anthropic API directly, stay under the provider cap, and do not consume the
+  visitors' global rate limit. `scripts/run-agent-evals.ts` refuses to start
+  if `ANTHROPIC_BASE_URL` is set (the SDK would otherwise read it from the
+  environment and every call would fail the gateway's authentication). The
+  production probes do use the gateway, since they call `/api/ask`:
+  `uptime-ask` hourly and `redteam-live` twice daily — a few of the 100
+  requests per hour.
+- **Does the gateway buffer SSE?** No. A streamed request arrived as ~45
+  separate network chunks ~25 ms apart, first text ~1.4 s after sending.
+
 ## Revisit conditions
 
 - Sustained legitimate traffic approaches 100 req/hr → raise the gateway limit

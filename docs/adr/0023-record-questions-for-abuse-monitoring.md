@@ -1,6 +1,12 @@
 # ADR-0023: Record submitted questions in operational logs for abuse monitoring
 
-**Status:** Accepted (2026-07-25)
+**Status:** Accepted (2026-07-25); superseded in part 2026-10-08 (ADR-0029)
+
+> **Superseded in part ([ADR-0029](0029-ai-gateway-request-logs-retain-answers.md), 2026-10-08):**
+> "answers are never logged" and the expiring-window-only retention no
+> longer hold. The AI Gateway's request log keeps model questions with their
+> answers (most recent 100,000 requests). The Workers Logs recording below is
+> unchanged.
 
 ## Context
 
