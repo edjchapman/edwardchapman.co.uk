@@ -223,13 +223,13 @@ async function probePageHeaders(path: string): Promise<void> {
   );
 }
 
-async function inlineScriptHashes(html: string): Promise<string[]> {
+export async function inlineScriptHashes(html: string): Promise<string[]> {
   const hashes: string[] = [];
-  // Case-insensitive and whitespace-tolerant on the closing tag: HTML tag names
-  // are case-insensitive, so a sound "is every inline script CSP-allowlisted?"
-  // check must match <SCRIPT> and </script > too — a case-sensitive pattern
-  // would let an injected variant slip past this guard (CodeQL js/bad-tag-filter).
-  const scriptRe = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+  // Match closing tags the way browsers do: case-insensitive, and `</script`
+  // followed by whitespace or junk attributes still ends the element. A
+  // narrower pattern would let an injected variant slip past this guard
+  // (CodeQL js/bad-tag-filter).
+  const scriptRe = /<script\b([^>]*)>([\s\S]*?)<\/script[^>]*>/gi;
   let match: RegExpExecArray | null;
   while ((match = scriptRe.exec(html)) !== null) {
     const attrs = match[1] ?? "";
