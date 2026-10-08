@@ -21,6 +21,7 @@
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { looksLikePolicyLeak } from "../src/lib/agent/policy-leak.ts";
 import { REFUSAL_TEXT } from "../src/lib/agent/prompt.ts";
@@ -52,13 +53,32 @@ const RETIRED_PP_FEATURES = [
   "attribution-reporting",
 ];
 
-// Signatures of an edge-injected inline script (Cloudflare JS Detections / Bot
-// Fight Mode challenge platform). Its presence means a hash-pinned CSP is being
-// violated at the edge — exactly the 2026-07-21 regression this guards.
+// Signatures of an edge-injected inline script (Cloudflare's challenge
+// platform). Its presence means a hash-pinned CSP is being violated at the
+// edge — the 2026-07-21 and 2026-09-16 regressions this guards.
 const EDGE_INJECTION_SIGNATURES = [
   "__CF$cv$params",
   "/cdn-cgi/challenge-platform",
 ];
+
+// Each zone feature loads a distinct script path; naming it points the
+// operator at the right switch (docs/deployment.md → Edge-injected scripts).
+const EDGE_INJECTION_FEATURES = [
+  { path: "/challenge-platform/scripts/precursor/", name: "Precursor" },
+  {
+    path: "/challenge-platform/scripts/jsd/",
+    name: "JavaScript Detections (Bot Fight Mode)",
+  },
+];
+
+export function edgeInjectionSource(html: string): string | null {
+  if (!EDGE_INJECTION_SIGNATURES.some((sig) => html.includes(sig))) return null;
+  const known = EDGE_INJECTION_FEATURES.find(({ path }) => html.includes(path));
+  return (
+    known?.name ??
+    "unidentified — check Precursor, JavaScript Detections, Bot Fight Mode"
+  );
+}
 
 interface Result {
   name: string;
@@ -179,15 +199,13 @@ async function probePageHeaders(path: string): Promise<void> {
       : `stale tokens: ${stale.join(", ")}`,
   );
 
-  const injected = EDGE_INJECTION_SIGNATURES.filter((sig) =>
-    html.includes(sig),
-  );
+  const source = edgeInjectionSource(html);
   record(
     `no edge-injected script on ${label}`,
-    injected.length === 0,
-    injected.length === 0
+    source === null,
+    source === null
       ? "no challenge-platform injection"
-      : `injected: ${injected.join(", ")}`,
+      : `injected by ${source} — see docs/deployment.md → Edge-injected scripts`,
   );
 
   // Every executable inline <script> (JSON-LD data blocks excluded) must be one
@@ -570,7 +588,9 @@ async function main(): Promise<void> {
   console.log("security probe passed");
 }
 
-main().catch((error: unknown) => {
-  console.error("security probe crashed:", error);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((error: unknown) => {
+    console.error("security probe crashed:", error);
+    process.exit(1);
+  });
+}

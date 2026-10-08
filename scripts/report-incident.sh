@@ -41,7 +41,7 @@ case "$KIND" in
   security)
     TITLE="🚨 production security probe is failing"
     CONDITION="one or more live security invariants (headers, edge injection, refusal, rate limit) regressed"
-    REMEDY=$'- Cloudflare edge setting re-enabled (Bot Fight Mode / JS Detections re-injecting) \xE2\x86\x92 docs/threat-model.md (API-Enforced Content Security Policy row) and docs/deployment.md.\n- A `public/_headers` regression in the last deploy weakened the CSP \xE2\x86\x92 `pnpm exec wrangler rollback` (docs/deployment.md \xE2\x86\x92 Rollback), then fix on a branch.\n- An agent refusal/leak regression \xE2\x86\x92 reproduce with `make redteam-live` and see docs/red-team.md.'
+    REMEDY=$'- Cloudflare zone feature injecting a script (Precursor, JS Detections or Bot Fight Mode; the failing check names which) \xE2\x86\x92 docs/deployment.md \xE2\x86\x92 Edge-injected scripts.\n- A `public/_headers` regression in the last deploy weakened the CSP \xE2\x86\x92 `pnpm exec wrangler rollback` (docs/deployment.md \xE2\x86\x92 Rollback), then fix on a branch.\n- An agent refusal/leak regression \xE2\x86\x92 reproduce with `make redteam-live` and see docs/red-team.md.'
     ;;
   quality)
     TITLE="🚨 live agent evaluation is failing its thresholds"

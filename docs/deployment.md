@@ -403,16 +403,32 @@ DMARC ratchet (`p=none` → `quarantine`/`reject` once reports run clean).
 - Both: questions that don't clear the retrieval confidence gate return a 200
   refusal regardless, so probe with a question known to retrieve (e.g. the
   smoke question above).
-- **CSP console errors on the live site only ("Executing inline script
-  violates … script-src"), with a hash that changes on every load** — that is
-  not the build. Cloudflare **Bot Fight Mode** injects an inline
-  challenge-platform script (`window.__CF$cv$params` →
-  `/cdn-cgi/challenge-platform/…`) into HTML at the edge; its content embeds a
-  per-request token, so it can never be hash-allowlisted and the strict CSP
-  (correctly) blocks it. The site itself is unaffected — the pinned Astro
-  island hashes still match (verify: hash each inline `<script>` in a fetched
-  live page and compare with `public/_headers`). The same injected iframe
-  produces the "Unrecognized feature" Permissions-Policy warnings. Fix at the
-  zone, not in the CSP: Cloudflare dashboard → Security → Bots → turn Bot
-  Fight Mode off (dashboard-only; the deploy token cannot change it). Do not
-  add `unsafe-inline` to accommodate it.
+- **CSP console errors on the live site only, or `redteam-live` reports an
+  edge-injected script** — a Cloudflare zone feature is injecting a script; see
+  [Edge-injected scripts](#edge-injected-scripts).
+
+## Edge-injected scripts
+
+Symptom: `window.__CF$cv$params` → `/cdn-cgi/challenge-platform/…` in live
+HTML, a CSP violation with a hash that changes every load, and the
+`redteam-live` alert (#177). The site is unaffected — the strict CSP blocks the
+script — but the fix is always at the zone, **never** in the CSP: the script
+carries a per-request token, so it cannot be hash-allowlisted, and
+`unsafe-inline` is out.
+
+The script path names the feature. The probe prints it.
+
+| Script path                   | Feature               | Switch it off                                                                                                                                                              |
+| ----------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `…/scripts/precursor/main.js` | Precursor             | Dashboard → zone → Security → Settings → **Precursor** toggle (alert opened 2026-09-16; how it was enabled is unknown)                                                     |
+| `…/scripts/jsd/main.js`       | JavaScript Detections | API only on this plan: `PUT /zones/{zone_id}/bot_management` with `{"fight_mode": false, "enable_js": false}`, using a one-off token with **Zone → Bot Management → Edit** |
+
+Bot Fight Mode is the usual way JavaScript Detections gets switched on, and
+turning Bot Fight Mode off leaves it on (hit 2026-07-21) — so after toggling Bot
+Fight Mode off, clear `enable_js` too. The same injected iframe causes the
+"Unrecognized feature" Permissions-Policy console warnings.
+
+Verify with a fresh fetch (`curl -s https://edwardchapman.co.uk/ | grep -c
+challenge-platform` → `0`; edge changes land within a minute), then
+`make redteam-live`. The open alert closes on the next scheduled run that
+passes. Delete the one-off API token afterwards.
