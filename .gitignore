@@ -34,3 +34,4 @@ standups/
 .claude/rules
 .claude/settings.local.json
 .mcp.json
+.cache/

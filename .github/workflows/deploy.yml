@@ -16,6 +16,8 @@ concurrency:
 permissions:
   contents: read # checkout
   issues: write # open/close the production incident issue on smoke failure/recovery
+  pull-requests: read # build stamp: find the PR that produced this commit
+  checks: read # build stamp: read that PR's "lighthouse budgets" conclusion
 
 jobs:
   deploy:
@@ -33,6 +35,24 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Look up this commit's Lighthouse result for the build stamp
+        # ADR-0030: the footer reports the "lighthouse budgets" check from the
+        # PR that produced this commit. Best effort — a failed lookup leaves
+        # the values empty and the stamp omits Lighthouse rather than guess.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '.[0].number // empty' 2>/dev/null || true)
+          conclusion=""
+          if [ -n "$pr" ]; then
+            head=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$pr" --jq '.head.sha' 2>/dev/null || true)
+            if [ -n "$head" ]; then
+              conclusion=$(gh api "repos/$GITHUB_REPOSITORY/commits/$head/check-runs?check_name=lighthouse%20budgets" --jq '.check_runs[0].conclusion // empty' 2>/dev/null || true)
+            fi
+          fi
+          echo "build stamp: PR ${pr:-none}, lighthouse ${conclusion:-unknown}"
+          echo "LIGHTHOUSE_PR=$pr" >> "$GITHUB_ENV"
+          echo "LIGHTHOUSE_CONCLUSION=$conclusion" >> "$GITHUB_ENV"
       - name: Re-prove the gate (includes the production build)
         run: make check
       - name: Deploy to Cloudflare Workers
