@@ -90,7 +90,7 @@
       ],
       "requiredClaims": [
         "nine-plus years building production systems",
-        "most recently in senior and lead roles"
+        "across proptech, supply-chain logistics, and energy, including a tech lead role"
       ],
       "forbiddenClaims": ["salary", "reasons for leaving any role"],
       "shouldRefuse": false
@@ -134,7 +134,7 @@
       "question": "Where has Ed worked, and when?",
       "expectedSourceIds": ["experience#intro", "experience#built-ai"],
       "requiredClaims": [
-        "Built AI as Senior Backend/Platform Engineer, Aug 2023 to May 2026",
+        "Built AI as Backend and DevOps Engineer, Aug 2023 to May 2026",
         "Kraken Technologies (Octopus Energy Group) in 2023",
         "Natoora from 2017 to 2023, latterly as Tech Lead"
       ],
@@ -150,7 +150,7 @@
       "question": "What was Ed's most recent role?",
       "expectedSourceIds": ["experience#intro", "experience#built-ai"],
       "requiredClaims": [
-        "Senior Backend/Platform Engineer at Built AI",
+        "Backend and DevOps Engineer at Built AI",
         "commercial real-estate analytics SaaS"
       ],
       "forbiddenClaims": ["salary", "reasons for leaving any role"],

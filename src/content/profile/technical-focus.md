@@ -1,7 +1,7 @@
 ---
 title: "Technical focus"
 order: 3
-updatedDate: 2026-07-24
+updatedDate: 2026-10-28
 tags:
   - technologies and languages
   - technical skills and stack
@@ -9,7 +9,7 @@ tags:
   - cloud platforms and infrastructure
 ---
 
-- **Backend & platform** — Python, Django/DRF, FastAPI, Celery, PostgreSQL,
+- **Backend & platform** — Python, Django/DRF, Celery, PostgreSQL,
   Redis: reliable async processing, transactional-outbox patterns, and
   observability that proves it.
 - **Product engineering** — TypeScript, React, Node.js/Fastify, and Astro, plus

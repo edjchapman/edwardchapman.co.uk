@@ -1,7 +1,7 @@
 ---
 title: "Experience"
 order: 6
-updatedDate: 2026-07-24
+updatedDate: 2026-10-28
 tags:
   - work history and employers
   - companies worked for and dates
@@ -11,10 +11,10 @@ tags:
 
 The companies Ed has worked for and his roles, most recent first:
 
-- **Built AI** — Senior Backend/Platform Engineer on a commercial
+- **Built AI** — Backend and DevOps Engineer on a commercial
   real-estate analytics SaaS (Aug 2023 – May 2026).
-- **Kraken Technologies**, part of the Octopus Energy Group — Software
-  Engineer (Feb – Jun 2023).
+- **Kraken Technologies**, part of the Octopus Energy Group — Backend
+  Developer (Feb – Jun 2023).
 - **Natoora** — Tech Lead (Jan 2022 – Feb 2023), Software Engineer
   (Feb 2017 – Jan 2022).
 
@@ -31,14 +31,14 @@ behind them.
 
 ## Built AI
 
-Senior Backend/Platform Engineer, August 2023 – May 2026. Proptech: a
+Backend and DevOps Engineer, August 2023 – May 2026. Proptech: a
 commercial real-estate analytics SaaS for financial modelling. Backend and
 platform engineering in Python and Django/DRF, product work in React and
 TypeScript, and infrastructure ownership on AWS with Terraform.
 
 ## Kraken Technologies (Octopus Energy Group)
 
-Software Engineer, February – June 2023. Energy platform engineering in
+Backend Developer, February – June 2023. Energy platform engineering in
 Python and Django/DRF.
 
 ## Natoora
