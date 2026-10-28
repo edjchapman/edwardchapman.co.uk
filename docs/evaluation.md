@@ -385,6 +385,40 @@ lesson generalises the verbatim-phrasing rule: a golden's required
 claims must be scoped to what its question actually asks, or every
 correct concise answer scores as incomplete.
 
+### Editorial-overhaul copy (2026-10-28, ADR-0030)
+
+The overhaul's copy pass changed both homepage profile chunks:
+
+- **`positioning#body`:** the tagline became a one-line position ("I design
+  backend systems for the places they actually fail, and measure rather than
+  assert."). Its wording restates the intro and the earlier How I work line
+  "If it isn't measured, it isn't asserted". A first candidate ("…stay correct
+  when things fail, and I measure them to prove it") was dropped in review: it
+  generalised one public project's evidence into a claim about every system. Because the tagline is prepended into the chunk, its stack
+  enumeration moved into the body verbatim ("backend depth in Python and
+  Django, infrastructure ownership on AWS and Terraform, and React and
+  TypeScript product work"), so the live goldens' required claims keep their
+  text.
+- **`how-i-work#body`:** shorter lead-ins. The tokens retrieval leans on stay:
+  "evaluation-driven", "in a harness", "agentic tooling".
+
+The first draft regressed two rankings without failing a case.
+"Where is Ed based?" fell from `positioning#body` (8.57) to second behind
+`availability#body`, and the platform-role golden's positioning score fell
+from 12.78 to 10.15, third place. Raw query-term matches were identical
+before and after. The loss was the old tagline's "Software engineer" token,
+which the role bridges land on. Restoring it in the body ("A London-based
+software engineer with nine-plus years…") puts positioning first again on both
+(8.34, 12.46).
+
+Authoring lesson, the same one as the 2026-07-24 copy retune: a summary chunk
+must carry its query vocabulary in its own text. Entity-gate margins are
+byte-identical: "What is Claude?" 4.20 and "What is quality?" 4.22, both
+refused under the 4.35 bar; "What is Foreman?" 4.48. All 218 deterministic
+cases pass, and the final tagline leaves every ranking and margin above
+unchanged. No thresholds changed; a post-merge live run re-scores the
+claim-bearing goldens.
+
 ### Post-improvement-wave run (2026-07-21)
 
 After the positioning wave (#103–#109: corrected Foreman tech tags, the
