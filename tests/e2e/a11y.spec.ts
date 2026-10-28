@@ -51,10 +51,12 @@ test.describe("accessibility", () => {
     page,
   }) => {
     await page.emulateMedia({ colorScheme: "dark" });
-    await page.goto("/projects");
+    await page.goto("/projects/foreman");
+    // The case-study summary panel is the raised surface since ADR-0030
+    // turned the project cards into a flat ruled index.
     const background = await page.evaluate(
       () =>
-        getComputedStyle(document.querySelector("article") as Element)
+        getComputedStyle(document.querySelector(".summary") as Element)
           .backgroundColor,
     );
     // --color-paper-raised #212625: the figure/ground step that 1px rules

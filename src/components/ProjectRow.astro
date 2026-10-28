@@ -1,11 +1,17 @@
 ---
 import type { CollectionEntry } from "astro:content";
 
+import ScaleBars from "./ScaleBars.astro";
+
 interface Props {
   project: CollectionEntry<"projects">;
+  /** 3 under a Section h2 (homepage), 2 directly under a page h1
+   * (/projects). Visual size is the same either way. */
+  headingLevel?: 2 | 3;
 }
 
-const { project } = Astro.props;
+const { project, headingLevel = 3 } = Astro.props;
+const Heading = `h${headingLevel}` as "h2" | "h3";
 const { title, problem, tech, metrics, repo, demo } = project.data;
 // One evidence line per row (ADR-0030); the rest stays on the case study.
 const evidence = metrics[0];
@@ -14,7 +20,7 @@ const caseStudy = `/projects/${project.id}`;
 
 <article>
   <div class="main">
-    <h3><a href={caseStudy}>{title}</a></h3>
+    <Heading class="title"><a href={caseStudy}>{title}</a></Heading>
     <p>{problem}</p>
   </div>
   <div class="side">
@@ -24,23 +30,7 @@ const caseStudy = `/projects/${project.id}`;
           <p class="figure">{evidence.value}</p>
           <p class="caption">{evidence.label}</p>
           {evidence.scale && (
-            <div
-              class="bars"
-              role="img"
-              aria-label={`Drawn to scale: before ${evidence.scale.from}, after ${evidence.scale.to}`}
-            >
-              <span class="key">before</span>
-              <span class="track">
-                <span class="fill" style="width: 100%" />
-              </span>
-              <span class="key">after</span>
-              <span class="track">
-                <span
-                  class="fill after"
-                  style={`width: ${(evidence.scale.to / evidence.scale.from) * 100}%`}
-                />
-              </span>
-            </div>
+            <ScaleBars from={evidence.scale.from} to={evidence.scale.to} />
           )}
         </div>
       )
@@ -79,17 +69,17 @@ const caseStudy = `/projects/${project.id}`;
     min-width: 0;
   }
 
-  h3 {
+  .title {
     margin: 0;
     font-size: var(--text-xl);
   }
 
-  h3 a {
+  .title a {
     color: var(--color-ink);
     text-decoration: none;
   }
 
-  h3 a:hover {
+  .title a:hover {
     color: var(--color-accent);
   }
 
@@ -120,40 +110,6 @@ const caseStudy = `/projects/${project.id}`;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--color-muted);
-  }
-
-  /* Bars share one scale: "before" is the full track, "after" its ratio. */
-  .bars {
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr);
-    align-items: center;
-    gap: 0.3rem var(--space-2);
-    max-width: 15rem;
-    margin-top: var(--space-2);
-  }
-
-  .key {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--color-muted);
-  }
-
-  .track {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--color-rule);
-    overflow: hidden;
-  }
-
-  .fill {
-    display: block;
-    height: 100%;
-    border-radius: 3px;
-    background: var(--color-muted);
-  }
-
-  .fill.after {
-    background: var(--color-accent);
   }
 
   .tech {

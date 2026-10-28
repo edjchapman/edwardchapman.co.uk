@@ -79,6 +79,52 @@ test.describe("projects", () => {
     }
   });
 
+  test("case study opens with a summary of what was built and why it differs", async ({
+    page,
+  }) => {
+    await page.goto("/projects/foreman");
+    const summary = page.getByRole("region", { name: "Summary" });
+    for (const term of [
+      "What was built",
+      "What's different",
+      "Evidence",
+      "Stack",
+      "Links",
+    ]) {
+      await expect(
+        summary.getByRole("term").filter({ hasText: term }),
+      ).toHaveCount(1);
+    }
+    await expect(summary).toContainText("transactional outbox pattern");
+    await expect(summary).toContainText("LISTEN/NOTIFY");
+    await expect(summary).toContainText("1.84s → 0.34s");
+    await expect(
+      summary.getByRole("link", { name: "Repository" }),
+    ).toHaveAttribute("href", "https://github.com/edjchapman/Foreman");
+  });
+
+  test("case-study contents link every section heading", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const slug of [
+      "foreman",
+      "ai-due-diligence-assistant",
+      "claude-code-config",
+    ]) {
+      await page.goto(`/projects/${slug}`);
+      const links = page
+        .getByRole("navigation", { name: "Contents" })
+        .getByRole("link");
+      const sections = page.locator(".prose h2");
+      expect(await links.count(), slug).toBe(await sections.count());
+      const unresolved = await links.evaluateAll((els) =>
+        els
+          .map((a) => a.getAttribute("href") ?? "")
+          .filter((href) => !document.getElementById(href.slice(1))),
+      );
+      expect(unresolved, slug).toEqual([]);
+    }
+  });
+
   test("case-study canonical is slash-free and exact", async ({ page }) => {
     await page.goto("/projects/foreman");
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(

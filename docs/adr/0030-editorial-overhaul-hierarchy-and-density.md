@@ -147,6 +147,16 @@ palette is replaced.
    `/projects/[slug]` (what was built, what's different, evidence, stack,
    links), and at ≥ 64rem a static sticky contents list from the entry's
    `h2` headings in the rail. No JavaScript.
+   - **Mobile omits the contents.** The page reads top to bottom, and twelve
+     links above the summary would push it off the first screen.
+   - **Contents links are padded blocks,** so every target clears WCAG
+     2.2's 24px minimum.
+   - **`/projects` uses the same ruled index as the homepage.** `ProjectRow`
+     takes a heading level, and the page header joins the wide canvas, so
+     `ProjectCard` and the `.card-grid` utility are removed. The summary
+     panel is now the page's one raised surface, and the dark-scheme
+     figure/ground test pins it.
+   - **Before → after bars** are one shared `ScaleBars` component.
 
 10. **Technical focus moves to `/experience`.** `PROFILE_PAGES` gains
     `"technical-focus": "/experience"` so citations resolve where the text
