@@ -99,4 +99,22 @@ test.describe("smoke", () => {
     expect(svg).not.toContain("<text");
     expect(svg).toContain("#6fbfa9"); // the accent tick, from the palette
   });
+  test("footer carries a build stamp of observed values only", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const stamp = page.getByRole("contentinfo").locator(".stamp");
+    await expect(stamp).toContainText(/^Built \d{1,2} [A-Z][a-z]{2} \d{4}/);
+    const datetime = await stamp.locator("time").getAttribute("datetime");
+    expect(Number.isNaN(Date.parse(datetime ?? ""))).toBe(false);
+    // Omitted, never defaulted (ADR-0030): no placeholder text can render.
+    await expect(stamp).not.toContainText(/undefined|null|NaN|\bdev\b/);
+    const commit = stamp.getByRole("link", { name: /^[0-9a-f]{7}$/ });
+    if ((await commit.count()) > 0) {
+      await expect(commit).toHaveAttribute(
+        "href",
+        /^https:\/\/github\.com\/edjchapman\/edwardchapman\.co\.uk\/commit\/[0-9a-f]{7}$/,
+      );
+    }
+  });
 });

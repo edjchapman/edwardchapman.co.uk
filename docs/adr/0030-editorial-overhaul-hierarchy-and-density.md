@@ -131,7 +131,17 @@ palette is replaced.
    state: build date, short commit SHA, the last deterministic agent-eval
    result, and the Lighthouse budget status from CI. A value that is
    unavailable at build time is omitted, never defaulted — the spec bans
-   fake snippets.
+   fake snippets. `scripts/build-stamp.ts` writes
+   `src/generated/build-stamp.json` in the build chain:
+   - **Commit and evals are CI-only.** The SHA is `GITHUB_SHA`, and the
+     eval count is read from the vitest JSON report `make test` writes moments
+     earlier in the same `make check`. Locally a tree may be dirty or the
+     report stale, so both are omitted.
+   - **Lighthouse comes from the producing PR.** The deploy workflow looks
+     up the PR that produced the commit and passes that PR's
+     `lighthouse budgets` conclusion and number. Any lookup failure omits
+     it. This needs `pull-requests: read` and `checks: read` on the deploy
+     job.
 
 9. **Case-study summary and contents.** A summary panel at the top of
    `/projects/[slug]` (what was built, what's different, evidence, stack,

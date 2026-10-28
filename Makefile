@@ -69,11 +69,14 @@ icons: ## Generate apple-touch-icon.png and manifest icon fallbacks into public/
 llms: ## Generate public/llms.txt from published content
 	@node scripts/build-llms-txt.ts
 
-typecheck: corpus baseline ## astro check (TypeScript + .astro diagnostics)
+stamp: ## Write src/generated/build-stamp.json (footer build stamp, ADR-0030)
+	@node scripts/build-stamp.ts
+
+typecheck: corpus baseline stamp ## astro check (TypeScript + .astro diagnostics)
 	@pnpm exec astro check
 
 test: ## Vitest unit/integration suites (corpus via vitest globalSetup)
-	@pnpm exec vitest run
+	@pnpm exec vitest run --reporter=default --reporter=json --outputFile.json=.cache/vitest-results.json
 
 # Delegates to the package.json "build" chain so there is exactly one build
 # entrypoint. A second Makefile-maintained step list silently dropped

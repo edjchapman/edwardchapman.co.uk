@@ -14,13 +14,14 @@
     "logo": "node scripts/build-logo.ts",
     "icons": "node scripts/build-icons.ts",
     "llms": "node scripts/build-llms-txt.ts",
-    "build": "pnpm run corpus && pnpm run baseline && pnpm run logo && pnpm run icons && pnpm run og-cards && pnpm run llms && astro build && node scripts/sanitize-build-output.ts",
+    "build": "pnpm run corpus && pnpm run baseline && pnpm run logo && pnpm run icons && pnpm run og-cards && pnpm run llms && pnpm run stamp && astro build && node scripts/sanitize-build-output.ts",
     "preview": "wrangler dev --config dist/server/wrangler.json --var ASK_MODEL_MODE:fake",
-    "typecheck": "pnpm run corpus && pnpm run baseline && astro check",
+    "typecheck": "pnpm run corpus && pnpm run baseline && pnpm run stamp && astro check",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "stamp": "node scripts/build-stamp.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

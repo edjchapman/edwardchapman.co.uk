@@ -1,5 +1,20 @@
 ---
+import stamp from "../generated/build-stamp.json";
 import { SITE } from "../lib/site";
+
+// Build stamp (ADR-0030): real state from the build that produced this page;
+// scripts/build-stamp.ts omits anything it couldn't observe.
+const built = new Date(stamp.builtAt).toLocaleDateString("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+const { sha, evals, lighthouse } = stamp as {
+  sha?: string;
+  evals?: { passed: number; total: number };
+  lighthouse?: { conclusion: string; pr: number };
+};
 ---
 
 <footer>
@@ -17,6 +32,38 @@ import { SITE } from "../lib/site";
       <li><a href="/rss.xml">RSS</a></li>
     </ul>
     <p class="copyright">© {new Date().getFullYear()} Ed Chapman</p>
+    <p class="stamp">
+      <span>Built <time datetime={stamp.builtAt}>{built}</time></span>
+      {
+        sha && (
+          <span>
+            commit <a href={`${SITE.repo}/commit/${sha}`}>{sha}</a>
+          </span>
+        )
+      }
+      {
+        evals && (
+          <span>
+            <a href={`${SITE.repo}/blob/main/docs/evaluation.md`}>
+              agent evals
+            </a>{" "}
+            {evals.passed}/{evals.total} passing
+          </span>
+        )
+      }
+      {
+        lighthouse && (
+          <span>
+            Lighthouse budgets{" "}
+            {lighthouse.conclusion === "success"
+              ? "met"
+              : lighthouse.conclusion}{" "}
+            (<a href={`${SITE.repo}/pull/${lighthouse.pr}`}>#{lighthouse.pr}</a>
+            )
+          </span>
+        )
+      }
+    </p>
   </div>
 </footer>
 
@@ -43,6 +90,27 @@ import { SITE } from "../lib/site";
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+
+  /* One quiet mono line under a dashed rule: the gates, made visible. */
+  .stamp {
+    flex-basis: 100%;
+    max-width: none; /* the global p measure would cap it beside the copyright */
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    margin: 0;
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--color-rule-strong);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  .stamp a {
+    font-size: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .copyright {
