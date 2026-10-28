@@ -1,7 +1,7 @@
 ---
 title: "Positioning"
 order: 1
-tagline: "Software engineer. Backend depth in Python and Django, infrastructure ownership on AWS and Terraform, React and TypeScript product work, and evaluation-driven AI engineering."
+tagline: "I build backend systems that stay correct when things fail, and I measure them to prove it."
 updatedDate: 2026-10-28
 tags:
   - professional background and experience
@@ -11,12 +11,14 @@ tags:
   - proptech, supply-chain logistics, and energy
 ---
 
-Based in London with nine-plus years building production systems,[^experience] I take
-ownership from specification through deployment and observability, and
-design for the places systems actually fail.[^foreman] I've worked across proptech,
-supply-chain logistics, and energy, including a tech lead role;[^experience] my current
-focus is AI-native engineering — retrieval grounded in
-verifiable sources,[^citations] and evaluation harnesses that run in CI.[^evals]
+A London-based software engineer with nine-plus years building production
+systems:[^experience] backend depth in Python and Django, infrastructure ownership on AWS and
+Terraform, and React and TypeScript product work. I take ownership from
+specification through deployment and observability, and design for the places
+systems actually fail.[^foreman] I've worked across proptech, supply-chain
+logistics and energy, including a tech lead role.[^experience] My current focus
+is AI engineering: retrieval grounded in verifiable sources,[^citations] and
+evaluation harnesses that run in CI.[^evals]
 
 [^experience]: [Experience: Natoora, Kraken Technologies and Built AI](https://edwardchapman.co.uk/experience)
 
