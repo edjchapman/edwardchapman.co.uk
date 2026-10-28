@@ -69,7 +69,10 @@ icons: ## Generate apple-touch-icon.png and manifest icon fallbacks into public/
 llms: ## Generate public/llms.txt from published content
 	@node scripts/build-llms-txt.ts
 
-typecheck: corpus baseline ## astro check (TypeScript + .astro diagnostics)
+stamp: ## Write src/generated/build-stamp.json (footer build stamp, ADR-0030)
+	@node scripts/build-stamp.ts
+
+typecheck: corpus baseline stamp ## astro check (TypeScript + .astro diagnostics)
 	@pnpm exec astro check
 
 test: ## Vitest unit/integration suites (corpus via vitest globalSetup)
