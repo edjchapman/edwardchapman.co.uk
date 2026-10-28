@@ -116,10 +116,16 @@ palette is replaced.
 7. **Cited claims.** Positioning claims on the homepage carry numbered
    citations, written as standard GFM footnotes in the profile Markdown and
    rendered as a sources list in the section rail (inline after the body
-   below 64rem). Hovering or focusing a marker highlights its source — a
-   progressive enhancement; without JavaScript the markers are in-page
-   links. `check-content-policy` gains a rule: every footnote on a published
-   page links to this site or a public repository.
+   below 64rem). CSS only: a marker is an in-page link and following it
+   highlights the source with `:target`, so the homepage stays at zero
+   JavaScript. A Sätteri hast plugin (`src/lib/scoped-footnotes.ts`) scopes
+   footnote ids per source file — entries sharing a page would otherwise
+   collide — turns the hidden "Footnotes" `h2` into a visible "Sources"
+   label so section heading order holds, and drops the "↩" backrefs, which
+   fail WCAG 2.2's 24px target size and add little beside the claim. The
+   corpus strips footnotes, so cited prose yields byte-identical chunk
+   text. `check-content-policy` gains `citation-source`: every footnote
+   links to this site or a public `edjchapman` repository.
 
 8. **A build stamp.** One footer line generated at build time from real
    state: build date, short commit SHA, the last deterministic agent-eval

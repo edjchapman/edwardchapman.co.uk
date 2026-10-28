@@ -26,12 +26,14 @@ const { tagline, eyebrow } = Astro.props;
 
 <style>
   .hero {
+    position: relative;
     display: grid;
     gap: var(--space-4);
     padding-block: var(--space-4) var(--space-6);
   }
 
   .eyebrow {
+    align-self: start;
     margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-xs);
@@ -126,6 +128,15 @@ const { tagline, eyebrow } = Astro.props;
     /* Optical alignment: the eyebrow's cap height meets the h1's. */
     .eyebrow {
       padding-top: 1.1rem;
+    }
+
+    /* Sources hang in the rail below the eyebrow, level with the intro. */
+    .intro :global(.footnotes) {
+      position: absolute;
+      top: calc(var(--space-6) + var(--space-7));
+      left: 0;
+      width: var(--rail);
+      margin: 0;
     }
   }
 </style>

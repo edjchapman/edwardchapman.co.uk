@@ -137,6 +137,81 @@ main > .u-wide {
   }
 }
 
+/* Citations (ADR-0030): GFM footnotes render as a numbered sources list —
+ * beside the claim in the rail on desktop (Hero, Section), directly after
+ * it on mobile. The marker is an in-page link; following it highlights the
+ * source with :target, so citations need no JavaScript. */
+[data-footnote-ref] {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-decoration: none;
+  padding-inline: 0.1em;
+}
+
+sup:has(> [data-footnote-ref]) {
+  font-size: 0.62em;
+  line-height: 0;
+}
+
+.footnotes {
+  margin-top: var(--space-4);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--color-muted);
+}
+
+.footnotes-label {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.footnotes ol {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: source;
+}
+
+.footnotes li {
+  counter-increment: source;
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr);
+  padding: var(--space-1) var(--space-2) var(--space-1) 0;
+  border-radius: var(--radius);
+  transition: background-color var(--duration-quick) var(--ease-out);
+}
+
+.footnotes li::before {
+  content: counter(source) / "";
+  padding-left: var(--space-1);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+.footnotes li p {
+  margin: 0;
+}
+
+.footnotes li a:not([data-footnote-backref]) {
+  color: inherit;
+}
+
+.footnotes li:target {
+  background: var(--color-accent-subtle);
+  color: var(--color-ink);
+}
+
+[data-footnote-backref] {
+  font-family: var(--font-mono);
+  text-decoration: none;
+}
+
 /* Anchor targets (skip link's #main, the ask sources' #ask-source-N) land
  * with breathing room instead of flush against the viewport edge. */
 [id] {

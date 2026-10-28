@@ -44,6 +44,13 @@
       "flags": "i",
       "paths": ["dist/client"],
       "enabled": true
+    },
+    {
+      "id": "citation-source",
+      "description": "Every footnote citation must link to a published page on this site or a public edjchapman repository (ADR-0030)",
+      "pattern": "^\\[\\^[^\\]]+\\]:(?!.*\\]\\((?:/|https://edwardchapman\\.co\\.uk/|https://github\\.com/edjchapman/)).*$",
+      "flags": "",
+      "paths": ["src/content"]
     }
   ]
 }

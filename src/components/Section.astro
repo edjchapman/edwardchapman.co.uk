@@ -27,6 +27,7 @@ const { id, heading, wideBody = false } = Astro.props;
 
 <style>
   section {
+    position: relative;
     display: grid;
     gap: var(--space-3);
     padding-block: var(--space-5);
@@ -66,6 +67,16 @@ const { id, heading, wideBody = false } = Astro.props;
       grid-template-columns: var(--rail) minmax(0, 1fr);
       column-gap: var(--space-5);
       padding-block: var(--space-6);
+    }
+
+    /* Sources hang in the rail under the label. Out of flow, so they never
+     * stretch the section; layout.spec pins that they stay inside it. */
+    .body :global(.footnotes) {
+      position: absolute;
+      top: calc(var(--space-6) + var(--space-5));
+      left: 0;
+      width: var(--rail);
+      margin: 0;
     }
   }
 </style>

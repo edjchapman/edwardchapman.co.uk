@@ -2,7 +2,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { buildCorpus } from "../../scripts/build-agent-corpus";
+import { buildCorpus, stripMarkdown } from "../../scripts/build-agent-corpus";
 
 const FIXTURE_ROOT = join(process.cwd(), "tests/agent/fixtures/content-root");
 
@@ -73,5 +73,29 @@ describe("corpus construction (real content)", () => {
       .toLowerCase();
     expect(allText).not.toContain("career-portfolio");
     expect(allText).not.toContain("edchapman88@gmail.com");
+  });
+});
+
+// Citations are presentation (ADR-0030): the rail lists sources beside the
+// claim, but the agent answers from the claim itself, so footnotes must leave
+// chunk text byte-identical to the uncited prose.
+describe("footnote citations stay out of chunk text", () => {
+  it("drops references and definitions", () => {
+    const cited = [
+      "Nine-plus years in production,[^experience] designed for failure.[^foreman]",
+      "",
+      "[^experience]: [Experience](/experience)",
+      "[^foreman]: [Foreman case study](/projects/foreman)",
+    ].join("\n");
+    expect(stripMarkdown(cited)).toBe(
+      "Nine-plus years in production, designed for failure.",
+    );
+  });
+
+  it("leaves real-content chunks free of footnote syntax", () => {
+    const corpus = buildCorpus(process.cwd());
+    for (const chunk of corpus.chunks) {
+      expect(chunk.text, chunk.sectionId).not.toMatch(/\[\^[^\]]+\]/);
+    }
   });
 });

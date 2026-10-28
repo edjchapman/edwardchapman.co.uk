@@ -60,6 +60,42 @@ test.describe("wide-canvas layout", () => {
     expect(await left('section[aria-labelledby="work"] .body')).toBe(body);
   });
 
+  test("citation sources hang in the rail, inside their section", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const edge = await page
+      .locator("header .site-name")
+      .evaluate((el) => Math.round(el.getBoundingClientRect().left));
+    const boxes = await page.locator(".footnotes").evaluateAll((els) =>
+      els.map((el) => {
+        const box = el.getBoundingClientRect();
+        const scope = el.closest("section:not(.footnotes), .hero") as Element;
+        const outer = scope.getBoundingClientRect();
+        const label = scope.querySelector("h2, .eyebrow") as Element;
+        return {
+          left: Math.round(box.left),
+          right: box.right,
+          top: box.top,
+          bottom: box.bottom,
+          labelBottom: label.getBoundingClientRect().bottom,
+          scopeBottom: outer.bottom,
+          bodyLeft: (
+            scope.querySelector(".body") as Element
+          ).getBoundingClientRect().left,
+        };
+      }),
+    );
+    expect(boxes.length).toBe(2);
+    for (const b of boxes) {
+      expect(b.left).toBe(edge);
+      expect(b.right).toBeLessThanOrEqual(b.bodyLeft);
+      expect(b.top).toBeGreaterThan(b.labelBottom);
+      expect(b.bottom).toBeLessThanOrEqual(b.scopeBottom);
+    }
+  });
+
   test("desktop viewports never scroll horizontally", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     for (const path of ["/", "/projects", "/notes"]) {

@@ -98,3 +98,34 @@ describe("content-policy scanner", () => {
     expect(ids(hits)).not.toContain("noncanonical-origin");
   });
 });
+
+describe("citation-source rule (ADR-0030)", () => {
+  const scan = (line: string) =>
+    ids(scanText("src/content/profile/positioning.md", line, config));
+
+  it("accepts footnotes citing this site or a public edjchapman repo", () => {
+    for (const line of [
+      "[^a]: [Experience](/experience)",
+      "[^b]: [Note](https://edwardchapman.co.uk/notes/x)",
+      "[^c]: [ADRs](https://github.com/edjchapman/edwardchapman.co.uk/tree/main/docs/adr)",
+    ]) {
+      expect(scan(line), line).not.toContain("citation-source");
+    }
+  });
+
+  it("flags footnotes with no link or an outside source", () => {
+    for (const line of [
+      "[^a]: Trust me.",
+      "[^b]: [Blog](https://example.com/post)",
+      "[^c]: [Fork](https://github.com/someone-else/repo)",
+    ]) {
+      expect(scan(line), line).toContain("citation-source");
+    }
+  });
+
+  it("ignores footnote references in running prose", () => {
+    expect(scan("Nine-plus years,[^a] in production.")).not.toContain(
+      "citation-source",
+    );
+  });
+});

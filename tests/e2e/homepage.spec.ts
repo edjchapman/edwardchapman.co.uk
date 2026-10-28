@@ -113,6 +113,48 @@ test.describe("homepage", () => {
     expect((after ?? 0) / (before ?? 1)).toBeCloseTo(0.34 / 1.84, 2);
   });
 
+  test("every id on the page is unique", async ({ page }) => {
+    await page.goto("/");
+    const dupes = await page.evaluate(() => {
+      const seen = new Map<string, number>();
+      for (const el of document.querySelectorAll("[id]")) {
+        seen.set(el.id, (seen.get(el.id) ?? 0) + 1);
+      }
+      return [...seen].filter(([, n]) => n > 1).map(([id]) => id);
+    });
+    expect(dupes).toEqual([]);
+  });
+
+  test("citation markers resolve to a source in the same section", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const refs = page.locator("[data-footnote-ref]");
+    expect(await refs.count()).toBeGreaterThanOrEqual(6);
+    const orphans = await refs.evaluateAll((els) =>
+      els
+        .filter((a) => {
+          const target = document.querySelector(a.getAttribute("href") ?? "");
+          const scope = a.closest("section, .hero");
+          return !target || !scope?.contains(target);
+        })
+        .map((a) => a.getAttribute("href")),
+    );
+    expect(orphans).toEqual([]);
+  });
+
+  test("following a citation highlights its source", async ({ page }) => {
+    await page.goto("/");
+    const ref = page.locator(".hero [data-footnote-ref]").first();
+    const href = (await ref.getAttribute("href")) ?? "";
+    const source = page.locator(href);
+    const before = await source.evaluate(
+      (el) => getComputedStyle(el).backgroundColor,
+    );
+    await ref.click();
+    await expect(source).not.toHaveCSS("background-color", before);
+  });
+
   test("JSON-LD @graph carries a valid Person, WebSite, and ProfilePage", async ({
     page,
   }) => {

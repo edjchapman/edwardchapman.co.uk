@@ -79,16 +79,22 @@ export function slugifyHeading(heading: string): string {
 
 /** Strip presentation-only markup, keeping the words. */
 export function stripMarkdown(text: string): string {
-  return text
-    .replace(/```[\s\S]*?```/g, (block) =>
-      block.replace(/```[a-z]*\n?/g, "").replace(/```$/, ""),
-    )
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-    .replace(/[*_`]/g, "")
-    .replace(/^#+\s*/gm, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return (
+    text
+      .replace(/```[\s\S]*?```/g, (block) =>
+        block.replace(/```[a-z]*\n?/g, "").replace(/```$/, ""),
+      )
+      // GFM footnotes are citations (ADR-0030): drop definitions, then refs,
+      // so cited prose yields the same chunk text as uncited prose.
+      .replace(/^\[\^[^\]]+\]:.*$/gm, "")
+      .replace(/\[\^[^\]]+\]/g, "")
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/[*_`]/g, "")
+      .replace(/^#+\s*/gm, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
 }
 
 /** Split a markdown body into (heading, text) sections at ## boundaries. */
