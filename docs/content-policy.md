@@ -60,8 +60,10 @@ appear; the scanner fails closed on any address not in its allowlist.
 CI, and weekly). Rules live in
 [`scripts/content-policy-rules.json`](../scripts/content-policy-rules.json):
 private-repo references, UK phone numbers, full postcodes, salary figures,
-non-allowlisted emails, and (post-cutover) non-canonical origins in built
-output. Scanned surfaces: `src/`, `public/`, `docs/` (rule-dependent), and
+non-allowlisted emails, (post-cutover) non-canonical origins in built
+output, and citation footnotes whose source is not this site or a public
+`edjchapman` repository
+([ADR-0030](adr/0030-editorial-overhaul-hierarchy-and-density.md)). Scanned surfaces: `src/`, `public/`, `docs/` (rule-dependent), and
 the built `dist/client/`.
 
 False positives are handled with an inline, greppable marker on the affected

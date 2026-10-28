@@ -11,9 +11,17 @@ tags:
   - proptech, supply-chain logistics, and energy
 ---
 
-Based in London with nine-plus years building production systems, I take
+Based in London with nine-plus years building production systems,[^experience] I take
 ownership from specification through deployment and observability, and
-design for the places systems actually fail. I've worked across proptech,
-supply-chain logistics, and energy, including a tech lead role; my current
+design for the places systems actually fail.[^foreman] I've worked across proptech,
+supply-chain logistics, and energy, including a tech lead role;[^experience] my current
 focus is AI-native engineering — retrieval grounded in
-verifiable sources, and evaluation harnesses that run in CI.
+verifiable sources,[^citations] and evaluation harnesses that run in CI.[^evals]
+
+[^experience]: [Experience: Natoora, Kraken Technologies and Built AI](https://edwardchapman.co.uk/experience)
+
+[^foreman]: [Foreman: outbox, leases and crash recovery](https://edwardchapman.co.uk/projects/foreman)
+
+[^citations]: [Citations the model can't fake](https://edwardchapman.co.uk/notes/api-enforced-citations)
+
+[^evals]: [AI Due-Diligence Assistant: a golden dataset gates every push](https://edwardchapman.co.uk/projects/ai-due-diligence-assistant)

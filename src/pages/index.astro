@@ -151,7 +151,7 @@ const formatDate = (date: Date) =>
 
   /* How I work renders as Markdown bullets ("**Lead.** text"); on wider
    * screens the bold lead hangs in its own column like a definition term. */
-  .principles :global(ul) {
+  .principles > :global(ul) {
     display: grid;
     gap: var(--space-4);
     list-style: none;
@@ -159,14 +159,14 @@ const formatDate = (date: Date) =>
     padding: 0;
   }
 
-  .principles :global(li) {
+  .principles > :global(ul > li) {
     color: var(--color-muted);
     font-size: var(--text-sm);
     line-height: 1.55;
     margin: 0;
   }
 
-  .principles :global(strong) {
+  .principles > :global(ul > li > strong) {
     display: block;
     color: var(--color-ink);
     font-family: var(--font-serif);
@@ -207,12 +207,12 @@ const formatDate = (date: Date) =>
       grid-column: 2;
     }
 
-    .principles :global(li) {
+    .principles > :global(ul > li) {
       position: relative;
       padding-left: 13rem;
     }
 
-    .principles :global(strong) {
+    .principles > :global(ul > li > strong) {
       position: absolute;
       left: 0;
       width: 12rem;

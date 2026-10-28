@@ -1,9 +1,11 @@
 import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
+import { satteri } from "@astrojs/markdown-satteri";
 import sitemap from "@astrojs/sitemap";
 import { defineConfig, fontProviders, sessionDrivers } from "astro/config";
 
 import { contentLastmods } from "./src/lib/content-dates";
+import { scopedFootnotes } from "./src/lib/scoped-footnotes";
 
 // Read content dates once at config load (astro:content isn't available
 // here): notes plus /now — see src/lib/content-dates.ts.
@@ -61,6 +63,10 @@ export default defineConfig({
   // hardcode hexes that fight the palette and dodge the axe contrast gate.
   markdown: {
     shikiConfig: { theme: "css-variables" },
+    // Footnotes are citations (ADR-0030): ids scoped per source file so
+    // entries sharing a page never collide, and a visible "Sources" label in
+    // place of the hidden h2 that would break a section's heading order.
+    processor: satteri({ hastPlugins: [scopedFootnotes] }),
   },
   // Sessions are unused on this site. Without an explicit driver the adapter
   // auto-provisions a Cloudflare KV namespace (spec: no KV — see docs/spec.md
