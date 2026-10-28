@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { glob, readFile } from "node:fs/promises";
 
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -49,5 +49,29 @@ describe("site.webmanifest follows the palette", () => {
     ) as { theme_color: string; background_color: string };
     expect(manifest.theme_color).toBe(PALETTE.light.paper);
     expect(manifest.background_color).toBe(PALETTE.light.paper);
+  });
+});
+
+// An undefined custom property invalidates the whole declaration silently —
+// ADR-0030's --rail and --text-xs both shipped that way before review.
+describe("every custom property used in src/ is defined", () => {
+  // Injected at build time by Astro's fonts API (astro.config.ts); every use
+  // carries a var() fallback, so they may be absent in the source.
+  const INJECTED = new Set(["--font-display", "--font-data"]);
+
+  it("has a definition for each var() reference", async () => {
+    const used = new Set<string>();
+    const defined = new Set<string>();
+    for await (const file of glob("src/**/*.{astro,css,tsx}")) {
+      const text = await readFile(file, "utf8");
+      for (const m of text.matchAll(/var\(\s*(--[a-z0-9-]+)/g))
+        used.add(m[1] ?? "");
+      for (const m of text.matchAll(/(--[a-z0-9-]+)\s*:/g))
+        defined.add(m[1] ?? "");
+    }
+    const missing = [...used].filter(
+      (v) => !defined.has(v) && !INJECTED.has(v),
+    );
+    expect(missing).toEqual([]);
   });
 });

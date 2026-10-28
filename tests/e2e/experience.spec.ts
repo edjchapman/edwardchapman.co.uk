@@ -15,6 +15,7 @@ test.describe("experience page", () => {
       "Education",
       "Technology depth",
       "Strengths and leadership",
+      "Technical focus",
       "Availability",
     ]) {
       await expect(

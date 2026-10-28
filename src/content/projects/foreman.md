@@ -16,6 +16,7 @@ tech:
 metrics:
   - value: "1.84s → 0.34s"
     label: "p95 queue wait, after push dispatch"
+    scale: { from: 1.84, to: 0.34 }
   - value: "733ms → 41ms"
     label: "p50 queue wait"
 featured: true

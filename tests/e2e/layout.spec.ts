@@ -38,6 +38,28 @@ test.describe("wide-canvas layout", () => {
     expect(columns).toBe(1);
   });
 
+  test("homepage shares one left edge from header to footer", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const left = (selector: string) =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate((el) => Math.round(el.getBoundingClientRect().left));
+    const edge = await left("header .site-name");
+    // Hero eyebrow and every section label sit on the same line (ADR-0030).
+    expect(await left(".hero .eyebrow")).toBe(edge);
+    for (const id of ["work", "experience", "how-i-work", "writing"]) {
+      expect(await left(`#${id}`), id).toBe(edge);
+    }
+    // Bodies share a second line, one rail-width in.
+    const body = await left(".hero h1");
+    expect(body).toBeGreaterThan(edge);
+    expect(await left('section[aria-labelledby="work"] .body')).toBe(body);
+  });
+
   test("desktop viewports never scroll horizontally", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
     for (const path of ["/", "/projects", "/notes"]) {

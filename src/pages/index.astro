@@ -1,11 +1,9 @@
 ---
 import { getCollection, getEntry, render } from "astro:content";
 
-import AskCallout from "../components/AskCallout.astro";
 import Hero from "../components/Hero.astro";
 import JsonLd from "../components/JsonLd.astro";
-import ProjectCard from "../components/ProjectCard.astro";
-import Prose from "../components/Prose.astro";
+import ProjectRow from "../components/ProjectRow.astro";
 import Section from "../components/Section.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { personNode, profilePageNode, webSiteNode } from "../lib/jsonld";
@@ -13,16 +11,14 @@ import { SITE } from "../lib/site";
 
 const positioning = await getEntry("profile", "positioning");
 const howIWork = await getEntry("profile", "how-i-work");
-const technicalFocus = await getEntry("profile", "technical-focus");
-const contact = await getEntry("profile", "contact");
-if (!positioning || !howIWork || !technicalFocus || !contact) {
+const experience = await getEntry("profile", "experience");
+if (!positioning || !howIWork || !experience) {
   throw new Error("Homepage profile entries are missing from the collection");
 }
 
 const { Content: Positioning } = await render(positioning);
 const { Content: HowIWork } = await render(howIWork);
-const { Content: TechnicalFocus } = await render(technicalFocus);
-const { Content: Contact } = await render(contact);
+const roles = experience.data.roles ?? [];
 
 const projects = (
   await getCollection("projects", ({ data }) => data.featured && !data.draft)
@@ -41,56 +37,63 @@ const recentNotes = (await getCollection("notes", ({ data }) => !data.draft))
 const formatDate = (date: Date) =>
   date.toLocaleDateString("en-GB", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 ---
 
 <BaseLayout title={SITE.title} description={SITE.description}>
-  <Hero tagline={positioning.data.tagline ?? SITE.description} />
-  <Prose><Positioning /></Prose>
-  <AskCallout />
+  <Hero
+    tagline={positioning.data.tagline ?? SITE.description}
+    eyebrow="Software engineer · London"
+  >
+    <Positioning />
+  </Hero>
 
-  <Section id="projects" heading="Selected projects" class="u-wide">
-    <div class="card-grid">
-      {projects.map((project) => <ProjectCard project={project} />)}
+  <Section id="work" heading="Selected work" wideBody>
+    <div class="work">
+      {projects.map((project) => <ProjectRow project={project} />)}
     </div>
   </Section>
 
-  <Section id="how-i-work" heading="How I work">
-    <Prose><HowIWork /></Prose>
-  </Section>
-
-  <Section id="technical-focus" heading="Technical focus">
-    <Prose><TechnicalFocus /></Prose>
-  </Section>
-
-  <Section id="recent-notes" heading="Recent notes">
-    <ul class="recent-notes">
+  <Section id="experience" heading="Experience">
+    <ul class="roles">
       {
-        recentNotes.map((note) => (
+        roles.map((role) => (
           <li>
-            <a href={`/notes/${note.id}`}>{note.data.title}</a>
-            <time datetime={note.data.pubDate.toISOString().slice(0, 10)}>
-              {formatDate(note.data.pubDate)}
-            </time>
+            <span class="org">
+              {role.org} <small>· {role.sector}</small>
+            </span>
+            <span class="years">{role.years}</span>
+            <span class="title">{role.title}</span>
           </li>
         ))
       }
     </ul>
-    <p class="all-notes"><a href="/notes">All notes →</a></p>
+    <p class="more">
+      <a href="/experience">Full experience, skills and education →</a>
+    </p>
   </Section>
 
-  <Section id="contact" heading="Contact">
-    <Prose><Contact /></Prose>
+  <Section id="how-i-work" heading="How I work">
+    <div class="principles"><HowIWork /></div>
   </Section>
 
-  <p class="deeper">
-    This site is a project too — the <a href="/colophon">colophon</a> explains how
-    it's built, and full <a href="/projects">case studies</a> sit behind each project
-    above. Questions about the work? <a href="/ask">Ask</a> — it answers from this
-    site's published content only.
-  </p>
+  <Section id="writing" heading="Writing">
+    <ul class="notes">
+      {
+        recentNotes.map((note) => (
+          <li>
+            <time datetime={note.data.pubDate.toISOString().slice(0, 10)}>
+              {formatDate(note.data.pubDate)}
+            </time>
+            <a href={`/notes/${note.id}`}>{note.data.title}</a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="more"><a href="/notes">All notes →</a></p>
+  </Section>
 
   <JsonLd
     nodes={[
@@ -102,38 +105,125 @@ const formatDate = (date: Date) =>
 </BaseLayout>
 
 <style>
-  .recent-notes {
+  .work {
+    display: grid;
+  }
+
+  ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
-  .recent-notes li {
-    margin-bottom: var(--space-3);
+  .roles {
+    display: grid;
+    gap: var(--space-3);
   }
 
-  .recent-notes a {
+  .roles li {
+    display: grid;
+    column-gap: var(--space-4);
+  }
+
+  .org {
     font-family: var(--font-serif);
     font-weight: 600;
+    font-size: var(--text-lg);
   }
 
-  .recent-notes time {
+  .org small {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .title {
+    color: var(--color-muted);
+  }
+
+  .years,
+  .notes time {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  /* How I work renders as Markdown bullets ("**Lead.** text"); on wider
+   * screens the bold lead hangs in its own column like a definition term. */
+  .principles :global(ul) {
+    display: grid;
+    gap: var(--space-4);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .principles :global(li) {
+    color: var(--color-muted);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .principles :global(strong) {
     display: block;
-    color: var(--color-muted);
-    font-size: var(--text-sm);
-    margin-top: var(--space-1);
+    color: var(--color-ink);
+    font-family: var(--font-serif);
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-bottom: var(--space-1);
   }
 
-  .all-notes {
-    margin: var(--space-3) 0 0;
+  .notes {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .notes li {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .notes a {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: var(--text-lg);
+  }
+
+  .more {
+    margin: var(--space-4) 0 0;
     font-size: var(--text-sm);
   }
 
-  .deeper {
-    margin-top: var(--space-5);
-    padding-top: var(--space-3);
-    border-top: var(--rule);
-    color: var(--color-muted);
-    font-size: var(--text-sm);
+  @media (min-width: 40rem) {
+    .roles li {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: baseline;
+    }
+
+    .years {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    .principles :global(li) {
+      position: relative;
+      padding-left: 13rem;
+    }
+
+    .principles :global(strong) {
+      position: absolute;
+      left: 0;
+      width: 12rem;
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .notes li {
+      grid-template-columns: 8.5rem minmax(0, 1fr);
+      align-items: baseline;
+      column-gap: var(--space-4);
+    }
   }
 </style>
