@@ -200,7 +200,7 @@
       "question": "Is Ed open to contract or permanent roles?",
       "expectedSourceIds": ["availability#body"],
       "requiredClaims": [
-        "open to permanent roles and to contract or freelance engagements"
+        "looking for permanent or fixed-term employed roles, not contract or freelance engagements"
       ],
       "forbiddenClaims": [
         "salary, day-rate, or compensation figures",
