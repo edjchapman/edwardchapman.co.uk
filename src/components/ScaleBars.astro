@@ -1,0 +1,60 @@
+---
+interface Props {
+  from: number;
+  to: number;
+}
+
+// Before → after drawn to one scale (ADR-0030): "before" is the full track,
+// "after" its ratio. The schema guarantees both numbers appear in the
+// metric's own text, so the bars only restate published evidence.
+const { from, to } = Astro.props;
+---
+
+<span
+  class="bars"
+  role="img"
+  aria-label={`Drawn to scale: before ${from}, after ${to}`}
+>
+  <span class="key">before</span>
+  <span class="track"><span class="fill" style="width: 100%"></span></span>
+  <span class="key">after</span>
+  <span class="track">
+    <span class="fill after" style={`width: ${(to / from) * 100}%`}></span>
+  </span>
+</span>
+
+<style>
+  .bars {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.3rem var(--space-2);
+    max-width: 15rem;
+    margin-top: var(--space-2);
+  }
+
+  .key {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+
+  .track {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-rule);
+    overflow: hidden;
+  }
+
+  .fill {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--color-muted);
+  }
+
+  .fill.after {
+    background: var(--color-accent);
+  }
+</style>

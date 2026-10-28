@@ -5,6 +5,7 @@ import { getCollection, render } from "astro:content";
 import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import JsonLd from "../../components/JsonLd.astro";
 import Prose from "../../components/Prose.astro";
+import ScaleBars from "../../components/ScaleBars.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
   breadcrumbNode,
@@ -22,8 +23,12 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 const { project } = Astro.props;
-const { title, problem, tech, repo, demo } = project.data;
-const { Content } = await render(project);
+const { title, problem, built, differentiator, tech, metrics, repo, demo } =
+  project.data;
+const { Content, headings } = await render(project);
+// Contents rail (ADR-0030): the case study's own h2s, linked by the ids the
+// Markdown renderer gives them — static, no scroll-spy.
+const contents = headings.filter((heading) => heading.depth === 2);
 
 const relatedNotes = await getCollection(
   "notes",
@@ -59,78 +64,259 @@ const jsonLdNodes = [
   image={`/og/projects/${project.id}.png`}
   type="article"
 >
-  <Breadcrumbs items={crumbs} />
-  <article>
-    <header>
-      <h1>{title}</h1>
-      <p class="problem">{problem}</p>
-      <ul class="tech" aria-label="Technologies">
-        {tech.map((tag) => <li>{tag}</li>)}
-      </ul>
-      <p class="links">
-        <a href={repo}>Repository</a>
-        {demo && <a href={demo}>Live demo</a>}
-      </p>
-    </header>
-    <Prose><Content /></Prose>
-    {
-      relatedNotes.length > 0 && (
-        <aside aria-label="Related writing">
-          <p>Related writing:</p>
-          <ul>
-            {relatedNotes.map((note) => (
-              <li>
-                <a href={`/notes/${note.id}`}>{note.data.title}</a>
-              </li>
-            ))}
-          </ul>
-        </aside>
-      )
-    }
-  </article>
-  <p class="back"><a href="/projects">← All projects</a></p>
+  <div class="case-study">
+    <nav class="contents" aria-label="Contents">
+      <p class="contents-label">Contents</p>
+      <ol>
+        {
+          contents.map((heading) => (
+            <li>
+              <a href={`#${heading.slug}`}>{heading.text}</a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+    <div class="body">
+      <Breadcrumbs items={crumbs} />
+      <article>
+        <header>
+          <h1>{title}</h1>
+          <p class="problem">{problem}</p>
+        </header>
+        <section class="summary" aria-label="Summary">
+          <dl>
+            <div>
+              <dt>What was built</dt>
+              <dd>{built}</dd>
+            </div>
+            <div>
+              <dt>What's different</dt>
+              <dd>{differentiator}</dd>
+            </div>
+            {
+              metrics.length > 0 && (
+                <div>
+                  <dt>Evidence</dt>
+                  <dd>
+                    <ul class="evidence">
+                      {metrics.map((metric) => (
+                        <li>
+                          <span class="figure">{metric.value}</span>
+                          <span class="caption">{metric.label}</span>
+                          {metric.scale && (
+                            <ScaleBars
+                              from={metric.scale.from}
+                              to={metric.scale.to}
+                            />
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </dd>
+                </div>
+              )
+            }
+            <div>
+              <dt>Stack</dt>
+              <dd>
+                <ul class="tech" aria-label="Technologies">
+                  {tech.map((tag) => <li>{tag}</li>)}
+                </ul>
+              </dd>
+            </div>
+            <div>
+              <dt>Links</dt>
+              <dd class="links">
+                <a href={repo}>Repository</a>
+                {demo && <a href={demo}>Live demo</a>}
+              </dd>
+            </div>
+          </dl>
+        </section>
+        <Prose><Content /></Prose>
+        {
+          relatedNotes.length > 0 && (
+            <aside aria-label="Related writing">
+              <p>Related writing:</p>
+              <ul>
+                {relatedNotes.map((note) => (
+                  <li>
+                    <a href={`/notes/${note.id}`}>{note.data.title}</a>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          )
+        }
+      </article>
+      <p class="back"><a href="/projects">← All projects</a></p>
+    </div>
+  </div>
   <JsonLd nodes={jsonLdNodes} />
 </BaseLayout>
 
 <style>
+  /* Rail layout (ADR-0030): on the wide canvas a sticky contents list sits in
+   * the --rail column beside the case study; below 64rem it is omitted and
+   * the page reads top to bottom. */
+  .case-study {
+    grid-column: wide;
+    display: grid;
+  }
+
+  .contents {
+    display: none;
+  }
+
+  .body {
+    min-width: 0;
+    max-width: var(--measure);
+  }
+
+  @media (min-width: 64rem) {
+    .case-study {
+      grid-template-columns: var(--rail) minmax(0, 1fr);
+      column-gap: var(--space-5);
+      align-items: start;
+    }
+
+    .contents {
+      display: block;
+      position: sticky;
+      top: var(--space-4);
+    }
+  }
+
+  .contents-label {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .contents ol {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+  }
+
+  /* Block links with padding: each target clears WCAG 2.2's 24px minimum. */
+  .contents a {
+    display: block;
+    padding-block: 0.2rem;
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+
+  .contents a:hover {
+    color: var(--color-ink);
+    text-decoration: underline;
+  }
+
   header {
-    margin-bottom: var(--space-5);
-    padding-bottom: var(--space-4);
-    border-bottom: var(--rule);
+    margin-bottom: var(--space-4);
   }
 
   .problem {
     color: var(--color-muted);
     font-style: italic;
     font-size: var(--text-lg);
+    margin: 0;
   }
 
-  /* Labels, not controls — plain mono text with dot separators. */
+  /* The one emphasised surface on the page: what a reviewer needs before
+   * deciding to read the whole case study. */
+  .summary {
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+    border: 1px solid var(--color-rule-strong);
+    border-radius: var(--radius);
+    background: var(--color-paper-raised);
+    box-shadow: var(--shadow-1);
+  }
+
+  dl {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: var(--space-1);
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  .evidence,
   .tech {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
     list-style: none;
-    margin: 0 0 var(--space-3);
+    margin: 0;
     padding: 0;
   }
 
-  .tech li {
+  .evidence {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .evidence li {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .figure {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 1.12rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .caption {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  .tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     color: var(--color-muted);
   }
 
-  .tech li + li::before {
-    content: "·";
-    margin-inline: var(--space-2);
-    color: var(--color-rule);
-  }
-
   .links {
     display: flex;
     gap: var(--space-3);
-    margin: 0;
+  }
+
+  @media (min-width: 40rem) {
+    dl > div {
+      display: grid;
+      grid-template-columns: 9rem minmax(0, 1fr);
+      column-gap: var(--space-4);
+      align-items: baseline;
+    }
+
+    dt {
+      margin: 0;
+    }
   }
 
   .back {

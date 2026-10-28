@@ -16,26 +16,49 @@ test.describe("wide-canvas layout", () => {
     expect(display).toBe("grid");
   });
 
-  test("projects index lays cards three abreast on desktop", async ({
+  test("projects index is a ruled list sharing the header's left edge", async ({
     page,
   }) => {
     await page.setViewportSize(DESKTOP);
     await page.goto("/projects");
-    const columns = await page.evaluate(() => {
-      const grid = document.querySelector(".card-grid") as Element;
-      return getComputedStyle(grid).gridTemplateColumns.split(" ").length;
-    });
-    expect(columns).toBe(3);
+    const left = (selector: string) =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate((el) => Math.round(el.getBoundingClientRect().left));
+    const edge = await left("header .site-name");
+    expect(await left("main h1")).toBe(edge);
+    expect(await left("main article")).toBe(edge);
   });
 
-  test("card grid stacks to a single column on mobile", async ({ page }) => {
+  test("case study hangs a sticky contents list in the rail", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/projects/foreman");
+    const nav = page.getByRole("navigation", { name: "Contents" });
+    await expect(nav).toBeVisible();
+    expect(await nav.evaluate((el) => getComputedStyle(el).position)).toBe(
+      "sticky",
+    );
+    const navLeft = await nav.evaluate((el) =>
+      Math.round(el.getBoundingClientRect().left),
+    );
+    const edge = await page
+      .locator("header .site-name")
+      .evaluate((el) => Math.round(el.getBoundingClientRect().left));
+    expect(navLeft).toBe(edge);
+    // Still in view after scrolling deep into the case study.
+    await page.mouse.wheel(0, 3000);
+    await expect(nav).toBeInViewport();
+  });
+
+  test("case-study contents are omitted on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/projects");
-    const columns = await page.evaluate(() => {
-      const grid = document.querySelector(".card-grid") as Element;
-      return getComputedStyle(grid).gridTemplateColumns.split(" ").length;
-    });
-    expect(columns).toBe(1);
+    await page.goto("/projects/foreman");
+    await expect(
+      page.getByRole("navigation", { name: "Contents" }),
+    ).toBeHidden();
   });
 
   test("homepage shares one left edge from header to footer", async ({
@@ -98,7 +121,7 @@ test.describe("wide-canvas layout", () => {
 
   test("desktop viewports never scroll horizontally", async ({ page }) => {
     await page.setViewportSize(DESKTOP);
-    for (const path of ["/", "/projects", "/notes"]) {
+    for (const path of ["/", "/projects", "/projects/foreman", "/notes"]) {
       await page.goto(path);
       const scrollWidth = await page.evaluate(
         () => document.documentElement.scrollWidth,

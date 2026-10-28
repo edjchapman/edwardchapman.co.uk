@@ -2,7 +2,7 @@
 import { getCollection } from "astro:content";
 
 import JsonLd from "../../components/JsonLd.astro";
-import ProjectCard from "../../components/ProjectCard.astro";
+import ProjectRow from "../../components/ProjectRow.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { collectionPageNode } from "../../lib/jsonld";
 import { SITE } from "../../lib/site";
@@ -26,15 +26,17 @@ const collectionPage = collectionPageNode({
 ---
 
 <BaseLayout title="Projects — Ed Chapman" description={description}>
-  <h1>Projects</h1>
-  <p class="lede">
-    Each project links to a case study covering the architecture, the decisions
-    that carried weight, honest limitations, and what I'd do next.
-  </p>
-  <div class="card-grid u-wide">
+  <header class="head">
+    <h1>Projects</h1>
+    <p class="lede">
+      Each project links to a case study covering the architecture, the
+      decisions that carried weight, honest limitations, and what I'd do next.
+    </p>
+  </header>
+  <div class="index">
     {
       projects.map((project) => (
-        <ProjectCard project={project} headingLevel={2} />
+        <ProjectRow project={project} headingLevel={2} />
       ))
     }
   </div>
@@ -42,8 +44,21 @@ const collectionPage = collectionPageNode({
 </BaseLayout>
 
 <style>
+  /* Header on the wide canvas so title and rows share one left edge. */
+  .head {
+    grid-column: wide;
+  }
+
   .lede {
     color: var(--color-muted);
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+
+  /* Same ruled index as the homepage (ADR-0030), on the wide canvas. */
+  .index {
+    grid-column: wide;
+    display: grid;
+    padding-top: var(--space-4);
+    border-top: var(--rule);
   }
 </style>
