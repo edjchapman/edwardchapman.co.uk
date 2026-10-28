@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("homepage", () => {
-  test("shows the 30-second scan: hero, actions, three project cards, sections", async ({
+  test("shows the 30-second scan: hero, actions, three projects, sections", async ({
     page,
   }) => {
     await page.goto("/");
@@ -11,49 +11,65 @@ test.describe("homepage", () => {
     );
 
     const actions = page.getByRole("list", { name: "Primary links" });
-    await expect(actions.getByRole("link", { name: "GitHub" })).toBeVisible();
-    await expect(actions.getByRole("link", { name: "LinkedIn" })).toBeVisible();
-    await expect(actions.getByRole("link", { name: "Email" })).toHaveAttribute(
-      "href",
-      "mailto:ed@edwardchapman.co.uk",
-    );
+    await expect(
+      actions.getByRole("link", { name: "Read the case studies" }),
+    ).toHaveAttribute("href", "/projects");
+    await expect(
+      actions.getByRole("link", { name: "Ask about Ed's work" }),
+    ).toHaveAttribute("href", "/ask");
+    await expect(
+      actions.getByRole("link", { name: "ed@edwardchapman.co.uk" }),
+    ).toHaveAttribute("href", "mailto:ed@edwardchapman.co.uk");
 
     await expect(page.locator("article")).toHaveCount(3);
-    await expect(
-      page.getByRole("heading", { level: 3, name: "Foreman" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        level: 3,
-        name: "AI Due-Diligence Assistant",
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { level: 3, name: "claude-code-config" }),
-    ).toBeVisible();
+    for (const name of [
+      "Foreman",
+      "AI Due-Diligence Assistant",
+      "claude-code-config",
+    ]) {
+      await expect(page.getByRole("heading", { level: 3, name })).toBeVisible();
+    }
 
-    await expect(
-      page.getByRole("heading", { level: 2, name: "How I work" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { level: 2, name: "Technical focus" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { level: 2, name: "Recent notes" }),
-    ).toBeVisible();
-
-    const contact = page.getByRole("region", { name: "Contact" });
-    await expect(
-      contact.getByRole("link", { name: "ed@edwardchapman.co.uk" }),
-    ).toHaveAttribute("href", "mailto:ed@edwardchapman.co.uk");
+    for (const name of [
+      "Selected work",
+      "Experience",
+      "How I work",
+      "Writing",
+    ]) {
+      await expect(page.getByRole("heading", { level: 2, name })).toBeVisible();
+    }
   });
 
-  test("recent notes list the three newest published notes and resolve", async ({
+  test("trims what ADR-0030 moved off the homepage", async ({ page }) => {
+    await page.goto("/");
+    for (const name of ["Technical focus", "Contact", "Availability"]) {
+      await expect(page.getByRole("heading", { level: 2, name })).toHaveCount(
+        0,
+      );
+    }
+    await expect(page.locator(".deeper")).toHaveCount(0);
+    await expect(page.getByRole("complementary")).toHaveCount(0);
+  });
+
+  test("experience lists every employer and links to the full page", async ({
     page,
   }) => {
     await page.goto("/");
-    const section = page.getByRole("region", { name: "Recent notes" });
-    const links = section.locator(".recent-notes a");
+    const section = page.getByRole("region", { name: "Experience" });
+    for (const org of ["Built AI", "Kraken Technologies", "Natoora"]) {
+      await expect(section).toContainText(org);
+    }
+    await expect(
+      section.getByRole("link", { name: /Full experience/ }),
+    ).toHaveAttribute("href", "/experience");
+  });
+
+  test("writing lists the three newest published notes and resolves", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const section = page.getByRole("region", { name: "Writing" });
+    const links = section.locator(".notes a");
     await expect(links).toHaveCount(3);
     await expect(
       section.getByRole("link", { name: "All notes →" }),
@@ -65,56 +81,36 @@ test.describe("homepage", () => {
     expect(response?.status()).toBe(200);
   });
 
-  test("closing pointer links live content and the ask agent, no stale copy", async ({
+  test("project rows link to case studies, demos and repositories", async ({
     page,
   }) => {
     await page.goto("/");
-    const deeper = page.locator(".deeper");
-    await expect(deeper.getByRole("link", { name: "colophon" })).toBeVisible();
-    await expect(
-      deeper.getByRole("link", { name: "case studies" }),
-    ).toHaveAttribute("href", "/projects");
-    await expect(deeper.getByRole("link", { name: "Ask" })).toHaveAttribute(
-      "href",
-      "/ask",
+    await expect(page.getByRole("link", { name: /case study$/ })).toHaveCount(
+      3,
     );
-    await expect(page.locator("body")).not.toContainText("on the way");
-  });
-
-  test("project cards link to repositories and live demos", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await expect(
-      page.getByRole("link", { name: "Repository" }).first(),
-    ).toHaveAttribute("href", /^https:\/\/github\.com\/edjchapman\//);
     await expect(page.getByRole("link", { name: "Live demo" })).toHaveCount(2);
-  });
-
-  test("promotes the ask assistant between the summary and the projects", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    const callout = page.getByRole("complementary", {
-      name: "Ask about Ed's work",
-    });
-    await expect(callout).toBeVisible();
     await expect(
-      callout.getByRole("link", { name: /Ask about Ed's work/ }),
-    ).toHaveAttribute("href", "/ask");
-    const calloutBox = await callout.boundingBox();
-    const projectsBox = await page
-      .getByRole("heading", { name: "Selected projects" })
-      .boundingBox();
-    expect(calloutBox?.y ?? Infinity).toBeLessThan(projectsBox?.y ?? 0);
+      page.getByRole("link", { name: "Repository" }),
+    ).toHaveAttribute("href", /^https:\/\/github\.com\/edjchapman\//);
   });
 
-  test("surfaces Foreman's published metrics on its card", async ({ page }) => {
+  test("every project row leads with one evidence line", async ({ page }) => {
     await page.goto("/");
-    const card = page.locator("article", { hasText: "Foreman" });
-    const metrics = card.getByRole("term");
-    await expect(metrics).toHaveCount(2);
-    await expect(card.locator(".metrics")).toContainText("1.84s → 0.34s");
+    await expect(page.locator("article .figure")).toHaveCount(3);
+    const foreman = page.locator("article", { hasText: "Foreman" });
+    await expect(foreman.locator(".figure")).toHaveText("1.84s → 0.34s");
+  });
+
+  test("Foreman's before → after is drawn to one scale", async ({ page }) => {
+    await page.goto("/");
+    const bars = page
+      .locator("article", { hasText: "Foreman" })
+      .locator(".bars");
+    await expect(bars).toHaveAttribute("aria-label", /before 1.84, after 0.34/);
+    const [before, after] = await bars
+      .locator(".fill")
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width));
+    expect((after ?? 0) / (before ?? 1)).toBeCloseTo(0.34 / 1.84, 2);
   });
 
   test("JSON-LD @graph carries a valid Person, WebSite, and ProfilePage", async ({
@@ -143,7 +139,7 @@ test.describe("homepage", () => {
     await page.goto("/");
     await expect(page.locator("article")).toHaveCount(3);
     await expect(
-      page.getByRole("heading", { level: 2, name: "Selected projects" }),
+      page.getByRole("heading", { level: 2, name: "Selected work" }),
     ).toBeVisible();
     await context.close();
   });

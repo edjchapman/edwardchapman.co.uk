@@ -75,6 +75,33 @@ describe("projectSchema", () => {
   });
 });
 
+describe("projectSchema metrics", () => {
+  const withMetric = (metric: Record<string, unknown>) =>
+    projectSchema.safeParse({ ...validProject, metrics: [metric] });
+
+  it("accepts a to-scale metric whose numbers appear in its value", () => {
+    const result = withMetric({
+      value: "1.84s → 0.34s",
+      label: "p95",
+      scale: { from: 1.84, to: 0.34 },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a scale that the value text does not state", () => {
+    const result = withMetric({
+      value: "1.84s → 0.34s",
+      label: "p95",
+      scale: { from: 1.84, to: 0.2 },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("keeps scale optional", () => {
+    expect(withMetric({ value: "14 agents", label: "x" }).success).toBe(true);
+  });
+});
+
 describe("noteSchema", () => {
   const validNote = {
     title: "LLM-as-judge as a CI quality gate",

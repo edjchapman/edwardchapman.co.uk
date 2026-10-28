@@ -61,6 +61,9 @@
   );
 
   /* scale: 1.25 ratio on a 17px base */
+  /* xs: mono labels and data (ADR-0030); mono reads larger than the sans
+   * at the same size, so it sits half a step below sm. */
+  --text-xs: 0.78rem;
   --text-sm: 0.875rem;
   --text-base: 1.0625rem;
   --text-lg: 1.25rem;
@@ -81,6 +84,9 @@
    * properties, so the one desktop breakpoint is the literal 64rem —
    * grep "64rem" to find every use. */
   --measure-wide: 68rem;
+  /* Rail: the wide canvas's label column (ADR-0030) — section names, the hero
+   * eyebrow, and sources sit here at ≥ 64rem; bodies start one rail in. */
+  --rail: 13rem;
 
   /* space: 4px base */
   --space-1: 0.25rem;

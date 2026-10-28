@@ -1,0 +1,188 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  project: CollectionEntry<"projects">;
+}
+
+const { project } = Astro.props;
+const { title, problem, tech, metrics, repo, demo } = project.data;
+// One evidence line per row (ADR-0030); the rest stays on the case study.
+const evidence = metrics[0];
+const caseStudy = `/projects/${project.id}`;
+---
+
+<article>
+  <div class="main">
+    <h3><a href={caseStudy}>{title}</a></h3>
+    <p>{problem}</p>
+  </div>
+  <div class="side">
+    {
+      evidence && (
+        <div class="evidence">
+          <p class="figure">{evidence.value}</p>
+          <p class="caption">{evidence.label}</p>
+          {evidence.scale && (
+            <div
+              class="bars"
+              role="img"
+              aria-label={`Drawn to scale: before ${evidence.scale.from}, after ${evidence.scale.to}`}
+            >
+              <span class="key">before</span>
+              <span class="track">
+                <span class="fill" style="width: 100%" />
+              </span>
+              <span class="key">after</span>
+              <span class="track">
+                <span
+                  class="fill after"
+                  style={`width: ${(evidence.scale.to / evidence.scale.from) * 100}%`}
+                />
+              </span>
+            </div>
+          )}
+        </div>
+      )
+    }
+    <ul class="tech" aria-label="Technologies">
+      {tech.map((tag) => <li>{tag}</li>)}
+    </ul>
+    <p class="links">
+      <a href={caseStudy} aria-label={`${title} case study`}>Case study</a>
+      {demo ? <a href={demo}>Live demo</a> : <a href={repo}>Repository</a>}
+    </p>
+  </div>
+</article>
+
+<style>
+  article {
+    display: grid;
+    gap: var(--space-3);
+    padding-block: var(--space-4);
+    border-bottom: var(--rule);
+  }
+
+  article:first-child {
+    padding-top: 0;
+  }
+
+  article:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .main {
+    display: grid;
+    align-content: start;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: var(--text-xl);
+  }
+
+  h3 a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  h3 a:hover {
+    color: var(--color-accent);
+  }
+
+  p {
+    margin: 0;
+  }
+
+  .side {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+  }
+
+  .evidence {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .figure {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 1.12rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .caption {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  /* Bars share one scale: "before" is the full track, "after" its ratio. */
+  .bars {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.3rem var(--space-2);
+    max-width: 15rem;
+    margin-top: var(--space-2);
+  }
+
+  .key {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-muted);
+  }
+
+  .track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-rule);
+    overflow: hidden;
+  }
+
+  .fill {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--color-muted);
+  }
+
+  .fill.after {
+    background: var(--color-accent);
+  }
+
+  .tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  @media (min-width: 64rem) {
+    article {
+      grid-template-columns: minmax(0, 1fr) 15rem;
+      column-gap: var(--space-5);
+    }
+
+    .side {
+      padding-top: 0.4rem;
+    }
+  }
+</style>

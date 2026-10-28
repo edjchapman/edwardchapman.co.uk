@@ -11,6 +11,10 @@ tech:
   - Claude
   - PostgreSQL
   - pgvector
+# Both lines restate this file's own built/differentiator text.
+metrics:
+  - value: "Every finding cited"
+    label: "golden dataset gates every push in CI"
 featured: true
 order: 2
 draft: false

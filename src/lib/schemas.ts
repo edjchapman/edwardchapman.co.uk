@@ -6,6 +6,37 @@
 
 import { z } from "zod";
 
+/** A before → after measurement drawn to one scale (ADR-0030). Both numbers
+ * must appear in the metric's own value text, so the bars restate published
+ * evidence and can never diverge from it. */
+const scaleSchema = z.object({
+  from: z.number().positive(),
+  to: z.number().nonnegative(),
+});
+
+const metricSchema = z
+  .object({
+    value: z.string().min(1),
+    label: z.string().min(1),
+    scale: scaleSchema.optional(),
+  })
+  .refine(
+    (m) =>
+      !m.scale ||
+      (m.value.includes(String(m.scale.from)) &&
+        m.value.includes(String(m.scale.to))),
+    { message: "scale.from and scale.to must both appear in the value text" },
+  );
+
+/** One employer row for the homepage experience list (ADR-0030). Every field
+ * restates the experience entry's own prose — tests/unit enforces it. */
+const roleSchema = z.object({
+  org: z.string().min(1),
+  sector: z.string().min(1),
+  title: z.string().min(1),
+  years: z.string().min(1),
+});
+
 export const projectSchema = z.object({
   title: z.string().min(1),
   /** One-sentence problem statement (project card). */
@@ -18,10 +49,7 @@ export const projectSchema = z.object({
   /** Headline measurements for the card's metric strip. Content boundary:
    * every value must already be published in this project's own prose —
    * the strip surfaces evidence, it never introduces it. */
-  metrics: z
-    .array(z.object({ value: z.string().min(1), label: z.string().min(1) }))
-    .max(3)
-    .default([]),
+  metrics: z.array(metricSchema).max(3).default([]),
   repo: z.url(),
   demo: z.url().optional(),
   featured: z.boolean().default(false),
@@ -59,8 +87,12 @@ export const profileSchema = z.object({
    * like the title). They must describe the entry truthfully, never inflate.
    */
   tags: z.array(z.string()).default([]),
+  /** Structured employer rows (experience entry only). */
+  roles: z.array(roleSchema).optional(),
 });
 
 export type Project = z.infer<typeof projectSchema>;
 export type Note = z.infer<typeof noteSchema>;
 export type Profile = z.infer<typeof profileSchema>;
+export type Metric = z.infer<typeof metricSchema>;
+export type Role = z.infer<typeof roleSchema>;

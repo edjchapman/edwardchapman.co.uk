@@ -7,6 +7,11 @@ tech:
   - Shell
   - Claude Code
   - GitHub Actions
+# Counts restate "fourteen specialist agents, eighteen reusable skills" in
+# built; the label restates the differentiator's CI sentence.
+metrics:
+  - value: "14 agents · 18 skills"
+    label: "validated in CI on every push"
 featured: true
 order: 3
 draft: false

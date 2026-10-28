@@ -54,6 +54,7 @@ const PROFILE_PAGES: Record<string, string> = {
   experience: "/experience",
   "skills-depth": "/experience",
   availability: "/experience",
+  "technical-focus": "/experience",
 };
 
 function parseFrontmatter(raw: string): {

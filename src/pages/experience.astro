@@ -9,12 +9,14 @@ import { personNode } from "../lib/jsonld";
 const experience = await getEntry("profile", "experience");
 const skillsDepth = await getEntry("profile", "skills-depth");
 const availability = await getEntry("profile", "availability");
-if (!experience || !skillsDepth || !availability) {
+const technicalFocus = await getEntry("profile", "technical-focus");
+if (!experience || !skillsDepth || !availability || !technicalFocus) {
   throw new Error("Experience entries are missing from the profile collection");
 }
 const { Content: Experience } = await render(experience);
 const { Content: SkillsDepth } = await render(skillsDepth);
 const { Content: Availability } = await render(availability);
+const { Content: TechnicalFocus } = await render(technicalFocus);
 
 // Every value below restates published content: alumniOf from this page,
 // occupation from the site's positioning headline (ADR-0019).
@@ -37,6 +39,14 @@ const person = personNode({
     /* The entry body is heading-less (single availability#body chunk); the
     page supplies the visible heading so the chunk id stays stable. */
   }
+  {
+    /* Heading-less entry (one technical-focus#body chunk), moved here from the
+    homepage by ADR-0030; its corpus URL moved with it (PROFILE_PAGES). */
+  }
+  <div class="technical-focus">
+    <h2>Technical focus</h2>
+    <Prose><TechnicalFocus /></Prose>
+  </div>
   <div class="availability">
     <h2>Availability</h2>
     <Prose><Availability /></Prose>
@@ -48,6 +58,7 @@ const person = personNode({
   /* skills-depth is a separate document stacked onto this page; the rule
    * stops its intro reading as part of the Education section above. */
   .skills,
+  .technical-focus,
   .availability {
     border-top: var(--rule);
     margin-top: var(--space-5);

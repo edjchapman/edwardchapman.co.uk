@@ -2,6 +2,21 @@
 title: "Experience"
 order: 6
 updatedDate: 2026-10-28
+# Homepage experience list (ADR-0030); each row restates the prose below,
+# titles exactly as held (ADR-0019, #199).
+roles:
+  - org: "Built AI"
+    sector: "proptech"
+    title: "Backend and DevOps Engineer"
+    years: "2023 – 2026"
+  - org: "Kraken Technologies"
+    sector: "energy"
+    title: "Backend Developer"
+    years: "2023"
+  - org: "Natoora"
+    sector: "supply-chain logistics"
+    title: "Tech Lead, after five years as Software Engineer"
+    years: "2017 – 2023"
 tags:
   - work history and employers
   - companies worked for and dates
