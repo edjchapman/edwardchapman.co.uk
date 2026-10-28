@@ -170,6 +170,11 @@ palette is replaced.
     I work are rewritten shorter, foregrounding correctness under failure
     and platform ownership as part of backend work. Every claim traces to
     published content; Ed approves the wording in PR review.
+    - **Outcome (2026-10-28):** the tagline became a one-line position, and
+      the stack enumeration moved into the intro. The intro is therefore
+      repositioned rather than shorter: the agent retrieves the
+      tagline-prefixed chunk, and the live goldens' required claims need
+      that vocabulary in its text (retune recorded in `docs/evaluation.md`).
 
 ## Delivery
 

@@ -1,7 +1,7 @@
 ---
 title: "Positioning"
 order: 1
-tagline: "I build backend systems that stay correct when things fail, and I measure them to prove it."
+tagline: "I design backend systems for the places they actually fail, and measure rather than assert."
 updatedDate: 2026-10-28
 tags:
   - professional background and experience

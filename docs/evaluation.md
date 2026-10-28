@@ -389,9 +389,12 @@ correct concise answer scores as incomplete.
 
 The overhaul's copy pass changed both homepage profile chunks:
 
-- **`positioning#body`:** the tagline became a one-line position ("I build
-  backend systems that stay correct when things fail, and I measure them to
-  prove it."). Because the tagline is prepended into the chunk, its stack
+- **`positioning#body`:** the tagline became a one-line position ("I design
+  backend systems for the places they actually fail, and measure rather than
+  assert."). Its wording restates the intro and the earlier How I work line
+  "If it isn't measured, it isn't asserted". A first candidate ("…stay correct
+  when things fail, and I measure them to prove it") was dropped in review: it
+  generalised one public project's evidence into a claim about every system. Because the tagline is prepended into the chunk, its stack
   enumeration moved into the body verbatim ("backend depth in Python and
   Django, infrastructure ownership on AWS and Terraform, and React and
   TypeScript product work"), so the live goldens' required claims keep their
@@ -412,7 +415,8 @@ Authoring lesson, the same one as the 2026-07-24 copy retune: a summary chunk
 must carry its query vocabulary in its own text. Entity-gate margins are
 byte-identical: "What is Claude?" 4.20 and "What is quality?" 4.22, both
 refused under the 4.35 bar; "What is Foreman?" 4.48. All 218 deterministic
-cases pass. No thresholds changed; a post-merge live run re-scores the
+cases pass, and the final tagline leaves every ranking and margin above
+unchanged. No thresholds changed; a post-merge live run re-scores the
 claim-bearing goldens.
 
 ### Post-improvement-wave run (2026-07-21)
