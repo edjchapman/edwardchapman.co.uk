@@ -14,11 +14,11 @@ export default defineConfig({
   trailingSlash: "never",
   build: { format: "file" },
   adapter: cloudflare({ imageService: "compile" }),
-  // One self-hosted display serif (ADR-0021): resolved from the local
-  // @fontsource package at build time (no network, OFL-licensed), subsetted
-  // woff2 under /_astro/ with immutable caching. tokens.css routes
-  // --font-serif through the injected --font-display variable, so removing
-  // this block reverts the whole site to the system stack.
+  // Self-hosted display serif (ADR-0021) and data mono (ADR-0030): resolved
+  // from local @fontsource packages at build time (no network, OFL-licensed),
+  // subsetted woff2 under /_astro/ with immutable caching. tokens.css routes
+  // --font-serif and --font-mono through the injected variables, so removing
+  // an entry reverts that role to its system stack.
   fonts: [
     {
       provider: fontProviders.fontsource(),
@@ -28,6 +28,15 @@ export default defineConfig({
       styles: ["normal"],
       subsets: ["latin"],
       fallbacks: ["Georgia", "Times New Roman", "serif"],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: "IBM Plex Mono",
+      cssVariable: "--font-data",
+      weights: [400, 500],
+      styles: ["normal"],
+      subsets: ["latin"],
+      fallbacks: ["ui-monospace", "Menlo", "Consolas", "monospace"],
     },
   ],
   integrations: [

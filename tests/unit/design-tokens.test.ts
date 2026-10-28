@@ -39,3 +39,15 @@ describe("palette.ts mirrors tokens.css", () => {
     );
   });
 });
+
+// The manifest is static JSON with no build step, so it can't import the
+// palette; without this it silently kept the pre-ADR-0030 paper.
+describe("site.webmanifest follows the palette", () => {
+  it("theme and background colours are the light paper", async () => {
+    const manifest = JSON.parse(
+      await readFile("public/site.webmanifest", "utf8"),
+    ) as { theme_color: string; background_color: string };
+    expect(manifest.theme_color).toBe(PALETTE.light.paper);
+    expect(manifest.background_color).toBe(PALETTE.light.paper);
+  });
+});

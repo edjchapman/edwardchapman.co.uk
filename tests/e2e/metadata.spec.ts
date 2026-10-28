@@ -157,6 +157,22 @@ test.describe("metadata", () => {
     expect(served.headers()["content-type"]).toContain("font");
   });
 
+  test("the data mono is self-hosted and sets code, without a preload", async ({
+    page,
+  }) => {
+    await page.goto("/projects/foreman");
+    const family = await page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector("code") as Element).fontFamily,
+    );
+    expect(family).toContain("IBM Plex Mono");
+    const faces = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return [...document.fonts].map((f) => f.family);
+    });
+    expect(faces.some((f) => f.includes("IBM Plex Mono"))).toBe(true);
+  });
+
   test("default social card is generated as a valid 1200×630 PNG", async ({
     request,
   }) => {

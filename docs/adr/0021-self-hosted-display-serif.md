@@ -1,6 +1,8 @@
 # ADR-0021: One self-hosted display serif via the fonts API
 
-**Status:** Accepted (2026-07-24)
+**Status:** Accepted (2026-07-24); amended by
+[ADR-0030](0030-editorial-overhaul-hierarchy-and-density.md) (2026-10-28) —
+a second self-hosted face, IBM Plex Mono, sets data and code; still one preload.
 
 ## Context
 
