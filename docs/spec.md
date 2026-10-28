@@ -339,6 +339,15 @@ roles timeline (Senior Backend/Platform Engineer at Built AI; Tech Lead at
 Natoora) and the "senior and lead roles" summary are unchanged. The
 recommended-direction list above remains the spec's original.)_
 
+_(Revised 2026-10-28 at Ed's direction: the title is now "Software engineer"
+across the tagline, page titles, and schema jobTitle — "Platform engineer" is
+not used as a title-like label, since it was never a title held. The roles
+timeline now carries the titles exactly as published on the public LinkedIn
+profile (ADR-0019): Backend and DevOps Engineer at Built AI, Backend Developer
+at Kraken Technologies. With no "Senior" title held, the summary names the
+Tech Lead role instead of "senior and lead roles". Platform depth stays in the
+tagline as infrastructure ownership.)_
+
 ## Selected projects
 
 Initial featured projects:

@@ -1,7 +1,7 @@
 ---
 title: "Availability"
 order: 8
-updatedDate: 2026-07-24
+updatedDate: 2026-10-28
 tags:
   - availability and current openness to new roles
   - contract, freelance, and permanent work
@@ -14,8 +14,8 @@ assistant can answer them directly.
 
 - **Current availability** — Actively looking for his next role: senior
   backend/platform and AI engineering positions.
-- **Contract or permanent** — Open to permanent roles and to contract or
-  freelance engagements.
+- **Contract or permanent** — Looking for permanent or fixed-term employed
+  roles; not taking on contract or freelance engagements.
 - **Remote, hybrid, or office** — London-based, and comfortable working
   fully remote or hybrid.
 - **Relocation** — Not looking to relocate.

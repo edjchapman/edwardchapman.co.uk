@@ -5,4 +5,4 @@ aliases:
   - "Is Ed open to permanent roles?"
 ---
 
-Yes — Ed is open to both permanent roles and to contract or freelance engagements. He is actively looking for his next role in senior backend/platform and AI engineering, is London-based and comfortable working fully remote or hybrid, and is not looking to relocate.[[availability#body]]
+Ed is looking for permanent or fixed-term employed roles; he is not taking on contract or freelance engagements. He is actively looking for his next role in senior backend/platform and AI engineering, is London-based and comfortable working fully remote or hybrid, and is not looking to relocate.[[availability#body]]
