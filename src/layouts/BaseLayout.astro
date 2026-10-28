@@ -44,6 +44,10 @@ const { title, description, image, type, noindex, canonical } = Astro.props;
       cssVariable="--font-display"
       preload={[{ weight: 600, subset: "latin" }]}
     />
+    {
+      /* The data mono sets small below-the-fold labels; no preload (ADR-0030). */
+    }
+    <Font cssVariable="--font-data" />
     <SEO
       title={title}
       description={description}

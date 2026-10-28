@@ -73,22 +73,15 @@ test.describe("smoke", () => {
     const page = await context.newPage();
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "Site" });
-    for (const label of [
-      "Projects",
-      "Notes",
-      "Experience",
-      "Now",
-      "Ask",
-      "Colophon",
-    ]) {
+    for (const label of ["Projects", "Notes", "Experience", "Ask"]) {
       await expect(nav.getByRole("link", { name: label })).toBeInViewport();
     }
     const scrollWidth = await page.evaluate(
       () => document.documentElement.scrollWidth,
     );
     expect(scrollWidth).toBeLessThanOrEqual(390);
-    await nav.getByRole("link", { name: "Colophon" }).click();
-    await expect(page).toHaveURL(/\/colophon$/);
+    await nav.getByRole("link", { name: "Experience" }).click();
+    await expect(page).toHaveURL(/\/experience$/);
     await context.close();
   });
 
@@ -104,6 +97,6 @@ test.describe("smoke", () => {
     const svg = await favicon.text();
     expect(svg).toContain("<path");
     expect(svg).not.toContain("<text");
-    expect(svg).toContain("#e89a6b"); // the accent tick, from the palette
+    expect(svg).toContain("#6fbfa9"); // the accent tick, from the palette
   });
 });

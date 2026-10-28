@@ -44,7 +44,7 @@ test.describe("accessibility", () => {
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     );
-    expect(background).toBe("rgb(23, 22, 20)"); // --color-paper #171614
+    expect(background).toBe("rgb(19, 22, 21)"); // --color-paper #131615
   });
 
   test("dark scheme separates raised surfaces from the page", async ({
@@ -57,9 +57,9 @@ test.describe("accessibility", () => {
         getComputedStyle(document.querySelector("article") as Element)
           .backgroundColor,
     );
-    // --color-paper-raised #262420: the figure/ground step that 1px rules
+    // --color-paper-raised #212625: the figure/ground step that 1px rules
     // alone could not carry in the dark scheme.
-    expect(background).toBe("rgb(38, 36, 32)");
+    expect(background).toBe("rgb(33, 38, 37)");
   });
 
   test("reduced motion disables the transition vocabulary", async ({
@@ -80,7 +80,7 @@ test.describe("accessibility", () => {
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor,
     );
-    expect(background).toBe("rgb(250, 249, 246)"); // --color-paper #faf9f6
+    expect(background).toBe("rgb(245, 246, 244)"); // --color-paper #f5f6f4
   });
 
   test("landmarks are present and unique on the homepage", async ({ page }) => {

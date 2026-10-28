@@ -1,6 +1,8 @@
 # ADR-0028: Wide-canvas responsive layout and token-mapped code highlighting
 
-**Status:** Accepted (2026-08-12)
+**Status:** Accepted (2026-08-12); decision 4 (terracotta accent) superseded by
+[ADR-0030](0030-editorial-overhaul-hierarchy-and-density.md) (2026-10-28) — the
+verdigris palette; the code-string hue moves to the retired terracotta.
 
 ## Context
 
