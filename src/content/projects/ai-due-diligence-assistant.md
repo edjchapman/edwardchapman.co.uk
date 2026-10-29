@@ -68,8 +68,9 @@ append a cited finding. The graph is the inspectable artefact.
 
 - **The eval harness is the headline, and it gates the build.** The agent
   runs over reference companies and every finding is scored against a golden
-  set by an LLM-as-judge, in CI, on every push. A regression in retrieval,
-  scoping, the graph, or the golden set turns CI red.
+  set by a deterministic judge, in CI, on every push; a separate keyed
+  LLM-as-judge scores live reports for faithfulness to their cited evidence.
+  A regression in retrieval, scoping, the graph, or the golden set turns CI red.
 - **Keyless, deterministic providers everywhere.** Embeddings, reasoning, and
   the judge each sit behind a provider switch (`EMBED_PROVIDER` /
   `LLM_PROVIDER` / `JUDGE_PROVIDER`): real providers in production,
