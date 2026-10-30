@@ -8,7 +8,7 @@ test.describe("notes", () => {
   }) => {
     await page.goto("/notes");
     const link = page.getByRole("link", {
-      name: "LLM-as-judge as a CI quality gate",
+      name: "Golden sets as a CI quality gate for LLM systems",
     });
     await expect(link).toHaveAttribute("href", NOTE);
     await expect(page.locator("time").first()).toBeVisible();
@@ -41,7 +41,7 @@ test.describe("notes", () => {
   }) => {
     await page.goto(NOTE);
     await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      "LLM-as-judge",
+      "Golden sets",
     );
 
     const raw = await page
@@ -100,7 +100,7 @@ test.describe("notes", () => {
     await page.goto("/projects/ai-due-diligence-assistant");
     await expect(
       page.getByRole("complementary", { name: "Related writing" }),
-    ).toContainText("LLM-as-judge as a CI quality gate");
+    ).toContainText("Golden sets as a CI quality gate for LLM systems");
   });
 
   test("og:type is article on notes", async ({ page }) => {

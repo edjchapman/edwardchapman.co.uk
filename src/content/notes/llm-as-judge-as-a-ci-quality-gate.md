@@ -1,5 +1,5 @@
 ---
-title: "LLM-as-judge as a CI quality gate"
+title: "Golden sets as a CI quality gate for LLM systems"
 description: "A practical evaluation pattern for LLM systems: versioned golden cases, deterministic CI checks, separate live-model evaluation, and explicit limits for automated judges."
 pubDate: 2026-07-11
 tags:
