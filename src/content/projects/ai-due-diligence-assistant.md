@@ -54,7 +54,7 @@ _detectable by machinery_, not by vibes.
 ```text
 Ingest CLI ─▶ Postgres + pgvector ─▶ Fastify API ─▶ LangGraph.js agent ─▶ Eval harness (in CI)
   (chunk + embed)  (cosine + HNSW)     (/search,      (node per check:       (golden set +
-                                        /report)       retrieve → reason       LLM-as-judge)
+                                        /report)       retrieve → reason       keyless judge)
                                                        → cite)
 ```
 
